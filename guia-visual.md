@@ -61,6 +61,10 @@ A tela de abertura deve parecer parte da transmissão, não uma caixa de diálog
 - A entrada e a confirmação podem usar fade, varredura e um pulso breve, mas nenhuma animação deve atrasar a leitura das opções.
 - Não use `PanelContainer`, botões com o tema padrão do Godot, cantos arredondados ou assets externos.
 
+## Menu de pausa
+
+O menu de pausa reutiliza o mesmo template de transmissão do menu inicial, com dois cartões angulares e o cursor da bola. Mantenha o título CYBERPONG, os emblemas das equipes e os cartões **Continuar** e **Menu principal**, com o rodapé de teclas no estilo de keycap. O fundo escurece a partida congelada atrás do painel; nenhuma opção deve alterar a posição das raquetes, a direção da bola ou a velocidade enquanto o menu está aberto.
+
 ## Recursos e licenças
 
 Não são necessários arquivos de arte, fontes ou ícones externos. Use os recursos nativos do Godot já adotados pelo projeto, como `Polygon2D`, `Label` e os métodos de desenho de `CanvasItem`. Assim, não há licenças externas ou créditos adicionais a registrar. Se um asset externo for adotado no futuro, registre neste guia sua origem, licença e atribuição exigida.

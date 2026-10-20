@@ -5,6 +5,7 @@ const SCENE_PATHS := [
 	"res://scenes/ball.tscn",
 	"res://scenes/paddle.tscn",
 	"res://scenes/game_menu.tscn",
+	"res://scenes/pause_menu.tscn",
 ]
 
 

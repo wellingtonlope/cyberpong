@@ -12,6 +12,8 @@ const WINNING_SCORE := 3
 const POWER_UP_MIN_SPAWN_INTERVAL := 5
 const POWER_UP_MAX_SPAWN_INTERVAL := 15
 const HUD_BAR_HEIGHT := 60.0 * GAME_SCALE
+const GAME_MENU_SCENE := preload("res://scenes/game_menu.tscn")
+const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 
 enum GameMode {
 	PLAYER_VS_PLAYER,
@@ -36,6 +38,7 @@ var _next_power_up_rebound := 0
 var _random := RandomNumberGenerator.new()
 var _game_mode: int = GameMode.AI_VS_AI
 var _menu_shown := false
+var _pause_menu: Control = null
 
 func _ready() -> void:
 	_random.randomize()
@@ -53,13 +56,19 @@ func _ready() -> void:
 	_show_menu()
 
 func _show_menu() -> void:
-	var menu_scene = load("res://scenes/game_menu.tscn")
-	var menu = menu_scene.instantiate()
+	var previous_menu := get_node_or_null("GameMenu")
+	if previous_menu != null:
+		remove_child(previous_menu)
+		previous_menu.queue_free()
+	var menu = GAME_MENU_SCENE.instantiate()
+	menu.name = "GameMenu"
 	add_child(menu)
-	menu.mode_selected.connect(_on_mode_selected)
+	menu.connect("mode_selected", _on_mode_selected)
+	_menu_shown = true
 
 func _on_mode_selected(mode: int) -> void:
 	_game_mode = mode
+	_menu_shown = false
 	_apply_game_mode()
 	_restart_match()
 
@@ -76,7 +85,7 @@ func _apply_game_mode() -> void:
 			right_paddle.set_control_mode(0)
 
 func _physics_process(delta: float) -> void:
-	if game_over:
+	if game_over or _menu_shown or _pause_menu != null:
 		return
 
 	var viewport_size := get_viewport_rect().size
@@ -115,10 +124,43 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		debug_hud.toggle()
 		get_viewport().set_input_as_handled()
 		return
+	if event.keycode == KEY_ESCAPE or event.keycode == KEY_P:
+		if not game_over and not _menu_shown and _pause_menu == null:
+			_open_pause_menu()
+			get_viewport().set_input_as_handled()
+		return
 	if not game_over:
 		return
 	if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
 		_restart_match()
+
+func _open_pause_menu() -> void:
+	if _pause_menu != null or _menu_shown or game_over:
+		return
+	var menu = PAUSE_MENU_SCENE.instantiate()
+	add_child(menu)
+	menu.connect("resume_requested", _on_pause_resume_requested)
+	menu.connect("main_menu_requested", _on_pause_main_menu_requested)
+	_pause_menu = menu
+	get_tree().paused = true
+
+func _on_pause_resume_requested() -> void:
+	_dismiss_pause_menu()
+	get_tree().paused = false
+
+func _on_pause_main_menu_requested() -> void:
+	_dismiss_pause_menu()
+	_restart_match()
+	_show_menu()
+
+func _dismiss_pause_menu() -> void:
+	if not is_instance_valid(_pause_menu):
+		_pause_menu = null
+		return
+	var menu := _pause_menu
+	_pause_menu = null
+	remove_child(menu)
+	menu.queue_free()
 
 func _restart_match() -> void:
 	field_size = get_viewport_rect().size

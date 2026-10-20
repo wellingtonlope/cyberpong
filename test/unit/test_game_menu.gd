@@ -134,6 +134,20 @@ func test_activate_waits_for_the_close_transition_before_selecting() -> void:
 	assert_true(menu._selected)
 	assert_eq(emitted_modes, [menu.GameMode.AI_VS_AI])
 
+func test_focus_brackets_point_inward_at_every_corner() -> void:
+	var rect := Rect2(100.0, 100.0, 200.0, 60.0)
+	var segments: Array = menu._focus_bracket_segments(rect, 8.0, 2.0)
+
+	assert_eq(segments.size(), 8)
+	assert_eq(segments[1][0], Vector2(118.0, 110.0))
+	assert_eq(segments[1][1], Vector2(118.0, 130.0))
+	assert_eq(segments[3][0], Vector2(118.0, 150.0))
+	assert_eq(segments[3][1], Vector2(118.0, 130.0))
+	assert_eq(segments[5][0], Vector2(282.0, 110.0))
+	assert_eq(segments[5][1], Vector2(282.0, 130.0))
+	assert_eq(segments[7][0], Vector2(282.0, 150.0))
+	assert_eq(segments[7][1], Vector2(282.0, 130.0))
+
 func test_button_press_starts_the_same_selection_flow() -> void:
 	var emitted_modes: Array = []
 	menu.mode_selected.connect(func(mode: int) -> void: emitted_modes.append(mode))
