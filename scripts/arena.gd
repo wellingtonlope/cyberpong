@@ -17,6 +17,8 @@ const GAME_TITLE := "CYBERPONG"
 const LEFT_TEAM_NAME := "Cyan Circuit"
 const RIGHT_TEAM_NAME := "Magenta Volt"
 const POINT_FLASH_DURATION := 0.72
+const RALLY_INTRO_DURATION := 1.0
+const WINNER_REVEAL_DURATION := 0.55
 const FIELD_GRADIENT_STRIPS := 48
 const VIGNETTE_BANDS := 8
 
@@ -36,12 +38,23 @@ var power_up_hud_accent := MUTED_TEXT_COLOR
 var power_up_hud_show_progress := false
 var point_flash_remaining := 0.0
 var point_flash_is_left := true
+var rally_intro_remaining := 0.0
+var rally_intro_is_left := true
+var winner_reveal := 0.0
 
 func _process(delta: float) -> void:
-	if point_flash_remaining <= 0.0:
-		return
-	point_flash_remaining = maxf(point_flash_remaining - delta, 0.0)
-	queue_redraw()
+	var should_redraw := false
+	if point_flash_remaining > 0.0:
+		point_flash_remaining = maxf(point_flash_remaining - delta, 0.0)
+		should_redraw = true
+	if rally_intro_remaining > 0.0:
+		rally_intro_remaining = maxf(rally_intro_remaining - delta, 0.0)
+		should_redraw = true
+	if game_over and winner_reveal < 1.0:
+		winner_reveal = minf(winner_reveal + delta / WINNER_REVEAL_DURATION, 1.0)
+		should_redraw = true
+	if should_redraw:
+		queue_redraw()
 
 func configure(scale: float, bar_height: float = 0.0, margin: float = 120.0) -> void:
 	game_scale = scale
@@ -54,6 +67,8 @@ func set_game_over(value: bool) -> void:
 	if not value:
 		winner_name = ""
 		point_flash_remaining = 0.0
+		rally_intro_remaining = 0.0
+		winner_reveal = 0.0
 	queue_redraw()
 
 func set_score(left_value: int, right_value: int) -> void:
@@ -74,11 +89,19 @@ func set_winner(name: String) -> void:
 	winner_name = name
 	winner_is_left = name.to_lower() == LEFT_TEAM_NAME.to_lower()
 	game_over = true
+	rally_intro_remaining = 0.0
+	point_flash_remaining = 0.0
+	winner_reveal = 0.0
 	queue_redraw()
 
 func show_point_awarded(is_left: bool) -> void:
 	point_flash_is_left = is_left
 	point_flash_remaining = POINT_FLASH_DURATION
+	queue_redraw()
+
+func show_rally_intro(server_is_left: bool) -> void:
+	rally_intro_is_left = server_is_left
+	rally_intro_remaining = RALLY_INTRO_DURATION
 	queue_redraw()
 
 func _draw() -> void:
@@ -100,15 +123,17 @@ func _draw() -> void:
 	for y in range(int(hud_bar_height + 12.0 * game_scale), int(size.y - 12.0 * game_scale), 30 * int(game_scale)):
 		draw_rect(Rect2(size.x * 0.5 - 2.0 * game_scale, float(y), 4.0 * game_scale, 14.0 * game_scale), DIVIDER_COLOR)
 	_draw_goal_lines(size)
-
+	_draw_point_flash(size)
 	var font := ThemeDB.fallback_font
+	_draw_rally_intro(font, size, ui_scale)
+
 	_draw_game_logo(font, ui_scale)
 	_draw_rebound_badge(font, ui_scale)
 	_draw_score(font, size, ui_scale)
 	_draw_power_up_status(font, size, ui_scale)
 
 	if game_over:
-		_draw_winner_panel(font, size)
+		_draw_winner_panel(font, size, ui_scale)
 
 func _hud_scale_for(size: Vector2) -> float:
 	return minf(game_scale, maxf(size.x / 960.0, 0.55))
@@ -254,32 +279,200 @@ func _draw_game_logo(font: Font, ui_scale: float) -> void:
 		true
 	)
 
-func _draw_winner_panel(font: Font, size: Vector2) -> void:
-	var panel_size := Vector2(500.0, 160.0) * game_scale
-	var panel := Rect2((size - panel_size) * 0.5, panel_size)
-	var team_color := LEFT_COLOR if winner_is_left else RIGHT_COLOR
-	draw_rect(panel, Color(0.02, 0.035, 0.06, 0.96))
-	draw_rect(panel, Color(team_color, 0.65), false, 2.0 * game_scale)
+func _draw_point_flash(size: Vector2) -> void:
+	if point_flash_remaining <= 0.0:
+		return
+	var strength := point_flash_remaining / POINT_FLASH_DURATION
+	var team_color := LEFT_COLOR if point_flash_is_left else RIGHT_COLOR
+	var field_margin := 12.0 * game_scale
+	var field_left := field_margin
+	var field_right := size.x - field_margin
+	var play_height := size.y - hud_bar_height
+	var wash_width := minf(size.x * 0.16, 170.0 * game_scale)
+	var strip_count := 12
+	var strip_width := wash_width / float(strip_count)
+	for strip_index in range(strip_count):
+		var depth := float(strip_index) / float(strip_count)
+		var strip_x := field_left + float(strip_index) * strip_width
+		if not point_flash_is_left:
+			strip_x = field_right - float(strip_index + 1) * strip_width
+		draw_rect(
+			Rect2(Vector2(strip_x, hud_bar_height), Vector2(strip_width + 1.0, play_height)),
+			Color(team_color, 0.11 * strength * (1.0 - depth))
+		)
+	var goal_x := field_left if point_flash_is_left else field_right
+	draw_line(
+		Vector2(goal_x, hud_bar_height),
+		Vector2(goal_x, size.y),
+		Color(team_color, 0.32 + 0.5 * strength),
+		7.0 * game_scale,
+		true
+	)
 
-	var title_font_size := 30 * int(game_scale)
-	var title_text := "%s VENCEU!" % winner_name.to_upper()
-	var title_width := font.get_string_size(title_text, HORIZONTAL_ALIGNMENT_LEFT, -1, title_font_size).x
-	var emblem_radius := 11.0 * game_scale
-	var group_width := emblem_radius * 2.0 + 12.0 * game_scale + title_width
-	var group_left := size.x * 0.5 - group_width * 0.5
-	var title_y := size.y * 0.5 - 24.0 * game_scale
-	_draw_team_emblem(Vector2(group_left + emblem_radius, title_y - 10.0 * game_scale), team_color, winner_is_left)
+func _draw_rally_intro(font: Font, size: Vector2, ui_scale: float) -> void:
+	if rally_intro_remaining <= 0.0:
+		return
+	var elapsed := RALLY_INTRO_DURATION - rally_intro_remaining
+	var fade_in := clampf(elapsed / 0.12, 0.0, 1.0)
+	var fade_out := clampf(rally_intro_remaining / 0.24, 0.0, 1.0)
+	var alpha := minf(fade_in, fade_out)
+	if alpha <= 0.0:
+		return
+	var team_color := LEFT_COLOR if rally_intro_is_left else RIGHT_COLOR
+	var team_name := LEFT_TEAM_NAME if rally_intro_is_left else RIGHT_TEAM_NAME
+	var banner_size := Vector2(minf(size.x * 0.34, 330.0 * ui_scale), maxf(44.0 * ui_scale, 26.0))
+	var banner_position := Vector2(
+		(size.x - banner_size.x) * 0.5,
+		hud_bar_height + 18.0 * ui_scale + (1.0 - fade_in) * 8.0 * ui_scale
+	)
+	var banner := Rect2(banner_position, banner_size)
+	draw_rect(banner, Color(0.01, 0.02, 0.035, 0.88 * alpha))
+	draw_rect(banner, Color(team_color, 0.55 * alpha), false, 1.5 * ui_scale)
+	draw_rect(
+		Rect2(banner.position, Vector2(4.0 * ui_scale, banner.size.y)),
+		Color(team_color, alpha)
+	)
+	var emblem_center := banner.position + Vector2(22.0 * ui_scale, banner.size.y * 0.5)
+	_draw_team_emblem(emblem_center, team_color, rally_intro_is_left, ui_scale, alpha)
+	var text_x := banner.position.x + 42.0 * ui_scale
+	var text_width := banner.size.x - 54.0 * ui_scale
 	draw_string(
 		font,
-		Vector2(group_left + emblem_radius * 2.0 + 12.0 * game_scale, title_y),
-		title_text,
+		Vector2(text_x, banner.position.y + banner.size.y * 0.4),
+		"SAQUE",
 		HORIZONTAL_ALIGNMENT_LEFT,
-		title_width + 8.0 * game_scale,
-		title_font_size,
-		TEXT_COLOR
+		text_width,
+		maxi(int(7.0 * ui_scale), 7),
+		Color(MUTED_TEXT_COLOR, alpha)
 	)
-	draw_string(font, Vector2(panel.position.x, size.y * 0.5 + 10.0 * game_scale), "Fim de jogo: melhor de 5", HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, 18 * int(game_scale), MUTED_TEXT_COLOR)
-	draw_string(font, Vector2(panel.position.x, size.y * 0.5 + 43.0 * game_scale), "Pressione Enter para nova partida", HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, 16 * int(game_scale), TEXT_COLOR)
+	draw_string(
+		font,
+		Vector2(text_x, banner.position.y + banner.size.y * 0.78),
+		team_name.to_upper(),
+		HORIZONTAL_ALIGNMENT_LEFT,
+		text_width,
+		maxi(int(13.0 * ui_scale), 9),
+		Color(TEXT_COLOR, alpha)
+	)
+
+func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
+	var reveal := 1.0 - pow(1.0 - clampf(winner_reveal, 0.0, 1.0), 3.0)
+	var team_color := LEFT_COLOR if winner_is_left else RIGHT_COLOR
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.003, 0.008, 0.016, 0.78 * reveal))
+	var panel_size := Vector2(560.0, 260.0) * ui_scale * lerpf(0.94, 1.0, reveal)
+	var panel_center := size * 0.5 + Vector2(0.0, (1.0 - reveal) * 16.0 * ui_scale)
+	var panel := Rect2(panel_center - panel_size * 0.5, panel_size)
+	draw_rect(panel.grow(18.0 * ui_scale), Color(team_color, 0.05 * reveal))
+	draw_rect(panel, Color(0.02, 0.035, 0.06, 0.97 * reveal))
+	draw_rect(panel, Color(team_color, 0.7 * reveal), false, 2.0 * ui_scale)
+	draw_rect(
+		Rect2(panel.position, Vector2(panel.size.x, 4.0 * ui_scale)),
+		Color(team_color, reveal)
+	)
+	draw_string(
+		font,
+		Vector2(panel.position.x, panel.position.y + 28.0 * ui_scale),
+		"PARTIDA ENCERRADA",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		panel.size.x,
+		maxi(int(8.0 * ui_scale), 8),
+		Color(MUTED_TEXT_COLOR, reveal)
+	)
+	_draw_team_emblem(
+		Vector2(panel.get_center().x, panel.position.y + 62.0 * ui_scale),
+		team_color,
+		winner_is_left,
+		ui_scale,
+		reveal
+	)
+	var title_text := "%s VENCEU!" % winner_name.to_upper()
+	draw_string(
+		font,
+		Vector2(panel.position.x, panel.position.y + 108.0 * ui_scale),
+		title_text,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		panel.size.x,
+		maxi(int(25.0 * ui_scale), 12),
+		Color(team_color, reveal)
+	)
+	var score_y := panel.position.y + 148.0 * ui_scale
+	var score_font_size := maxi(int(24.0 * ui_scale), 12)
+	draw_string(
+		font,
+		Vector2(panel.position.x + 30.0 * ui_scale, score_y),
+		str(left_score),
+		HORIZONTAL_ALIGNMENT_RIGHT,
+		panel.size.x * 0.5 - 48.0 * ui_scale,
+		score_font_size,
+		Color(LEFT_COLOR, reveal)
+	)
+	draw_string(
+		font,
+		Vector2(panel.get_center().x - 16.0 * ui_scale, score_y),
+		"×",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		32.0 * ui_scale,
+		score_font_size,
+		Color(MUTED_TEXT_COLOR, reveal)
+	)
+	draw_string(
+		font,
+		Vector2(panel.get_center().x + 18.0 * ui_scale, score_y),
+		str(right_score),
+		HORIZONTAL_ALIGNMENT_LEFT,
+		panel.size.x * 0.5 - 48.0 * ui_scale,
+		score_font_size,
+		Color(RIGHT_COLOR, reveal)
+	)
+	draw_string(
+		font,
+		Vector2(panel.position.x, panel.position.y + 176.0 * ui_scale),
+		"MELHOR DE 5",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		panel.size.x,
+		maxi(int(8.0 * ui_scale), 8),
+		Color(MUTED_TEXT_COLOR, reveal)
+	)
+	draw_line(
+		Vector2(panel.position.x + 40.0 * ui_scale, panel.position.y + 194.0 * ui_scale),
+		Vector2(panel.end.x - 40.0 * ui_scale, panel.position.y + 194.0 * ui_scale),
+		Color(team_color, 0.32 * reveal),
+		ui_scale,
+		true
+	)
+	var instruction_font_size := maxi(int(12.0 * ui_scale), 9)
+	var instruction_text := "NOVA PARTIDA"
+	var instruction_width := font.get_string_size(
+		instruction_text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		instruction_font_size
+	).x
+	var key_size := Vector2(62.0, 28.0) * ui_scale
+	var group_width := key_size.x + 12.0 * ui_scale + instruction_width
+	var group_left := panel.get_center().x - group_width * 0.5
+	var instruction_y := panel.position.y + 215.0 * ui_scale
+	var key_rect := Rect2(Vector2(group_left, instruction_y), key_size)
+	draw_rect(key_rect, Color(0.04, 0.07, 0.11, reveal))
+	draw_rect(key_rect, Color(team_color, 0.75 * reveal), false, 1.5 * ui_scale)
+	draw_string(
+		font,
+		Vector2(key_rect.position.x, key_rect.position.y + key_size.y * 0.68),
+		"ENTER",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		key_size.x,
+		maxi(int(9.0 * ui_scale), 8),
+		Color(TEXT_COLOR, reveal)
+	)
+	draw_string(
+		font,
+		Vector2(key_rect.end.x + 12.0 * ui_scale, instruction_y + key_size.y * 0.68),
+		instruction_text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		instruction_width + 4.0,
+		instruction_font_size,
+		Color(TEXT_COLOR, reveal)
+	)
 
 func _draw_goal_lines(size: Vector2) -> void:
 	var field_margin := 12.0 * game_scale
@@ -417,18 +610,25 @@ func _draw_score_pips(card: Rect2, score: int, team_color: Color, ui_scale: floa
 		else:
 			draw_polyline(pip, Color(team_color, 0.38), maxf(1.0, ui_scale * 0.8), true)
 
-func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool, emblem_scale: float = -1.0) -> void:
+func _draw_team_emblem(
+	center: Vector2,
+	team_color: Color,
+	is_left: bool,
+	emblem_scale: float = -1.0,
+	alpha: float = 1.0
+) -> void:
 	if emblem_scale < 0.0:
 		emblem_scale = game_scale
+	var draw_color := Color(team_color, alpha)
 	if is_left:
 		var hexagon := PackedVector2Array()
 		for point_index in range(7):
 			var angle := -PI * 0.5 + TAU * float(point_index % 6) / 6.0
 			hexagon.append(center + Vector2(cos(angle), sin(angle)) * 10.0 * emblem_scale)
-		draw_polyline(hexagon, team_color, 1.8 * emblem_scale, true)
-		draw_line(center, center + Vector2(5.0, -5.0) * emblem_scale, team_color, 1.4 * emblem_scale, true)
-		draw_line(center, center + Vector2(-5.0, 5.0) * emblem_scale, team_color, 1.4 * emblem_scale, true)
-		draw_circle(center, 2.0 * emblem_scale, TEXT_COLOR)
+		draw_polyline(hexagon, draw_color, 1.8 * emblem_scale, true)
+		draw_line(center, center + Vector2(5.0, -5.0) * emblem_scale, draw_color, 1.4 * emblem_scale, true)
+		draw_line(center, center + Vector2(-5.0, 5.0) * emblem_scale, draw_color, 1.4 * emblem_scale, true)
+		draw_circle(center, 2.0 * emblem_scale, Color(TEXT_COLOR, alpha))
 	else:
 		var diamond := PackedVector2Array([
 			center + Vector2(0.0, -11.0) * emblem_scale,
@@ -437,7 +637,7 @@ func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool, emblem
 			center + Vector2(-11.0, 0.0) * emblem_scale,
 			center + Vector2(0.0, -11.0) * emblem_scale,
 		])
-		draw_polyline(diamond, team_color, 1.8 * emblem_scale, true)
+		draw_polyline(diamond, draw_color, 1.8 * emblem_scale, true)
 		var bolt := PackedVector2Array([
 			center + Vector2(1.0, -7.0) * emblem_scale,
 			center + Vector2(-4.0, 1.0) * emblem_scale,
@@ -446,7 +646,7 @@ func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool, emblem
 			center + Vector2(4.0, -1.0) * emblem_scale,
 			center + Vector2(1.0, -1.0) * emblem_scale,
 		])
-		draw_colored_polygon(bolt, team_color)
+		draw_colored_polygon(bolt, draw_color)
 
 func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 	if power_up_hud_title.is_empty():

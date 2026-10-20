@@ -13,6 +13,12 @@ const POWER_UP_MIN_SPAWN_INTERVAL := 5
 const POWER_UP_MAX_SPAWN_INTERVAL := 15
 const HUD_BAR_HEIGHT := 60.0 * GAME_SCALE
 
+enum GameMode {
+	PLAYER_VS_PLAYER,
+	PLAYER_VS_AI,
+	AI_VS_AI
+}
+
 @onready var arena = $Arena
 @onready var left_paddle = $Paddles/Left
 @onready var right_paddle = $Paddles/Right
@@ -28,6 +34,8 @@ var right_score := 0
 var total_rebounds := 0
 var _next_power_up_rebound := 0
 var _random := RandomNumberGenerator.new()
+var _game_mode: int = GameMode.AI_VS_AI
+var _menu_shown := false
 
 func _ready() -> void:
 	_random.randomize()
@@ -42,7 +50,30 @@ func _ready() -> void:
 	ball.power_up_collected.connect(power_up.collect)
 	power_up.effect_changed.connect(_on_power_up_effect_changed)
 	power_up.status_changed.connect(_refresh_match_hud)
+	_show_menu()
+
+func _show_menu() -> void:
+	var menu_scene = load("res://scenes/game_menu.tscn")
+	var menu = menu_scene.instantiate()
+	add_child(menu)
+	menu.mode_selected.connect(_on_mode_selected)
+
+func _on_mode_selected(mode: int) -> void:
+	_game_mode = mode
+	_apply_game_mode()
 	_restart_match()
+
+func _apply_game_mode() -> void:
+	match _game_mode:
+		GameMode.PLAYER_VS_PLAYER:
+			left_paddle.set_control_mode(1)
+			right_paddle.set_control_mode(1)
+		GameMode.PLAYER_VS_AI:
+			left_paddle.set_control_mode(1)
+			right_paddle.set_control_mode(0)
+		GameMode.AI_VS_AI:
+			left_paddle.set_control_mode(0)
+			right_paddle.set_control_mode(0)
 
 func _physics_process(delta: float) -> void:
 	if game_over:
@@ -103,6 +134,7 @@ func _restart_match() -> void:
 	arena.set_score(left_score, right_score)
 	_refresh_match_hud()
 	arena.set_game_over(false)
+	arena.show_rally_intro(true)
 	ball.restart(
 		field_size,
 		BALL_RADIUS,
@@ -166,3 +198,4 @@ func _on_ball_missed(left_side: bool) -> void:
 		scorer_is_left,
 		NEXT_RALLY_BALL_SPEED
 	)
+	arena.show_rally_intro(scorer_is_left)

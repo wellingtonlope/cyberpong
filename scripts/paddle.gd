@@ -32,6 +32,8 @@ var power_up_accent_color := Color.TRANSPARENT
 var power_up_active := false
 var _deformation_tween: Tween
 
+var control_mode := 0  # 0 = AI, 1 = Human
+
 func _ready() -> void:
 	power_up_highlight.z_index = 0
 	glow.z_index = 1
@@ -83,6 +85,9 @@ func clear_power_up() -> void:
 	_update_size_and_visuals()
 	position.y = clampf(position.y, play_top + paddle_height * 0.5, field_size.y - paddle_height * 0.5)
 
+func set_control_mode(mode: int) -> void:
+	control_mode = mode
+
 func update_ai(
 	ball_position: Vector2,
 	ball_velocity: Vector2,
@@ -91,6 +96,27 @@ func update_ai(
 	power_up_position: Vector2 = Vector2.ZERO,
 	power_up_is_beneficial: bool = false
 ) -> void:
+	if control_mode == 1:
+		var direction := 0.0
+		if is_left:
+			if Input.is_action_pressed("ui_up") or Input.is_key_pressed(KEY_W):
+				direction -= 1.0
+			if Input.is_action_pressed("ui_down") or Input.is_key_pressed(KEY_S):
+				direction += 1.0
+		else:
+			if Input.is_action_pressed("ui_up"):
+				direction -= 1.0
+			if Input.is_action_pressed("ui_down"):
+				direction += 1.0
+		if absf(direction) > 0.0:
+			position.y += direction * paddle_speed * delta
+		position.y = clampf(
+			position.y,
+			play_top + paddle_height * 0.5,
+			field_size.y - paddle_height * 0.5
+		)
+		return
+	
 	var target_y := play_top + (field_size.y - play_top) * 0.5
 	var ball_is_approaching := (is_left and ball_velocity.x < 0.0) or (not is_left and ball_velocity.x > 0.0)
 	if ball_is_approaching:

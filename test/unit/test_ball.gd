@@ -55,6 +55,27 @@ func test_powerful_bounce_can_exceed_normal_speed_cap() -> void:
 	assert_almost_eq(float(ball.current_speed), float(3540.0), float(0.01))
 	assert_eq(ball._powerful_bounce_visual_scale, 1.2)
 
+func test_powerful_bounce_never_exceeds_speed_cap_plus_boost() -> void:
+	ball.base_speed = 1140.0
+	ball.current_speed = 3000.0
+	ball._paddle_hits = 1
+	var speed_cap_with_boost := 3000.0 * ball.POWERFUL_BOUNCE_SPEED_MULTIPLIER
+
+	for _index in range(3):
+		ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+		assert_almost_eq(float(ball.current_speed), float(speed_cap_with_boost), float(0.01))
+		assert_lte(float(ball.current_speed), float(speed_cap_with_boost))
+
+	ball.current_speed = 2800.0
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+	assert_almost_eq(float(ball.current_speed), float(2800.0 * 1.18), float(0.01))
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+	assert_lte(float(ball.current_speed), float(speed_cap_with_boost))
+
+	ball.current_speed = 3600.0
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+	assert_almost_eq(float(ball.current_speed), float(speed_cap_with_boost), float(0.01))
+
 func test_opponent_rebound_resets_powerful_bounce_speed_and_visual_scale() -> void:
 	ball.base_speed = 1140.0
 	ball.current_speed = 3000.0

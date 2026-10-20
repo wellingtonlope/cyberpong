@@ -19,6 +19,8 @@ func test_main_scene_initializes_expected_nodes_and_first_serve() -> void:
 	assert_eq(game.ball.current_speed, 1140.0)
 	assert_eq(game.total_rebounds, 0)
 	assert_false(game.debug_hud._panel.visible)
+	assert_eq(game.arena.rally_intro_remaining, game.arena.RALLY_INTRO_DURATION)
+	assert_true(game.arena.rally_intro_is_left)
 
 func test_rebounds_persist_between_points_and_later_rally_uses_second_speed() -> void:
 	game.ball.paddle_hit.emit(true, Vector2(100.0, 300.0), 1.0, 1.0, false)
@@ -61,13 +63,17 @@ func test_scoring_point_briefly_highlights_scoring_team() -> void:
 
 	assert_false(game.arena.point_flash_is_left)
 	assert_eq(game.arena.point_flash_remaining, game.arena.POINT_FLASH_DURATION)
+	assert_false(game.arena.rally_intro_is_left)
+	assert_eq(game.arena.rally_intro_remaining, game.arena.RALLY_INTRO_DURATION)
 	game.arena._process(0.2)
 	assert_gt(game.arena.point_flash_remaining, 0.0)
 	assert_lt(game.arena.point_flash_remaining, game.arena.POINT_FLASH_DURATION)
+	assert_lt(game.arena.rally_intro_remaining, game.arena.RALLY_INTRO_DURATION)
 
 	game._on_ball_missed(false)
 	assert_true(game.arena.point_flash_is_left)
 	assert_eq(game.arena.point_flash_remaining, game.arena.POINT_FLASH_DURATION)
+	assert_true(game.arena.rally_intro_is_left)
 
 	game.arena._process(game.arena.POINT_FLASH_DURATION)
 	assert_eq(game.arena.point_flash_remaining, 0.0)
@@ -75,6 +81,31 @@ func test_scoring_point_briefly_highlights_scoring_team() -> void:
 	game._on_ball_missed(false)
 	game._restart_match()
 	assert_eq(game.arena.point_flash_remaining, 0.0)
+	assert_eq(game.arena.rally_intro_remaining, game.arena.RALLY_INTRO_DURATION)
+
+func test_winning_point_clears_serve_intro_and_reveals_victory_panel() -> void:
+	game.arena.show_rally_intro(true)
+	game.arena._process(0.4)
+	assert_gt(game.arena.rally_intro_remaining, 0.0)
+
+	for _index in range(3):
+		game._on_ball_missed(true)
+
+	assert_true(game.game_over)
+	assert_eq(game.arena.rally_intro_remaining, 0.0)
+	assert_eq(game.arena.point_flash_remaining, 0.0)
+	assert_eq(game.arena.winner_reveal, 0.0)
+
+	game.arena._process(game.arena.WINNER_REVEAL_DURATION * 0.5)
+	assert_gt(game.arena.winner_reveal, 0.0)
+	assert_lt(game.arena.winner_reveal, 1.0)
+
+	game.arena._process(game.arena.WINNER_REVEAL_DURATION)
+	assert_eq(game.arena.winner_reveal, 1.0)
+
+	game._restart_match()
+	assert_eq(game.arena.winner_reveal, 0.0)
+	assert_eq(game.arena.rally_intro_remaining, game.arena.RALLY_INTRO_DURATION)
 
 func test_new_match_resets_rebound_counts_and_debug_hud() -> void:
 	game.ball.paddle_hit.emit(true, Vector2(100.0, 300.0), 1.0, 1.0, false)
