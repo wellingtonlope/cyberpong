@@ -2,6 +2,7 @@ extends Node2D
 
 const BACKGROUND_COLOR := Color(0.018, 0.03, 0.052)
 const FIELD_COLOR := Color(0.035, 0.055, 0.09)
+const FIELD_CENTER_COLOR := Color(0.047, 0.069, 0.105)
 const DIVIDER_COLOR := Color(0.18, 0.24, 0.32)
 const TEXT_COLOR := Color(0.9, 0.94, 1.0)
 const MUTED_TEXT_COLOR := Color(0.58, 0.68, 0.8)
@@ -9,13 +10,15 @@ const LEFT_COLOR := Color(0.08, 0.98, 1.0)
 const RIGHT_COLOR := Color(1.0, 0.12, 0.72)
 const HUD_PANEL_COLOR := Color(0.012, 0.022, 0.04)
 const FIELD_BORDER_COLOR := Color(0.08, 0.98, 1.0, 0.45)
-const GOAL_LINE_COLOR := Color(1.0, 0.08, 0.12, 0.9)
 const SCORE_LEFT_PANEL := Color(0.035, 0.22, 0.26, 0.72)
 const SCORE_RIGHT_PANEL := Color(0.28, 0.035, 0.18, 0.72)
 const COUNT_BADGE_COLOR := Color(0.08, 0.98, 1.0, 0.12)
 const GAME_TITLE := "CYBERPONG"
 const LEFT_TEAM_NAME := "Cyan Circuit"
 const RIGHT_TEAM_NAME := "Magenta Volt"
+const POINT_FLASH_DURATION := 0.72
+const FIELD_GRADIENT_STRIPS := 48
+const VIGNETTE_BANDS := 8
 
 var game_scale := 3.0
 var hud_bar_height := 180.0
@@ -31,6 +34,14 @@ var power_up_hud_detail := ""
 var power_up_hud_progress := 0.0
 var power_up_hud_accent := MUTED_TEXT_COLOR
 var power_up_hud_show_progress := false
+var point_flash_remaining := 0.0
+var point_flash_is_left := true
+
+func _process(delta: float) -> void:
+	if point_flash_remaining <= 0.0:
+		return
+	point_flash_remaining = maxf(point_flash_remaining - delta, 0.0)
+	queue_redraw()
 
 func configure(scale: float, bar_height: float = 0.0, margin: float = 120.0) -> void:
 	game_scale = scale
@@ -42,6 +53,7 @@ func set_game_over(value: bool) -> void:
 	game_over = value
 	if not value:
 		winner_name = ""
+		point_flash_remaining = 0.0
 	queue_redraw()
 
 func set_score(left_value: int, right_value: int) -> void:
@@ -64,6 +76,11 @@ func set_winner(name: String) -> void:
 	game_over = true
 	queue_redraw()
 
+func show_point_awarded(is_left: bool) -> void:
+	point_flash_is_left = is_left
+	point_flash_remaining = POINT_FLASH_DURATION
+	queue_redraw()
+
 func _draw() -> void:
 	var size := get_viewport_rect().size
 	draw_rect(Rect2(Vector2.ZERO, size), BACKGROUND_COLOR)
@@ -73,7 +90,9 @@ func _draw() -> void:
 		Vector2(size.x - field_margin * 2.0, size.y - hud_bar_height)
 	)
 	draw_rect(field_rect, FIELD_COLOR)
-	draw_rect(field_rect, FIELD_BORDER_COLOR, false, 2.0 * game_scale)
+	_draw_field_backdrop(field_rect)
+	_draw_field_markings(field_rect)
+	_draw_arena_frame(field_rect)
 	draw_rect(Rect2(Vector2.ZERO, Vector2(size.x, hud_bar_height)), HUD_PANEL_COLOR)
 	draw_rect(Rect2(0.0, hud_bar_height - 2.0 * game_scale, size.x, 2.0 * game_scale), FIELD_BORDER_COLOR)
 
@@ -89,6 +108,108 @@ func _draw() -> void:
 
 	if game_over:
 		_draw_winner_panel(font, size)
+
+func _draw_field_backdrop(field_rect: Rect2) -> void:
+	var strip_width := field_rect.size.x / float(FIELD_GRADIENT_STRIPS)
+	for strip_index in range(FIELD_GRADIENT_STRIPS):
+		var strip_x := field_rect.position.x + float(strip_index) * strip_width
+		var strip_center := strip_x + strip_width * 0.5
+		var center_distance := absf((strip_center - field_rect.get_center().x) / (field_rect.size.x * 0.5))
+		var center_glow := pow(1.0 - center_distance, 1.4) * 0.7
+		var strip_color := FIELD_COLOR.lerp(FIELD_CENTER_COLOR, center_glow)
+		draw_rect(
+			Rect2(Vector2(strip_x, field_rect.position.y), Vector2(strip_width + 1.0, field_rect.size.y)),
+			strip_color
+		)
+
+	var band_size := 4.0 * game_scale
+	for band_index in range(VIGNETTE_BANDS):
+		var vignette_alpha := 0.075 * (1.0 - float(band_index) / float(VIGNETTE_BANDS))
+		var offset := float(band_index) * band_size
+		var vignette_color := Color(0.0, 0.0, 0.0, vignette_alpha)
+		draw_rect(
+			Rect2(field_rect.position + Vector2(0.0, offset), Vector2(field_rect.size.x, band_size)),
+			vignette_color
+		)
+		draw_rect(
+			Rect2(Vector2(field_rect.position.x, field_rect.end.y - offset - band_size), Vector2(field_rect.size.x, band_size)),
+			vignette_color
+		)
+		draw_rect(
+			Rect2(field_rect.position + Vector2(offset, 0.0), Vector2(band_size, field_rect.size.y)),
+			vignette_color
+		)
+		draw_rect(
+			Rect2(Vector2(field_rect.end.x - offset - band_size, field_rect.position.y), Vector2(band_size, field_rect.size.y)),
+			vignette_color
+		)
+
+func _draw_field_markings(field_rect: Rect2) -> void:
+	var center := field_rect.get_center()
+	draw_arc(center, 56.0 * game_scale, 0.0, TAU, 64, Color(DIVIDER_COLOR, 0.34), 1.0 * game_scale, true)
+	draw_circle(center, 2.0 * game_scale, Color(MUTED_TEXT_COLOR, 0.42))
+
+	for height_fraction in [0.25, 0.75]:
+		var marker_y: float = field_rect.position.y + field_rect.size.y * height_fraction
+		draw_line(
+			Vector2(field_rect.position.x + 10.0 * game_scale, marker_y),
+			Vector2(field_rect.position.x + 22.0 * game_scale, marker_y),
+			Color(LEFT_COLOR, 0.28),
+			1.0 * game_scale,
+			true
+		)
+		draw_line(
+			Vector2(field_rect.end.x - 22.0 * game_scale, marker_y),
+			Vector2(field_rect.end.x - 10.0 * game_scale, marker_y),
+			Color(RIGHT_COLOR, 0.28),
+			1.0 * game_scale,
+			true
+		)
+
+func _draw_arena_frame(field_rect: Rect2) -> void:
+	var left := field_rect.position.x
+	var top := field_rect.position.y
+	var right := field_rect.end.x
+	var bottom := field_rect.end.y
+	var corner_cut := 14.0 * game_scale
+	var corner_span := 24.0 * game_scale
+	var outline := PackedVector2Array([
+		Vector2(left + corner_cut, top),
+		Vector2(right - corner_cut, top),
+		Vector2(right, top + corner_cut),
+		Vector2(right, bottom - corner_cut),
+		Vector2(right - corner_cut, bottom),
+		Vector2(left + corner_cut, bottom),
+		Vector2(left, bottom - corner_cut),
+		Vector2(left, top + corner_cut),
+		Vector2(left + corner_cut, top),
+	])
+	draw_polyline(outline, Color(DIVIDER_COLOR, 0.78), 1.5 * game_scale, true)
+	draw_rect(field_rect.grow(-8.0 * game_scale), Color(DIVIDER_COLOR, 0.13), false, 1.0 * game_scale)
+	draw_line(Vector2(left, top + corner_cut), Vector2(left, bottom - corner_cut), Color(LEFT_COLOR, 0.74), 2.0 * game_scale, true)
+	draw_line(Vector2(right, top + corner_cut), Vector2(right, bottom - corner_cut), Color(RIGHT_COLOR, 0.74), 2.0 * game_scale, true)
+
+	for is_left in [true, false]:
+		var side_x := left if is_left else right
+		var horizontal_direction := 1.0 if is_left else -1.0
+		var team_color := LEFT_COLOR if is_left else RIGHT_COLOR
+		for is_top in [true, false]:
+			var corner_y := top if is_top else bottom
+			var vertical_direction := 1.0 if is_top else -1.0
+			draw_line(
+				Vector2(side_x + horizontal_direction * corner_cut, corner_y),
+				Vector2(side_x + horizontal_direction * (corner_cut + corner_span), corner_y),
+				team_color,
+				2.5 * game_scale,
+				true
+			)
+			draw_line(
+				Vector2(side_x, corner_y + vertical_direction * corner_cut),
+				Vector2(side_x, corner_y + vertical_direction * (corner_cut + corner_span)),
+				team_color,
+				2.5 * game_scale,
+				true
+			)
 
 func _draw_game_logo(font: Font) -> void:
 	var center := Vector2(107.0 * game_scale, hud_bar_height * 0.5)
@@ -164,13 +285,13 @@ func _draw_goal_lines(size: Vector2) -> void:
 	draw_line(
 		Vector2(left_line_x, hud_bar_height),
 		Vector2(left_line_x, size.y),
-		GOAL_LINE_COLOR,
+		LEFT_COLOR,
 		line_width
 	)
 	draw_line(
 		Vector2(right_line_x, hud_bar_height),
 		Vector2(right_line_x, size.y),
-		GOAL_LINE_COLOR,
+		RIGHT_COLOR,
 		line_width
 	)
 
@@ -231,6 +352,14 @@ func _draw_team_score(font: Font, card: Rect2, team_name: String, score: int, te
 		24 * int(game_scale),
 		TEXT_COLOR
 	)
+	if point_flash_remaining > 0.0 and point_flash_is_left == is_left:
+		var flash_strength := point_flash_remaining / POINT_FLASH_DURATION
+		draw_rect(
+			card.grow(3.0 * game_scale),
+			Color(team_color, 0.9 * flash_strength),
+			false,
+			3.0 * game_scale
+		)
 
 func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool) -> void:
 	var emblem_scale := game_scale

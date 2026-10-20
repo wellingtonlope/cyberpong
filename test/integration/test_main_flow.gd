@@ -56,6 +56,26 @@ func test_left_side_can_also_win_at_three_points() -> void:
 	assert_eq(game.left_score, 3)
 	assert_eq(game.arena.winner_name, "Cyan Circuit")
 
+func test_scoring_point_briefly_highlights_scoring_team() -> void:
+	game._on_ball_missed(true)
+
+	assert_false(game.arena.point_flash_is_left)
+	assert_eq(game.arena.point_flash_remaining, game.arena.POINT_FLASH_DURATION)
+	game.arena._process(0.2)
+	assert_gt(game.arena.point_flash_remaining, 0.0)
+	assert_lt(game.arena.point_flash_remaining, game.arena.POINT_FLASH_DURATION)
+
+	game._on_ball_missed(false)
+	assert_true(game.arena.point_flash_is_left)
+	assert_eq(game.arena.point_flash_remaining, game.arena.POINT_FLASH_DURATION)
+
+	game.arena._process(game.arena.POINT_FLASH_DURATION)
+	assert_eq(game.arena.point_flash_remaining, 0.0)
+
+	game._on_ball_missed(false)
+	game._restart_match()
+	assert_eq(game.arena.point_flash_remaining, 0.0)
+
 func test_new_match_resets_rebound_counts_and_debug_hud() -> void:
 	game.ball.paddle_hit.emit(true, Vector2(100.0, 300.0), 1.0, 1.0, false)
 	game.ball.paddle_hit.emit(false, Vector2(900.0, 300.0), -1.0, 1.0, false)

@@ -151,6 +151,7 @@ func _on_ball_missed(left_side: bool) -> void:
 	else:
 		right_score += 1
 	arena.set_score(left_score, right_score)
+	arena.show_point_awarded(scorer_is_left)
 
 	var winning_score := left_score if scorer_is_left else right_score
 	if winning_score >= WINNING_SCORE:
