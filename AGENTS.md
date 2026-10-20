@@ -1,0 +1,40 @@
+# Instruções para agentes
+
+## Sobre o projeto
+
+Este projeto contém um Pong 2D feito em Godot 4 e GDScript. As duas raquetes são controladas por uma IA simples; não há controle manual durante a partida. A primeira IA a marcar três pontos vence. Depois do fim, Enter inicia outra partida.
+
+## Orientações para alterações
+
+- Leia `README.md`, `project.godot` e os scripts relacionados à mudança antes de editar.
+- Use GDScript compatível com Godot 4, mantendo a tabulação usada pelos scripts existentes, nomes de funções e variáveis em `snake_case` e constantes em `UPPER_SNAKE_CASE`.
+- Preserve as responsabilidades existentes: `main.gd` coordena a partida, `scripts/ball.gd` controla a bola e suas colisões, `scripts/paddle.gd` controla a raquete e a IA, `scripts/arena.gd` desenha a arena, o placar e o HUD normal, `scripts/spark_effects.gd` cria partículas, `scripts/power_up.gd` controla o aparecimento e o ciclo do power-up e `scripts/debug_hud.gd` exibe informações de depuração.
+- O primeiro rally de uma partida começa em 1.140 px/s; rallies após um ponto começam em 1.500 px/s. A aceleração normal aumenta 10% a cada dois rebatimentos até 3.000 px/s. Rebote potente aumenta a velocidade em cada rebatida da raquete afetada, podendo passar de 3.000 px/s; quando a outra raquete rebate, a velocidade volta a 3.000 px/s. Reinicie a contagem de rebatimentos em cada saque.
+- Mantenha o HUD de debug oculto por padrão e alternável com F3. Quando aberto, ele fica no canto inferior esquerdo e exibe velocidade e rebatidas por IA e no total. O HUD normal fica na barra superior e exibe o total de rebatidas e o estado do power-up, incluindo usos e duração restantes. Mantenha a velocidade sincronizada pelo sinal `speed_changed`; emita o sinal no saque e sempre que a velocidade mudar, inclusive ao diminuir pelo efeito Freio na bola. As contagens de rebatidas persistem entre pontos e zeram ao iniciar uma partida nova.
+- Preserve os caminhos e nomes dos nós usados pelos scripts, como `Arena`, `Paddles/Left`, `Paddles/Right`, `Ball`, `PowerUp`, `SparkEffects`, `DebugHud` e `Body`. Se uma cena ou caminho mudar, atualize todas as referências correspondentes.
+- A bola e as raquetes usam `Polygon2D`; a arena é desenhada em `_draw()`. O jogo não requer dependências externas nem arquivos de arte para executar. GUT 9.7.1 em `addons/gut/` é um addon gratuito, exclusivo de desenvolvimento/testes. Prefira os recursos nativos já usados pelo projeto ao adicionar elementos visuais.
+- A escala do jogo é definida por `GAME_SCALE` em `main.gd` e passada para arena, raquetes, bola, efeitos e power-up. A altura da barra superior é `HUD_BAR_HEIGHT`; mantenha bola, raquetes e power-up dentro da área de jogo abaixo dela. Ao alterar a escala ou o tamanho da janela, confira as dimensões, posições e limites de todos esses elementos.
+- O primeiro power-up e as aparições seguintes são agendados após intervalos aleatórios de 5 a 15 rebatidas totais da partida. Se o efeito anterior ainda estiver ativo quando o intervalo terminar, o próximo item aparece assim que ele terminar. O item só é coletado quando a bola toca nele; a última raquete que rebateu a bola o recebe. Ele fica disponível por cinco rebatidas. O catálogo em `scripts/power_up.gd` contém raquete dobrada ou reduzida, Freio na bola, Rebote potente e Defesa extra. O efeito ativo dura dez rebatidas totais por padrão (`active_duration_hits`); Defesa extra dura até 20 rebatidas e salva uma falha uma vez, ou termina antes se for usada. Ambas as IAs contam para a duração, e a defesa salva conta como rebatida. Freio e Rebote potente também se aplicam nos próximos cinco rebatimentos da raquete afetada: com Freio, a dona rebate na velocidade atual e cada devolução da adversária sai 8% mais lenta; com Rebote potente, a dona acelera a bola em 18% e a raquete adversária devolve no limite de 3.000 px/s. A bola também volta ao tamanho normal na rebatida adversária após Rebote potente. A raquete afetada atualiza colisão, movimento e destaque visual. O HUD superior apresenta o estado, as cargas e a duração em um painel compacto.
+- Quando há um power-up disponível, a IA que vai rebater reconhece o efeito: tenta direcionar a trajetória aos benéficos (raquete dobrada, Freio na bola, Rebote potente e Defesa extra) e escolhe o caminho com maior distância do negativo (raquete reduzida), considerando reflexões nas bordas. Sem item, mantém a estratégia normal de interceptar a bola.
+- Mantenha o jogo como duelo entre IAs, a menos que a solicitação peça explicitamente uma mudança de gameplay. Atualize este arquivo e o README se controles, regras, execução ou estrutura forem alterados.
+- Evite adicionar plugins, dependências ou arquivos gerados sem necessidade para a mudança solicitada. GUT em `addons/gut/` é a dependência de desenvolvimento aprovada para executar a suíte; o jogo não depende dela em tempo de execução.
+
+## Testes
+
+- Toda nova funcionalidade deve incluir testes unitários para as regras e os estados que ela introduz. Alterações de comportamento também devem atualizar os testes afetados; correções de bugs devem incluir um teste de regressão quando forem reproduzíveis automaticamente.
+- Quando uma funcionalidade integrar mais de um sistema (por exemplo, bola, power-up e partida), inclua também testes de integração para os sinais e as transições entre eles. Para mudanças visuais, complemente os testes automatizados com verificação manual no Godot.
+- Siga o plano de testes e os comandos de execução/análise em `README.md`. A suíte fica em `test/unit/` e `test/integration/`; o projeto usa GUT 9.7.1 com Godot 4.7.x. Ao atualizar o Godot ou o addon, confirme a compatibilidade entre as versões antes de alterar a dependência.
+- Para executar os testes no PowerShell em modo headless, use `godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs -gexit`. Se `godot` não estiver no `PATH`, use o caminho do executável instalado. O GUT apresenta no terminal o total aprovado, falho e ignorado. Para exportar os resultados de execução em JUnit XML, acrescente `-gjunit_xml_file=reports/gut-results.xml` ao comando; crie `reports/` antes, se necessário. Esse XML não mede cobertura de código.
+- Mantenha casos determinísticos: valide intervalos e invariantes de comportamentos aleatórios, ou controle a semente/fonte de aleatoriedade no teste. Evite acoplar testes a detalhes visuais ou internos que não sejam parte do comportamento esperado.
+- Organize a suíte sob `test/unit/` e `test/integration/`, com nomes que identifiquem o sistema e o comportamento coberto, usando o prefixo `test_` exigido pela descoberta padrão do GUT. Os testes devem herdar de `GutTest` e usar `before_each` para preparar cada caso.
+- Ao adicionar ou mudar regras, atualize o plano de testes no README junto com a documentação de regras correspondente.
+
+## Executar o projeto
+
+Use o Godot 4.7.x. Abra `project.godot` no editor e selecione **Executar projeto**, ou abra um terminal na pasta que contém esse arquivo e execute:
+
+```text
+godot --path .
+```
+
+O comando pressupõe que o executável do Godot esteja no `PATH`. Se não estiver, substitua `godot` pelo caminho do executável instalado no sistema e adapte a sintaxe ao terminal usado.

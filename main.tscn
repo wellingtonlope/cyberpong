@@ -1,0 +1,48 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://main.gd" id="1_game"]
+[ext_resource type="PackedScene" path="res://scenes/paddle.tscn" id="2_paddle"]
+[ext_resource type="PackedScene" path="res://scenes/ball.tscn" id="3_ball"]
+[ext_resource type="Script" path="res://scripts/arena.gd" id="4_arena"]
+[ext_resource type="Script" path="res://scripts/spark_effects.gd" id="5_spark_effects"]
+[ext_resource type="Script" path="res://scripts/debug_hud.gd" id="6_debug_hud"]
+[ext_resource type="Script" path="res://scripts/power_up.gd" id="7_power_up"]
+
+[node name="Pong" type="Node2D"]
+script = ExtResource("1_game")
+
+[node name="Arena" type="Node2D" parent="."]
+script = ExtResource("4_arena")
+
+[node name="Paddles" type="Node2D" parent="."]
+
+[node name="Left" parent="Paddles" instance=ExtResource("2_paddle")]
+
+[node name="Right" parent="Paddles" instance=ExtResource("2_paddle")]
+is_left = false
+tint = Color(1, 0.12, 0.72, 1)
+
+[node name="Ball" parent="." instance=ExtResource("3_ball")]
+
+[node name="PowerUp" type="Node2D" parent="."]
+script = ExtResource("7_power_up")
+
+[node name="Body" type="Polygon2D" parent="PowerUp"]
+
+[node name="Core" type="Polygon2D" parent="PowerUp"]
+
+[node name="Symbol" type="Label" parent="PowerUp"]
+offset_left = -36.0
+offset_top = -36.0
+offset_right = 36.0
+offset_bottom = 36.0
+mouse_filter = 2
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SparkEffects" type="Node2D" parent="."]
+script = ExtResource("5_spark_effects")
+
+[node name="DebugHud" type="CanvasLayer" parent="."]
+script = ExtResource("6_debug_hud")

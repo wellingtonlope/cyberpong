@@ -1,0 +1,167 @@
+extends Node2D
+
+const GAME_SCALE := 3.0
+const PADDLE_WIDTH := 16.0 * GAME_SCALE
+const PADDLE_HEIGHT := 96.0 * GAME_SCALE
+const PADDLE_MARGIN := 40.0 * GAME_SCALE
+const PADDLE_SPEED := 440.0 * GAME_SCALE
+const BALL_RADIUS := 10.0 * GAME_SCALE
+const BALL_SPEED := 380.0 * GAME_SCALE
+const NEXT_RALLY_BALL_SPEED := 1500.0
+const WINNING_SCORE := 3
+const POWER_UP_MIN_SPAWN_INTERVAL := 5
+const POWER_UP_MAX_SPAWN_INTERVAL := 15
+const HUD_BAR_HEIGHT := 60.0 * GAME_SCALE
+
+@onready var arena = $Arena
+@onready var left_paddle = $Paddles/Left
+@onready var right_paddle = $Paddles/Right
+@onready var ball = $Ball
+@onready var spark_effects = $SparkEffects
+@onready var debug_hud = $DebugHud
+@onready var power_up = $PowerUp
+
+var field_size := Vector2.ZERO
+var game_over := false
+var left_score := 0
+var right_score := 0
+var total_rebounds := 0
+var _next_power_up_rebound := 0
+var _random := RandomNumberGenerator.new()
+
+func _ready() -> void:
+	_random.randomize()
+	field_size = get_viewport_rect().size
+	arena.configure(GAME_SCALE, HUD_BAR_HEIGHT, PADDLE_MARGIN)
+	spark_effects.configure(GAME_SCALE, HUD_BAR_HEIGHT, 12.0 * GAME_SCALE)
+	debug_hud.configure(GAME_SCALE)
+	power_up.configure(GAME_SCALE, HUD_BAR_HEIGHT)
+	ball.paddle_hit.connect(_on_ball_paddle_hit)
+	ball.missed.connect(_on_ball_missed)
+	ball.speed_changed.connect(debug_hud.set_ball_speed)
+	ball.power_up_collected.connect(power_up.collect)
+	power_up.effect_changed.connect(_on_power_up_effect_changed)
+	power_up.status_changed.connect(_refresh_match_hud)
+	_restart_match()
+
+func _physics_process(delta: float) -> void:
+	if game_over:
+		return
+
+	var viewport_size := get_viewport_rect().size
+	if viewport_size != field_size:
+		field_size = viewport_size
+		left_paddle.update_field_size(field_size)
+		right_paddle.update_field_size(field_size)
+		ball.update_field_size(field_size)
+		power_up.update_field_size(field_size)
+		arena.queue_redraw()
+
+	var power_up_available: bool = power_up.is_available()
+	var power_up_position: Vector2 = power_up.position if power_up_available else Vector2.ZERO
+	var power_up_radius: float = power_up.get_collision_radius() if power_up_available else 0.0
+	var power_up_is_beneficial: bool = power_up.is_beneficial() if power_up_available else false
+	var active_effect_id: String = power_up.get_active_effect_id()
+	var active_effect_owner_is_left: bool = power_up.get_active_owner_is_left()
+	left_paddle.update_ai(ball.position, ball.velocity, delta, power_up_available, power_up_position, power_up_is_beneficial)
+	right_paddle.update_ai(ball.position, ball.velocity, delta, power_up_available, power_up_position, power_up_is_beneficial)
+	ball.advance(
+		delta,
+		left_paddle.get_collision_rect(),
+		right_paddle.get_collision_rect(),
+		power_up_position,
+		power_up_radius,
+		active_effect_id,
+		active_effect_owner_is_left
+	)
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not event is InputEventKey:
+		return
+	if not event.pressed or event.echo:
+		return
+	if event.keycode == KEY_F3:
+		debug_hud.toggle()
+		get_viewport().set_input_as_handled()
+		return
+	if not game_over:
+		return
+	if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
+		_restart_match()
+
+func _restart_match() -> void:
+	field_size = get_viewport_rect().size
+	left_paddle.configure(field_size, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_MARGIN, PADDLE_SPEED, BALL_RADIUS, HUD_BAR_HEIGHT)
+	right_paddle.configure(field_size, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_MARGIN, PADDLE_SPEED, BALL_RADIUS, HUD_BAR_HEIGHT)
+	left_score = 0
+	right_score = 0
+	total_rebounds = 0
+	_schedule_next_power_up_spawn()
+	game_over = false
+	power_up.reset_for_match(field_size)
+	debug_hud.reset_match_counts()
+	arena.set_score(left_score, right_score)
+	_refresh_match_hud()
+	arena.set_game_over(false)
+	ball.restart(
+		field_size,
+		BALL_RADIUS,
+		BALL_SPEED,
+		left_paddle.get_collision_rect(),
+		right_paddle.get_collision_rect(),
+		HUD_BAR_HEIGHT
+	)
+
+func _on_ball_paddle_hit(
+	is_left: bool,
+	impact_position: Vector2,
+	horizontal_direction: float,
+	speed_ratio: float,
+	used_extra_defense: bool
+) -> void:
+	var paddle = left_paddle if is_left else right_paddle
+	total_rebounds += 1
+	debug_hud.record_paddle_hit(is_left)
+	power_up.record_paddle_hit(is_left, used_extra_defense)
+	if total_rebounds >= _next_power_up_rebound and power_up.appear(field_size):
+		_schedule_next_power_up_spawn()
+	_refresh_match_hud()
+	paddle.play_impact_deformation()
+	spark_effects.play_paddle_hit(impact_position, paddle.tint, horizontal_direction, speed_ratio)
+
+func _refresh_match_hud() -> void:
+	var hits_until_next_power_up := maxi(_next_power_up_rebound - total_rebounds, 0)
+	arena.set_match_hud(total_rebounds, power_up.get_hud_info(hits_until_next_power_up))
+
+func _schedule_next_power_up_spawn() -> void:
+	var interval := _random.randi_range(POWER_UP_MIN_SPAWN_INTERVAL, POWER_UP_MAX_SPAWN_INTERVAL)
+	_next_power_up_rebound = total_rebounds + interval
+
+func _on_power_up_effect_changed(is_left: bool, is_active: bool, size_multiplier: float, accent_color: Color) -> void:
+	var paddle = left_paddle if is_left else right_paddle
+	if is_active:
+		paddle.apply_power_up(size_multiplier, accent_color)
+	else:
+		paddle.clear_power_up()
+
+func _on_ball_missed(left_side: bool) -> void:
+	var scorer_is_left := not left_side
+	if scorer_is_left:
+		left_score += 1
+	else:
+		right_score += 1
+	arena.set_score(left_score, right_score)
+
+	var winning_score := left_score if scorer_is_left else right_score
+	if winning_score >= WINNING_SCORE:
+		game_over = true
+		var winner_name := "IA CIANO" if scorer_is_left else "IA MAGENTA"
+		arena.set_winner(winner_name)
+		return
+
+	ball.serve_from_paddle(
+		left_paddle.get_collision_rect(),
+		right_paddle.get_collision_rect(),
+		scorer_is_left,
+		NEXT_RALLY_BALL_SPEED
+	)
