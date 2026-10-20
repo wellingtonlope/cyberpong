@@ -92,7 +92,7 @@ func test_hud_panels_and_text_fit_without_overlap_across_window_sizes() -> void:
 		var score_half_width: float = (120.0 + 56.0 * 0.5) * ui_scale
 		var cards_left: float = window_size.x * 0.5 - score_half_width
 		var cards_right: float = window_size.x * 0.5 + score_half_width
-		var cards_bottom: float = (3.0 + 54.0) * ui_scale
+		var cards_bottom: float = (5.0 + 44.0) * ui_scale
 		var power_panel_left: float = window_size.x * 0.68
 		var logo_right: float = (125.0 + 150.0) * ui_scale
 

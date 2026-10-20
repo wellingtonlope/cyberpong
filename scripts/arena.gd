@@ -531,8 +531,8 @@ func _draw_rebound_badge(font: Font, ui_scale: float) -> void:
 	)
 
 func _draw_score(font: Font, size: Vector2, ui_scale: float) -> void:
-	var card_size := Vector2(120.0, 54.0) * ui_scale
-	var card_y := 3.0 * ui_scale
+	var card_size := Vector2(120.0, 44.0) * ui_scale
+	var card_y := 5.0 * ui_scale
 	var center_x := size.x * 0.5
 	var card_gap := 56.0 * ui_scale
 	var left_card := Rect2(Vector2(center_x - card_size.x - card_gap * 0.5, card_y), card_size)
@@ -547,7 +547,7 @@ func _draw_score(font: Font, size: Vector2, ui_scale: float) -> void:
 	_draw_team_score(font, right_card, RIGHT_TEAM_NAME, right_score, RIGHT_COLOR, false, ui_scale)
 	draw_string(
 		font,
-		Vector2(center_x - card_gap * 0.5, card_y + 36.0 * ui_scale),
+		Vector2(center_x - card_gap * 0.5, card_y + 30.0 * ui_scale),
 		":",
 		HORIZONTAL_ALIGNMENT_CENTER,
 		card_gap,
@@ -564,11 +564,11 @@ func _draw_team_score(
 	is_left: bool,
 	ui_scale: float
 ) -> void:
-	var emblem_center := card.position + Vector2(20.0, 24.0) * ui_scale
+	var emblem_center := card.position + Vector2(20.0, 22.0) * ui_scale
 	_draw_team_emblem(emblem_center, team_color, is_left, ui_scale)
 	draw_string(
 		font,
-		card.position + Vector2(34.0, 14.0) * ui_scale,
+		card.position + Vector2(34.0, 13.0) * ui_scale,
 		team_name,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		card.size.x - 37.0 * ui_scale,
@@ -576,15 +576,6 @@ func _draw_team_score(
 		team_color
 	)
 	_draw_score_pips(card, score, team_color, ui_scale)
-	draw_string(
-		font,
-		card.position + Vector2(30.0, 48.0) * ui_scale,
-		str(score),
-		HORIZONTAL_ALIGNMENT_RIGHT,
-		card.size.x - 38.0 * ui_scale,
-		maxi(int(26.0 * ui_scale), 14),
-		TEXT_COLOR
-	)
 	if point_flash_remaining > 0.0 and point_flash_is_left == is_left:
 		var flash_strength := point_flash_remaining / POINT_FLASH_DURATION
 		draw_rect(
@@ -595,20 +586,23 @@ func _draw_team_score(
 		)
 
 func _draw_score_pips(card: Rect2, score: int, team_color: Color, ui_scale: float) -> void:
-	for pip_index in range(3):
-		var pip_center := card.position + Vector2(36.0 + float(pip_index) * 8.0, 22.0) * ui_scale
-		var pip_radius := 2.4 * ui_scale
-		var pip := PackedVector2Array([
-			pip_center + Vector2(0.0, -pip_radius),
-			pip_center + Vector2(pip_radius, 0.0),
-			pip_center + Vector2(0.0, pip_radius),
-			pip_center + Vector2(-pip_radius, 0.0),
-			pip_center + Vector2(0.0, -pip_radius),
-		])
+	var pip_count := 3
+	var pip_size := 14.0 * ui_scale
+	var pip_gap := 8.0 * ui_scale
+	var total_width := pip_size * float(pip_count) + pip_gap * float(pip_count - 1)
+	var content_left := card.position.x + 34.0 * ui_scale
+	var content_right := card.end.x - 6.0 * ui_scale
+	var start_x := content_left + (content_right - content_left - total_width) * 0.5
+	var start_y := card.end.y - 6.0 * ui_scale - pip_size
+	for pip_index in range(pip_count):
+		var pip := Rect2(
+			Vector2(start_x + float(pip_index) * (pip_size + pip_gap), start_y),
+			Vector2(pip_size, pip_size)
+		)
 		if pip_index < score:
-			draw_colored_polygon(pip, team_color)
+			draw_rect(pip, team_color)
 		else:
-			draw_polyline(pip, Color(team_color, 0.38), maxf(1.0, ui_scale * 0.8), true)
+			draw_rect(pip, Color(team_color, 0.38), false, maxf(1.0, 1.5 * ui_scale))
 
 func _draw_team_emblem(
 	center: Vector2,
