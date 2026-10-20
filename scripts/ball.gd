@@ -196,7 +196,10 @@ func _bounce_from_paddle(
 	elif active_power_up_effect == "powerful_bounce":
 		if _paddle_hits % 2 == 0 and current_speed < MAX_SPEED:
 			current_speed = minf(current_speed * 1.1, MAX_SPEED)
-		current_speed *= POWERFUL_BOUNCE_SPEED_MULTIPLIER
+		current_speed = minf(
+			current_speed * POWERFUL_BOUNCE_SPEED_MULTIPLIER,
+			MAX_SPEED * POWERFUL_BOUNCE_SPEED_MULTIPLIER
+		)
 		_powerful_bounce_visual_scale = POWERFUL_BOUNCE_VISUAL_SCALE
 	else:
 		if _paddle_hits % 2 == 0 and current_speed < MAX_SPEED:

@@ -59,7 +59,7 @@ func test_powerful_bounce_never_exceeds_speed_cap_plus_boost() -> void:
 	ball.base_speed = 1140.0
 	ball.current_speed = 3000.0
 	ball._paddle_hits = 1
-	var speed_cap_with_boost := 3000.0 * ball.POWERFUL_BOUNCE_SPEED_MULTIPLIER
+	var speed_cap_with_boost: float = 3000.0 * float(ball.POWERFUL_BOUNCE_SPEED_MULTIPLIER)
 
 	for _index in range(3):
 		ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
