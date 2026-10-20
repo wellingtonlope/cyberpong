@@ -31,7 +31,7 @@ focus_mode = 2
 flat = true
 text = ""
 
-[node name="BtnAIvAI" type="Button" parent="."]
+[node name="BtnQuit" type="Button" parent="."]
 layout_mode = 0
 offset_right = 10.0
 offset_bottom = 10.0
@@ -40,11 +40,29 @@ focus_mode = 2
 flat = true
 text = ""
 
-[node name="BtnQuit" type="Button" parent="."]
+[node name="BtnEasy" type="Button" parent="."]
 layout_mode = 0
 offset_right = 10.0
 offset_bottom = 10.0
 mouse_default_cursor_shape = 2
-focus_mode = 2
+focus_mode = 0
+flat = true
+text = ""
+
+[node name="BtnNormal" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 0
+flat = true
+text = ""
+
+[node name="BtnHard" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 0
 flat = true
 text = ""

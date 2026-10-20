@@ -20,6 +20,12 @@ const HEADER_GAP := 18.0
 const BODY_GAP := 22.0
 const CARD_GUTTER := 26.0
 const CONTENT_WIDTH := 380.0
+const SELECTOR_HEIGHT := 34.0
+const SELECTOR_LABEL_WIDTH := 110.0
+const SELECTOR_LABEL_GAP := 10.0
+const SELECTOR_PILL_GAP := 8.0
+const SELECTOR_REFERENCE_EXTRA := 36.0
+const MENU_REFERENCE_HEIGHT := 540.0
 const MIN_UI_SCALE := 0.55
 const MAX_UI_SCALE := 3.0
 const FADE_IN_DURATION := 0.35
@@ -40,6 +46,12 @@ var _close_progress := 0.0
 var _closing_index := -1
 var _pending_index := -1
 var _selected := false
+var _selector_label := ""
+var _selector_titles: Array = []
+var _selector_buttons: Array[Button] = []
+var _selector_rects: Array = []
+var _selector_selected_index := 0
+var _selector_visible := true
 
 func _setup_menu(buttons: Array[Button], cards: Array) -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -50,6 +62,53 @@ func _setup_menu(buttons: Array[Button], cards: Array) -> void:
 	_update_layout()
 	_show()
 	call_deferred("grab_first_focus")
+
+func _setup_selector(label: String, buttons: Array[Button], titles: Array) -> void:
+	_selector_label = label
+	_selector_buttons = buttons
+	_selector_titles = titles
+	_configure_selector_buttons()
+	_set_selector_selection(0)
+	_update_layout()
+
+func _configure_selector_buttons() -> void:
+	var empty_style := StyleBoxEmpty.new()
+	for index in range(_selector_buttons.size()):
+		var button := _selector_buttons[index]
+		button.focus_mode = Control.FOCUS_NONE
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		button.flat = true
+		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+			button.add_theme_stylebox_override(state, empty_style)
+		button.pressed.connect(_on_selector_pressed.bind(index))
+
+func _set_selector_selection(index: int) -> void:
+	if _selector_buttons.is_empty():
+		return
+	_selector_selected_index = clampi(index, 0, _selector_buttons.size() - 1)
+	queue_redraw()
+
+func _set_selector_visible(visible: bool) -> void:
+	if _selector_buttons.is_empty():
+		return
+	_selector_visible = visible
+	for button in _selector_buttons:
+		button.visible = visible
+		button.mouse_filter = (
+			Control.MOUSE_FILTER_STOP if visible else Control.MOUSE_FILTER_IGNORE
+		)
+	queue_redraw()
+
+func _on_selector_pressed(index: int) -> void:
+	if _selected or _closing:
+		return
+	_selector_selected_index = clampi(index, 0, _selector_buttons.size() - 1)
+	_selector_activated(index)
+	queue_redraw()
+
+func _selector_activated(_index: int) -> void:
+	pass
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -137,11 +196,19 @@ func _current_surface_size() -> Vector2:
 func _apply_layout(surface_size: Vector2) -> void:
 	_layout = _layout_for(surface_size)
 	_card_rects = _layout["cards"]
+	_selector_rects = _layout["selector_pills"]
 	for index in range(_card_buttons.size()):
 		if index >= _card_rects.size():
 			continue
 		var rect: Rect2 = _card_rects[index]
 		var button := _card_buttons[index]
+		button.position = rect.position
+		button.size = rect.size
+	for index in range(_selector_buttons.size()):
+		if index >= _selector_rects.size():
+			continue
+		var rect: Rect2 = _selector_rects[index]
+		var button := _selector_buttons[index]
 		button.position = rect.position
 		button.size = rect.size
 	if _card_rects.is_empty():
@@ -164,11 +231,15 @@ func _layout_for(surface_size: Vector2) -> Dictionary:
 	var cards_height := card_height * float(card_count)
 	if card_count > 1:
 		cards_height += card_gap * float(card_count - 1)
+	var selector_height := 0.0
+	if not _selector_buttons.is_empty():
+		selector_height = SELECTOR_HEIGHT * scale_factor + BODY_GAP * scale_factor
 	var total_height := (
 		HEADER_HEIGHT * scale_factor
 		+ HEADER_GAP * scale_factor
 		+ STRIP_HEIGHT * scale_factor
 		+ BODY_GAP * scale_factor
+		+ selector_height
 		+ cards_height
 		+ BODY_GAP * scale_factor
 		+ FOOTER_HEIGHT * scale_factor
@@ -184,8 +255,35 @@ func _layout_for(surface_size: Vector2) -> Dictionary:
 		Vector2(content_left, header.end.y + HEADER_GAP * scale_factor),
 		Vector2(content_width, STRIP_HEIGHT * scale_factor)
 	)
+	var selector_label := Rect2()
+	var selector_pills: Array = []
+	var selector_section_height := 0.0
+	if not _selector_buttons.is_empty():
+		selector_section_height = SELECTOR_HEIGHT * scale_factor
+		var selector_top := strip.end.y + BODY_GAP * scale_factor
+		selector_label = Rect2(
+			Vector2(content_left, selector_top),
+			Vector2(SELECTOR_LABEL_WIDTH * scale_factor, selector_section_height)
+		)
+		var pills_left := content_left + (SELECTOR_LABEL_WIDTH + SELECTOR_LABEL_GAP) * scale_factor
+		var pills_width := content_width - (SELECTOR_LABEL_WIDTH + SELECTOR_LABEL_GAP) * scale_factor
+		var pill_gap := SELECTOR_PILL_GAP * scale_factor
+		var pill_count := _selector_buttons.size()
+		var pill_width := maxf(
+			(pills_width - pill_gap * float(pill_count - 1)) / float(pill_count),
+			1.0
+		)
+		for index in range(pill_count):
+			selector_pills.append(
+				Rect2(
+					Vector2(pills_left + float(index) * (pill_width + pill_gap), selector_top),
+					Vector2(pill_width, selector_section_height)
+				)
+			)
 	var cards: Array = []
 	var cards_y := strip.end.y + BODY_GAP * scale_factor
+	if selector_section_height > 0.0:
+		cards_y += selector_section_height + BODY_GAP * scale_factor
 	for index in range(card_count):
 		cards.append(
 			Rect2(
@@ -206,6 +304,8 @@ func _layout_for(surface_size: Vector2) -> Dictionary:
 		"content": Rect2(Vector2(content_left, top), Vector2(content_width, footer.end.y - top)),
 		"header": header,
 		"strip": strip,
+		"selector_label": selector_label,
+		"selector_pills": selector_pills,
 		"cards": cards,
 		"footer": footer,
 		"cursor_x": content_left + CARD_GUTTER * scale_factor * 0.5,
@@ -214,8 +314,11 @@ func _layout_for(surface_size: Vector2) -> Dictionary:
 	}
 
 func _ui_scale_for(surface_size: Vector2) -> float:
+	var reference_height := MENU_REFERENCE_HEIGHT
+	if not _selector_buttons.is_empty():
+		reference_height += SELECTOR_REFERENCE_EXTRA
 	return clampf(
-		minf(surface_size.x / 960.0, surface_size.y / 540.0),
+		minf(surface_size.x / 960.0, surface_size.y / reference_height),
 		MIN_UI_SCALE,
 		MAX_UI_SCALE
 	)
@@ -236,6 +339,8 @@ func _draw() -> void:
 	_draw_backdrop(surface_size, scale_factor, alpha)
 	_draw_header(scale_factor, alpha)
 	_draw_team_strip(scale_factor, alpha)
+	if _selector_visible:
+		_draw_selector(scale_factor, alpha)
 	for index in range(_card_rects.size()):
 		_draw_card(index, scale_factor, alpha)
 	_draw_cursor(scale_factor, alpha)
@@ -512,6 +617,83 @@ func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 		maxi(int(14.0 * scale_factor), 11),
 		_alpha(TEXT_COLOR, alpha)
 	)
+
+func _draw_selector(scale_factor: float, alpha: float) -> void:
+	if _selector_rects.is_empty() or not _selector_visible:
+		return
+	var label_rect: Rect2 = _layout["selector_label"]
+	if not _selector_label.is_empty():
+		var label_font_size := maxi(int(8.5 * scale_factor), 8)
+		draw_string(
+			_font,
+			Vector2(
+				label_rect.position.x,
+				label_rect.get_center().y + label_font_size * 0.36
+			),
+			_selector_label,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			label_rect.size.x,
+			label_font_size,
+			_alpha(MUTED_TEXT_COLOR, alpha)
+		)
+
+	for index in range(_selector_rects.size()):
+		var rect: Rect2 = _selector_rects[index]
+		var button := _selector_buttons[index]
+		var selected := index == _selector_selected_index
+		var hovered := button.is_hovered()
+		var cut := maxf(6.0 * scale_factor, 4.0)
+		var points := _angular_points(rect, cut)
+		var fill := PANEL_COLOR
+		if selected:
+			fill = Color(0.035, 0.075, 0.115, 0.97)
+		elif hovered:
+			fill = PANEL_HOVER_COLOR
+		draw_colored_polygon(points, _alpha(fill, alpha))
+
+		var outline := points.duplicate()
+		outline.append(points[0])
+		var border_color := Color(DIVIDER_COLOR, 0.62 if hovered else 0.42)
+		if selected:
+			border_color = LEFT_COLOR.lerp(RIGHT_COLOR, float(index) / float(maxi(_selector_rects.size() - 1, 1)))
+			border_color.a = 0.9
+		elif hovered:
+			border_color = Color(0.55, 0.75, 0.95, 0.55)
+		draw_polyline(
+			outline,
+			_alpha(border_color, alpha),
+			maxf(1.0, 1.5 * scale_factor),
+			true
+		)
+		if selected:
+			draw_line(
+				Vector2(rect.position.x + cut, rect.end.y - maxf(1.0, 2.0 * scale_factor)),
+				Vector2(rect.end.x - cut, rect.end.y - maxf(1.0, 2.0 * scale_factor)),
+				_alpha(BALL_COLOR, 0.9 * alpha),
+				maxf(1.0, 2.0 * scale_factor),
+				true
+			)
+
+		var title := String(_selector_titles[index]) if index < _selector_titles.size() else ""
+		var title_font_size := _fit_font_size(
+			_font,
+			title,
+			maxi(int(11.0 * scale_factor), 10),
+			maxi(int(8.0 * scale_factor), 8),
+			rect.size.x - 16.0 * scale_factor
+		)
+		draw_string(
+			_font,
+			Vector2(
+				rect.position.x,
+				rect.get_center().y + title_font_size * 0.36
+			),
+			title,
+			HORIZONTAL_ALIGNMENT_CENTER,
+			rect.size.x,
+			title_font_size,
+			_alpha(TEXT_COLOR if selected or hovered else MUTED_TEXT_COLOR, alpha)
+		)
 
 func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 	var rect: Rect2 = _card_rects[index]

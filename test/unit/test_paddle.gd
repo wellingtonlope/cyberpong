@@ -1,6 +1,7 @@
 extends GutTest
 
 const PADDLE_SCENE := preload("res://scenes/paddle.tscn")
+const Difficulty = preload("res://scripts/difficulty.gd")
 const FIELD_SIZE := Vector2(1000.0, 600.0)
 const PLAY_TOP := 50.0
 
@@ -66,6 +67,37 @@ func test_oversized_paddle_is_clamped_to_available_play_area() -> void:
 
 	assert_almost_eq(float(paddle.paddle_height), float(FIELD_SIZE.y - PLAY_TOP), float(0.01))
 	assert_eq(paddle.position.y, (FIELD_SIZE.y + PLAY_TOP) * 0.5)
+
+func test_apply_difficulty_updates_ai_parameters() -> void:
+	paddle.apply_difficulty(Difficulty.preset(Difficulty.Level.EASY))
+
+	assert_eq(paddle.ai_speed_factor, 0.64)
+	assert_eq(paddle.ai_reaction_delay, 0.30)
+	assert_eq(paddle.ai_dead_zone, 38.0)
+
+	paddle.apply_difficulty(Difficulty.preset(Difficulty.Level.HARD))
+
+	assert_eq(paddle.ai_speed_factor, 1.0)
+	assert_eq(paddle.ai_reaction_delay, 0.04)
+	assert_eq(paddle.ai_dead_zone, 12.0)
+
+
+func test_hard_ai_covers_more_distance_than_easy_ai() -> void:
+	var easy_paddle = add_child_autofree(PADDLE_SCENE.instantiate())
+	easy_paddle.configure(FIELD_SIZE, 20.0, 100.0, 30.0, 200.0, 10.0, PLAY_TOP)
+	easy_paddle.apply_difficulty(Difficulty.preset(Difficulty.Level.EASY))
+	paddle.apply_difficulty(Difficulty.preset(Difficulty.Level.HARD))
+	var ball_position := Vector2(50.0, 100.0)
+	var ball_velocity := Vector2(-100.0, 0.0)
+
+	easy_paddle.update_ai(ball_position, ball_velocity, 0.1)
+	paddle.update_ai(ball_position, ball_velocity, 0.1)
+
+	assert_gt(
+		absf(paddle.position.y - 325.0),
+		absf(easy_paddle.position.y - 325.0)
+	)
+
 
 func test_beneficial_aim_targets_power_up_with_reflected_path() -> void:
 	var hit_offset: float = paddle._get_power_up_aim_hit_offset(200.0, Vector2(500.0, 300.0))

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/screenshots/menu-inicial.png" alt="Menu inicial do CyberPong, com os modos Jogador VS Jogador, Jogador VS AI, AI VS AI e Sair" width="100%">
+  <img src="docs/screenshots/menu-inicial.png" alt="Menu inicial do CyberPong, com os modos Jogador VS Jogador, Jogador VS AI e Sair" width="100%">
 </p>
 
 <h1 align="center">CyberPong</h1>
@@ -19,7 +19,8 @@
 
 CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circuit** (esquerda, ciano) e **Magenta Volt** (direita, magenta) disputam a primeira a três pontos. A arena, o placar, os menus e os efeitos são desenhados em tempo de execução com recursos nativos do Godot.
 
-- **Três modos:** Jogador VS Jogador, Jogador VS AI e AI VS AI.
+- **Dois modos:** Jogador VS Jogador e Jogador VS AI.
+- **Três dificuldades:** Fácil, Médio e Difícil ajustam velocidade, reação e tolerância das IAs.
 - **Power-ups:** raquetes que mudam de tamanho, bola mais lenta ou mais rápida e uma defesa extra.
 - **IAs estratégicas:** as raquetes automáticas calculam a trajetória e escolhem caminhos para buscar efeitos benéficos e evitar os negativos.
 - **Visual neon:** trilha da bola, faíscas com física, anel de impacto, aviso de saque e tela de vitória.
@@ -37,6 +38,7 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 | --- | --- |
 | Pular os créditos | Qualquer tecla ou clique |
 | Navegar no menu | `↑` / `↓` e `Enter`, ou clique |
+| Selecionar dificuldade | `←` / `→` com o cartão Jogador VS AI focado, ou clique nas opções |
 | Movimentar no PvP (esquerda) | `W` / `S` ou `↑` / `↓` |
 | Movimentar no PvP (direita) | `↑` / `↓` |
 | Pausar / retomar | `ESC` ou `P` |
@@ -45,9 +47,21 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 
 - No modo **Jogador VS AI**, o lado esquerdo é humano e o direito é controlado pela IA.
 - No modo **Jogador VS Jogador**, os dois lados são controlados no mesmo teclado.
-- No modo **AI VS AI**, as duas raquetes jogam sozinhas.
+- O seletor de dificuldade aparece no menu somente quando o cartão **Jogador VS AI** está focado; no PvP ele fica oculto e a dificuldade não altera a partida.
 - No menu de pausa, **Continuar** retoma o rally no mesmo estado e **Menu principal** encerra a partida e restaura placar, rebatidas, power-ups, velocidade e tamanho das raquetes.
 - A tela de créditos da **Moron Souls Productions** aparece somente na abertura do jogo.
+
+### Dificuldades
+
+A dificuldade escolhida no menu vale para toda raquete controlada pela IA. No modo **Jogador VS Jogador** ela não altera a partida. O padrão é **Médio**, e a escolha permanece ao voltar ao menu principal.
+
+| Dificuldade | Velocidade da IA | Atraso de reação | Zona morta |
+| --- | --- | --- | --- |
+| **Fácil** | 64% da velocidade da raquete | 0,30 s | 38 px |
+| **Médio** | 82% da velocidade da raquete | 0,14 s | 24 px |
+| **Difícil** | 100% da velocidade da raquete | 0,04 s | 12 px |
+
+A dificuldade altera apenas o comportamento das IAs; regras, velocidade da bola e power-ups continuam iguais.
 
 ### Regras da partida
 
@@ -97,17 +111,18 @@ Se o executável não estiver no `PATH`, use o caminho completo do Godot. Para e
 **Unitários**
 
 - `test_ball.gd`: saques, sinal de velocidade, aceleração e limites, Rebote potente, Freio, colisões, falhas, Defesa extra, coleta varrida e última raquete.
-- `test_paddle.gd`: posição, colisão, previsão com reflexão, movimento, zona morta, tamanho dos efeitos, camadas visuais e mira.
+- `test_difficulty.gd`: ordem dos presets, padrão, títulos e conversão entre nível e índice.
+- `test_paddle.gd`: posição, colisão, previsão com reflexão, movimento, zona morta, dificuldade aplicada, tamanho dos efeitos, camadas visuais e mira.
 - `test_power_up.gd`: aparição, janela de cinco rebatidas, coleta, proprietário, durações, cargas, sinais, HUD, cores e redimensionamento.
 - `test_debug_hud.gd` e `test_spark_effects.gd`: visibilidade e contagens do HUD; quantidade, expiração, quique e anel de impacto.
 - `test_credits_screen.gd`: layout, fade, emissão única de `finished`, pulo por tecla/clique e janelas diferentes.
-- `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seleção, transição e início/saída.
+- `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seletor de dificuldade condicional, seleção, transição e início/saída.
 - `test_pause_menu.gd`: cartões, layout, foco, transição, retomada por ESC e volta ao menu principal.
 
 **Integração**
 
 - `test_credits_flow.gd`: abertura pelos créditos, entrega ao menu, bloqueio de teclas e ausência de repetição ao voltar da pausa.
-- `test_menu_flow.gd`: pausa da partida, seleção, retomada, modos PvP/AI vs AI e encerramento.
+- `test_menu_flow.gd`: pausa da partida, seleção de modo e dificuldade, aplicação na IA, retomada, modos PvP/Jogador VS AI e encerramento.
 - `test_pause_flow.gd`: abertura por ESC/P, congelamento, retomada sem alterar o estado e restauração dos padrões.
 - `test_main_flow.gd`: nós e sinais, saques, placar, vitória, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.
 - `test_scene_resources.gd`: carregamento das cenas e disponibilidade da fonte de fallback.
@@ -129,7 +144,7 @@ Os testes validam intervalos e invariantes quando há aleatoriedade e rodam em m
 ├── guia-visual.md          # Paleta, identidade das equipes e critérios visuais
 ├── assets/icons/           # Avatar da tela de créditos
 ├── scenes/                 # Cenas de bola, raquetes, créditos, menu e pausa
-├── scripts/                # Arena, bola, raquetes, menus, HUD, power-ups e efeitos
+├── scripts/                # Arena, bola, raquetes, dificuldade, menus, HUD, power-ups e efeitos
 ├── test/unit/              # Testes unitários
 ├── test/integration/       # Testes de cenas, sinais e fluxos
 ├── docs/screenshots/       # Capturas usadas neste README
@@ -158,10 +173,11 @@ O avatar pode ser substituído mantendo o caminho referenciado por `scenes/credi
 
 - `main.gd` coordena créditos, menus, modos, placar e o estado da partida; conecta os sinais da bola e reinicia os valores padrão ao voltar ao menu principal.
 - `ball.gd` implementa movimento e colisões por código, sem nós de física, e emite `speed_changed` no saque e a cada mudança de velocidade.
-- `paddle.gd` controla movimento humano e IA, calcula a previsão com reflexões nas bordas e atualiza colisão e visual quando recebe um efeito.
+- `paddle.gd` controla movimento humano e IA, aplica os parâmetros da dificuldade, calcula a previsão com reflexões nas bordas e atualiza colisão e visual quando recebe um efeito.
+- `difficulty.gd` define os presets Fácil, Médio e Difícil, com velocidade, atraso de reação e zona morta das IAs.
 - `power_up.gd` mantém o catálogo em `EFFECTS`, agenda aparições a cada 5–15 rebatidas totais e controla coleta, proprietário e duração.
 - `arena.gd` desenha a arena em camadas, o placar, o aviso de saque, a transição de ponto, a tela de vitória e o HUD superior.
-- `menu_screen.gd` concentra layout, desenho e foco compartilhados; `game_menu.gd`, `pause_menu.gd` e `credits_screen.gd` usam esse template.
+- `menu_screen.gd` concentra layout, desenho e foco compartilhados, incluindo o seletor de dificuldade; `game_menu.gd`, `pause_menu.gd` e `credits_screen.gd` usam esse template.
 - `debug_hud.gd` exibe velocidade e rebatidas por IA com `F3`; `spark_effects.gd` simula as faíscas e o anel de impacto.
 - A resolução de viewport em `project.godot` é **2880 × 1620**, em tela cheia. A escala é definida por `GAME_SCALE` em `main.gd` e o HUD respeita `HUD_BAR_HEIGHT`.
 

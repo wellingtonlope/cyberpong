@@ -15,11 +15,11 @@ const HUD_BAR_HEIGHT := 60.0 * GAME_SCALE
 const CREDITS_SCENE := preload("res://scenes/credits_screen.tscn")
 const GAME_MENU_SCENE := preload("res://scenes/game_menu.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
+const Difficulty = preload("res://scripts/difficulty.gd")
 
 enum GameMode {
 	PLAYER_VS_PLAYER,
-	PLAYER_VS_AI,
-	AI_VS_AI
+	PLAYER_VS_AI
 }
 
 @onready var arena = $Arena
@@ -37,7 +37,8 @@ var right_score := 0
 var total_rebounds := 0
 var _next_power_up_rebound := 0
 var _random := RandomNumberGenerator.new()
-var _game_mode: int = GameMode.AI_VS_AI
+var _game_mode: int = GameMode.PLAYER_VS_AI
+var _difficulty: int = Difficulty.DEFAULT_LEVEL
 var _menu_shown := false
 var _pause_menu: Control = null
 var _credits: Control = null
@@ -86,6 +87,7 @@ func _show_menu() -> void:
 		previous_menu.queue_free()
 	var menu = GAME_MENU_SCENE.instantiate()
 	menu.name = "GameMenu"
+	menu.selected_difficulty = _difficulty
 	add_child(menu)
 	menu.connect("mode_selected", _on_mode_selected)
 	menu.connect("quit_requested", _on_quit_requested)
@@ -94,8 +96,9 @@ func _show_menu() -> void:
 func _on_quit_requested() -> void:
 	get_tree().quit()
 
-func _on_mode_selected(mode: int) -> void:
+func _on_mode_selected(mode: int, difficulty: int) -> void:
 	_game_mode = mode
+	_difficulty = difficulty
 	_menu_shown = false
 	_apply_game_mode()
 	_restart_match()
@@ -107,9 +110,6 @@ func _apply_game_mode() -> void:
 			right_paddle.set_control_mode(1)
 		GameMode.PLAYER_VS_AI:
 			left_paddle.set_control_mode(1)
-			right_paddle.set_control_mode(0)
-		GameMode.AI_VS_AI:
-			left_paddle.set_control_mode(0)
 			right_paddle.set_control_mode(0)
 
 func _physics_process(delta: float) -> void:
@@ -196,6 +196,9 @@ func _restart_match() -> void:
 	field_size = get_viewport_rect().size
 	left_paddle.configure(field_size, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_MARGIN, PADDLE_SPEED, BALL_RADIUS, HUD_BAR_HEIGHT)
 	right_paddle.configure(field_size, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_MARGIN, PADDLE_SPEED, BALL_RADIUS, HUD_BAR_HEIGHT)
+	var difficulty_config := Difficulty.preset(_difficulty)
+	left_paddle.apply_difficulty(difficulty_config)
+	right_paddle.apply_difficulty(difficulty_config)
 	left_score = 0
 	right_score = 0
 	total_rebounds = 0

@@ -61,7 +61,7 @@ func test_keys_during_the_credits_do_not_reach_the_match() -> void:
 func test_returning_to_the_menu_does_not_replay_the_credits() -> void:
 	_finish_credits()
 	var menu = game.get_node_or_null("GameMenu")
-	menu._select(game.GameMode.AI_VS_AI)
+	menu._select(game.GameMode.PLAYER_VS_AI)
 
 	game._open_pause_menu()
 	game._on_pause_main_menu_requested()

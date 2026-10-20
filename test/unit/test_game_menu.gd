@@ -31,15 +31,25 @@ func test_layout_keeps_all_cards_and_footer_inside_window() -> void:
 		var header: Rect2 = layout["header"]
 		var strip: Rect2 = layout["strip"]
 		var cards: Array = layout["cards"]
+		var selector_pills: Array = layout["selector_pills"]
 		var footer: Rect2 = layout["footer"]
 
-		assert_eq(cards.size(), 4, "Every game mode and the exit action need a card at %s" % size)
+		assert_eq(cards.size(), 3, "Every game mode and the exit action need a card at %s" % size)
+		assert_eq(selector_pills.size(), 3, "Every difficulty needs a pill at %s" % size)
 		assert_gt(content.size.x, 0.0)
 		assert_gte(header.position.y, 0.0)
 		assert_gte(header.end.y, header.position.y)
 		assert_gt(strip.end.y, header.end.y)
+		for pill in selector_pills:
+			var pill_rect: Rect2 = pill
+			assert_gt(pill_rect.size.x, 0.0)
+			assert_gt(pill_rect.size.y, 0.0)
+			assert_gte(pill_rect.position.y, strip.end.y)
+			assert_lte(pill_rect.end.y, cards[0].position.y)
+			assert_gte(pill_rect.position.x, content.position.x)
+			assert_lte(pill_rect.end.x, content.end.x)
 		assert_gte(cards[0].position.y, strip.end.y)
-		assert_gt(footer.end.y, cards[3].end.y)
+		assert_gt(footer.end.y, cards[2].end.y)
 		assert_lte(footer.end.y, size.y, "Menu footer overflows at %s" % size)
 		assert_gte(content.position.x, 0.0)
 		assert_lte(content.end.x, size.x)
@@ -66,24 +76,101 @@ func test_mode_cards_map_to_expected_game_modes() -> void:
 	var expected_modes := [
 		menu.GameMode.PLAYER_VS_PLAYER,
 		menu.GameMode.PLAYER_VS_AI,
-		menu.GameMode.AI_VS_AI,
 	]
+	assert_eq(menu.MODE_CARDS.size(), expected_modes.size())
 	for index in range(menu.MODE_CARDS.size()):
 		assert_eq(menu.MODE_CARDS[index]["mode"], expected_modes[index])
+
+func test_difficulty_selector_starts_on_normal_and_hidden() -> void:
+	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.NORMAL)
+	assert_eq(
+		menu._selector_selected_index,
+		menu.Difficulty.index_of(menu.Difficulty.Level.NORMAL)
+	)
+	assert_eq(menu._selector_rects.size(), 3)
+	assert_false(menu._selector_visible)
+
+func test_difficulty_pills_map_to_the_expected_levels() -> void:
+	menu._on_card_focused(1)
+	var buttons := [menu.get_node("BtnEasy"), menu.get_node("BtnNormal"), menu.get_node("BtnHard")]
+	for index in range(buttons.size()):
+		buttons[index].pressed.emit()
+		assert_eq(menu.selected_difficulty, menu.Difficulty.level_at(index))
+		assert_false(menu._closing)
+		assert_false(menu._selected)
+
+func test_choosing_a_difficulty_does_not_start_the_match() -> void:
+	menu._on_card_focused(1)
+	var emitted: Array = []
+	menu.mode_selected.connect(
+		func(mode: int, difficulty: int) -> void: emitted.append([mode, difficulty])
+	)
+
+	menu.get_node("BtnHard").pressed.emit()
+
+	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.HARD)
+	assert_true(emitted.is_empty())
+	assert_true(menu.visible)
+
+func test_mode_selection_emits_the_chosen_difficulty() -> void:
+	menu._on_card_focused(1)
+	menu.get_node("BtnEasy").pressed.emit()
+	var emitted: Array = []
+	menu.mode_selected.connect(
+		func(mode: int, difficulty: int) -> void: emitted.append([mode, difficulty])
+	)
+
+	menu._select(menu.GameMode.PLAYER_VS_AI)
+
+	assert_eq(emitted, [[menu.GameMode.PLAYER_VS_AI, menu.Difficulty.Level.EASY]])
+
+func test_difficulty_selector_only_appears_for_player_vs_ai() -> void:
+	var pvp: Button = menu.get_node("BtnPvP")
+	var pvai: Button = menu.get_node("BtnPvAI")
+	var quit: Button = menu.get_node("BtnQuit")
+	var pills := [menu.get_node("BtnEasy"), menu.get_node("BtnNormal"), menu.get_node("BtnHard")]
+
+	pvp.grab_focus()
+	assert_false(menu._selector_visible)
+	for pill in pills:
+		assert_false(pill.visible)
+
+	pvai.grab_focus()
+	assert_true(menu._selector_visible)
+	for pill in pills:
+		assert_true(pill.visible)
+
+	quit.grab_focus()
+	assert_false(menu._selector_visible)
+	for pill in pills:
+		assert_false(pill.visible)
+
+func test_arrow_keys_cycle_difficulty_only_when_player_vs_ai_is_focused() -> void:
+	var pvp: Button = menu.get_node("BtnPvP")
+	var pvai: Button = menu.get_node("BtnPvAI")
+
+	pvp.grab_focus()
+	menu._input(_arrow_event(KEY_RIGHT))
+	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.NORMAL)
+
+	pvai.grab_focus()
+	menu._input(_arrow_event(KEY_RIGHT))
+	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.HARD)
+	menu._input(_arrow_event(KEY_RIGHT))
+	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.EASY)
+	menu._input(_arrow_event(KEY_LEFT))
+	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.HARD)
 
 func test_focus_neighbors_cycle_through_all_cards() -> void:
 	var pvp: Button = menu.get_node("BtnPvP")
 	var pvai: Button = menu.get_node("BtnPvAI")
-	var aivai: Button = menu.get_node("BtnAIvAI")
 	var quit: Button = menu.get_node("BtnQuit")
 
 	assert_eq(pvp.focus_neighbor_top, quit.get_path())
 	assert_eq(pvp.focus_neighbor_bottom, pvai.get_path())
 	assert_eq(pvai.focus_neighbor_top, pvp.get_path())
-	assert_eq(pvai.focus_neighbor_bottom, aivai.get_path())
-	assert_eq(aivai.focus_neighbor_top, pvai.get_path())
-	assert_eq(aivai.focus_neighbor_bottom, quit.get_path())
-	assert_eq(quit.focus_neighbor_top, aivai.get_path())
+	assert_eq(pvai.focus_neighbor_bottom, quit.get_path())
+	assert_eq(quit.focus_neighbor_top, pvai.get_path())
 	assert_eq(quit.focus_neighbor_bottom, pvp.get_path())
 
 func test_card_focus_moves_the_ball_cursor_target() -> void:
@@ -102,7 +189,7 @@ func test_first_card_can_receive_keyboard_focus() -> void:
 func test_select_emits_mode_and_resumes_the_paused_tree() -> void:
 	assert_true(get_tree().paused)
 	var emitted_modes: Array = []
-	menu.mode_selected.connect(func(mode: int) -> void: emitted_modes.append(mode))
+	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
 	menu._select(menu.GameMode.PLAYER_VS_AI)
 
@@ -114,18 +201,18 @@ func test_select_emits_mode_and_resumes_the_paused_tree() -> void:
 
 func test_select_ignores_a_second_choice() -> void:
 	var emitted_modes: Array = []
-	menu.mode_selected.connect(func(mode: int) -> void: emitted_modes.append(mode))
+	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
 	menu._select(menu.GameMode.PLAYER_VS_PLAYER)
-	menu._select(menu.GameMode.AI_VS_AI)
+	menu._select(menu.GameMode.PLAYER_VS_AI)
 
 	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_PLAYER])
 
 func test_activate_waits_for_the_close_transition_before_selecting() -> void:
 	var emitted_modes: Array = []
-	menu.mode_selected.connect(func(mode: int) -> void: emitted_modes.append(mode))
+	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
-	menu._activate(menu.GameMode.AI_VS_AI, 2)
+	menu._activate(menu.GameMode.PLAYER_VS_AI, 1)
 	assert_true(menu._closing)
 	assert_false(menu._selected)
 
@@ -135,7 +222,7 @@ func test_activate_waits_for_the_close_transition_before_selecting() -> void:
 
 	menu._process(menu.CLOSE_DURATION)
 	assert_true(menu._selected)
-	assert_eq(emitted_modes, [menu.GameMode.AI_VS_AI])
+	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_AI])
 
 func test_focus_brackets_point_inward_at_every_corner() -> void:
 	var rect := Rect2(100.0, 100.0, 200.0, 60.0)
@@ -153,7 +240,7 @@ func test_focus_brackets_point_inward_at_every_corner() -> void:
 
 func test_button_press_starts_the_same_selection_flow() -> void:
 	var emitted_modes: Array = []
-	menu.mode_selected.connect(func(mode: int) -> void: emitted_modes.append(mode))
+	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
 	menu.get_node("BtnPvP").pressed.emit()
 	assert_true(menu._closing)
@@ -162,7 +249,7 @@ func test_button_press_starts_the_same_selection_flow() -> void:
 	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_PLAYER])
 
 func test_exit_card_is_the_last_item_and_requests_to_quit() -> void:
-	assert_eq(menu._cards.size(), 4)
+	assert_eq(menu._cards.size(), 3)
 	assert_eq(menu._cards[menu.EXIT_CARD_INDEX], menu.EXIT_CARD)
 	assert_eq(menu.EXIT_CARD["title"], "SAIR")
 
@@ -188,10 +275,16 @@ func test_exit_card_waits_for_the_close_transition_before_requesting_quit() -> v
 func test_exit_ignores_a_second_choice_while_closing() -> void:
 	var emitted: Array = []
 	menu.quit_requested.connect(func() -> void: emitted.append("quit"))
-	menu.mode_selected.connect(func(_mode: int) -> void: emitted.append("mode"))
+	menu.mode_selected.connect(func(_mode: int, _difficulty: int) -> void: emitted.append("mode"))
 
 	menu._activate_card(menu.EXIT_CARD_INDEX)
 	menu._activate_card(0)
 	menu._process(menu.CLOSE_DURATION)
 
 	assert_eq(emitted, ["quit"])
+
+func _arrow_event(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.pressed = true
+	event.keycode = keycode
+	return event

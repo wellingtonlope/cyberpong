@@ -14,7 +14,7 @@ func before_each() -> void:
 	credits._process(credits.SKIP_FADE_OUT_DURATION)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
-	menu._select(game.GameMode.AI_VS_AI)
+	menu._select(game.GameMode.PLAYER_VS_AI)
 	game.game_over = true
 
 func test_main_scene_initializes_expected_nodes_and_first_serve() -> void:

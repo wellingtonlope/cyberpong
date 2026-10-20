@@ -30,6 +30,9 @@ var power_up_size_multiplier := 1.0
 var effective_height_multiplier := 1.0
 var power_up_accent_color := Color.TRANSPARENT
 var power_up_active := false
+var ai_speed_factor := AI_SPEED_FACTOR
+var ai_reaction_delay := AI_REACTION_DELAY
+var ai_dead_zone := AI_DEAD_ZONE
 var _deformation_tween: Tween
 
 var control_mode := 0  # 0 = AI, 1 = Human
@@ -88,6 +91,11 @@ func clear_power_up() -> void:
 func set_control_mode(mode: int) -> void:
 	control_mode = mode
 
+func apply_difficulty(config: Dictionary) -> void:
+	ai_speed_factor = maxf(float(config.get("ai_speed_factor", AI_SPEED_FACTOR)), 0.0)
+	ai_reaction_delay = maxf(float(config.get("ai_reaction_delay", AI_REACTION_DELAY)), 0.0)
+	ai_dead_zone = maxf(float(config.get("ai_dead_zone", AI_DEAD_ZONE)), 0.0)
+
 func update_ai(
 	ball_position: Vector2,
 	ball_velocity: Vector2,
@@ -131,9 +139,9 @@ func update_ai(
 			target_y -= steering_hit_offset * paddle_height * 0.5
 
 	var difference := target_y - position.y
-	if absf(difference) <= AI_DEAD_ZONE:
+	if absf(difference) <= ai_dead_zone:
 		return
-	var max_step := paddle_speed * AI_SPEED_FACTOR * delta
+	var max_step := paddle_speed * ai_speed_factor * delta
 	position.y = clampf(
 		position.y + clampf(difference, -max_step, max_step),
 		play_top + paddle_height * 0.5,
@@ -160,7 +168,7 @@ func _predict_intercept_y(
 	var time_to_intercept := absf(intercept_x - ball_position.x) / maxf(absf(ball_velocity.x), 1.0)
 	var prediction_time := time_to_intercept
 	if apply_reaction_delay:
-		prediction_time = maxf(time_to_intercept - AI_REACTION_DELAY, 0.0)
+		prediction_time = maxf(time_to_intercept - ai_reaction_delay, 0.0)
 	var predicted_y := ball_position.y + ball_velocity.y * prediction_time
 	return _reflect_ball_y(predicted_y)
 
