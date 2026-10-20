@@ -64,7 +64,11 @@ func _show_menu() -> void:
 	menu.name = "GameMenu"
 	add_child(menu)
 	menu.connect("mode_selected", _on_mode_selected)
+	menu.connect("quit_requested", _on_quit_requested)
 	_menu_shown = true
+
+func _on_quit_requested() -> void:
+	get_tree().quit()
 
 func _on_mode_selected(mode: int) -> void:
 	_game_mode = mode

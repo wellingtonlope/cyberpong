@@ -43,3 +43,9 @@ func test_ai_mode_selection_keeps_both_paddles_automatic() -> void:
 	assert_eq(game.left_paddle.control_mode, 0)
 	assert_eq(game.right_paddle.control_mode, 0)
 	assert_true(game.arena.rally_intro_remaining > 0.0)
+
+func test_quit_card_signal_is_connected_to_the_game_shutdown() -> void:
+	var menu = game.get_node_or_null("GameMenu")
+	assert_not_null(menu)
+
+	assert_true(menu.quit_requested.is_connected(game._on_quit_requested))

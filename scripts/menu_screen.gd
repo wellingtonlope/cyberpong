@@ -174,6 +174,8 @@ func _layout_for(surface_size: Vector2) -> Dictionary:
 		+ FOOTER_HEIGHT * scale_factor
 	)
 	var top := maxf((surface_size.y - total_height) * 0.5, 72.0 * scale_factor)
+	if top + total_height > surface_size.y:
+		top = maxf((surface_size.y - total_height) * 0.5, 8.0 * scale_factor)
 	var header := Rect2(
 		Vector2(content_left, top),
 		Vector2(content_width, HEADER_HEIGHT * scale_factor)
