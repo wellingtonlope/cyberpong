@@ -8,6 +8,9 @@ var game
 func before_each() -> void:
 	get_viewport().size = FIELD_SIZE
 	game = add_child_autofree(MAIN_SCENE.instantiate())
+	var menu = game.get_node_or_null("GameMenu")
+	assert_not_null(menu)
+	menu._select(game.GameMode.AI_VS_AI)
 	game.game_over = true
 
 func test_main_scene_initializes_expected_nodes_and_first_serve() -> void:

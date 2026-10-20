@@ -1,0 +1,206 @@
+extends GutTest
+
+const MAIN_SCENE := preload("res://main.tscn")
+const ARENA_SCRIPT := preload("res://scripts/arena.gd")
+const BALL_SCRIPT := preload("res://scripts/ball.gd")
+const POWER_UP_SCRIPT := preload("res://scripts/power_up.gd")
+const FIELD_SIZE := Vector2(2880.0, 1620.0)
+const WINDOW_SIZES := [
+	Vector2(2880.0, 1620.0),
+	Vector2(1920.0, 1080.0),
+	Vector2(1440.0, 810.0),
+	Vector2(1280.0, 720.0),
+	Vector2(1000.0, 600.0),
+	Vector2(800.0, 600.0),
+	Vector2(640.0, 480.0),
+]
+
+var game
+
+
+func before_each() -> void:
+	get_viewport().size = FIELD_SIZE
+	game = add_child_autofree(MAIN_SCENE.instantiate())
+	var menu = game.get_node_or_null("GameMenu")
+	assert_not_null(menu)
+	menu._select(game.GameMode.AI_VS_AI)
+
+
+func after_each() -> void:
+	get_tree().paused = false
+	get_viewport().size = FIELD_SIZE
+
+
+func test_gameplay_entities_fit_inside_hud_and_arena_across_window_sizes() -> void:
+	for size in WINDOW_SIZES:
+		var window_size: Vector2 = size
+		get_viewport().size = window_size
+		game._physics_process(0.016)
+		assert_eq(game.field_size, window_size, "Field size did not follow %s" % window_size)
+
+		var play_top: float = game.arena.hud_bar_height
+		var play_height: float = window_size.y - play_top
+		assert_gt(play_height, 0.0, "No playable area at %s" % window_size)
+
+		game.ball.position = Vector2(window_size.x * 0.5, window_size.y)
+		game.ball.update_field_size(window_size)
+		assert_between(
+			float(game.ball.position.y),
+			play_top + game.ball.radius,
+			window_size.y - game.ball.radius,
+			"Ball is outside the play area at %s" % window_size
+		)
+		assert_lte(game.ball.radius * 2.0, play_height)
+
+		for paddle in [game.left_paddle, game.right_paddle]:
+			paddle.position.y = window_size.y
+			paddle.update_field_size(window_size)
+			assert_between(
+				float(paddle.position.y - paddle.paddle_height * 0.5),
+				play_top,
+				window_size.y - paddle.paddle_height * 0.5,
+				"Paddle is outside the play area at %s" % window_size
+			)
+			assert_lte(paddle.paddle_height, play_height)
+			assert_gte(float(paddle.position.x - paddle.paddle_width * 0.5), 0.0)
+			assert_lte(float(paddle.position.x + paddle.paddle_width * 0.5), window_size.x)
+
+		game.power_up.reset_for_match(window_size)
+		assert_true(game.power_up.appear(window_size))
+		game.power_up.position = window_size
+		game.power_up.update_field_size(window_size)
+		var power_up_radius: float = game.power_up.get_collision_radius()
+		assert_between(
+			float(game.power_up.position.x),
+			power_up_radius,
+			window_size.x - power_up_radius,
+			"Power-up is outside horizontally at %s" % window_size
+		)
+		assert_between(
+			float(game.power_up.position.y),
+			play_top + power_up_radius,
+			window_size.y - power_up_radius,
+			"Power-up is outside vertically at %s" % window_size
+		)
+		assert_lte(power_up_radius * 2.0, play_height)
+
+
+func test_hud_panels_and_text_fit_without_overlap_across_window_sizes() -> void:
+	for size in WINDOW_SIZES:
+		var window_size: Vector2 = size
+		var ui_scale: float = game.arena._hud_scale_for(window_size)
+		var score_half_width: float = (120.0 + 56.0 * 0.5) * ui_scale
+		var cards_left: float = window_size.x * 0.5 - score_half_width
+		var cards_right: float = window_size.x * 0.5 + score_half_width
+		var cards_bottom: float = (3.0 + 54.0) * ui_scale
+		var power_panel_left: float = window_size.x * 0.68
+		var logo_right: float = (125.0 + 150.0) * ui_scale
+
+		assert_lt(logo_right, cards_left, "Logo overlaps scoreboard at %s" % window_size)
+		assert_lt(cards_right, power_panel_left, "Scoreboard overlaps power-up panel at %s" % window_size)
+		assert_lt(cards_bottom, game.arena.hud_bar_height, "Scoreboard exceeds HUD bar at %s" % window_size)
+		assert_lt(power_panel_left + window_size.x * 0.3, window_size.x)
+		assert_lt(game.arena.hud_bar_height, window_size.y)
+
+		var font := ThemeDB.fallback_font
+		var detail_width: float = window_size.x * 0.3 - 34.0 * ui_scale
+		var title_font_size: int = game.arena._fit_font_size(
+			font,
+			"RAQUETE REDUZIDA",
+			maxi(int(12.0 * ui_scale), 10),
+			8,
+			detail_width
+		)
+		assert_gte(title_font_size, 8)
+		assert_lte(
+			font.get_string_size("RAQUETE REDUZIDA", HORIZONTAL_ALIGNMENT_LEFT, -1, title_font_size).x,
+			detail_width,
+			"Power-up title overflows at %s" % window_size
+		)
+		for detail in [
+			"Raquete reduzida · 5 rebatidas para coletar",
+			"Magenta Volt · 4 usos · 8 rebatidas restantes",
+			"Magenta Volt · 1 defesa · 14 rebatidas restantes",
+		]:
+			var detail_font_size: int = game.arena._fit_font_size(
+				font,
+				detail,
+				maxi(int(9.0 * ui_scale), 8),
+				7,
+				detail_width
+			)
+			assert_gte(detail_font_size, 7)
+			var detail_size: float = font.get_string_size(
+				detail,
+				HORIZONTAL_ALIGNMENT_LEFT,
+				-1,
+				detail_font_size
+			).x
+			assert_lte(detail_size, detail_width, "Power-up detail overflows at %s: %s" % [window_size, detail])
+
+		var name_font_size := maxi(int(7.0 * ui_scale), 7)
+		var name_width: float = 120.0 * ui_scale - 37.0 * ui_scale
+		for team_name in [ARENA_SCRIPT.LEFT_TEAM_NAME, ARENA_SCRIPT.RIGHT_TEAM_NAME]:
+			var name_size: float = font.get_string_size(
+				team_name,
+				HORIZONTAL_ALIGNMENT_LEFT,
+				-1,
+				name_font_size
+			).x
+			assert_lte(name_size, name_width, "Team name overflows at %s: %s" % [window_size, team_name])
+
+
+func test_match_updates_collision_effects_and_power_up_highlight() -> void:
+	game.ball.paddle_hit.emit(true, Vector2(200.0, 300.0), 1.0, 1.0, false)
+
+	assert_gt(game.spark_effects._particles.size(), 0)
+	assert_eq(game.spark_effects._rings.size(), 1)
+	assert_eq(game.spark_effects._rings[0]["color"], game.left_paddle.tint)
+
+	assert_true(game.power_up.appear(game.field_size))
+	game.power_up.effect_id = "double_size"
+	game.power_up.collect(true)
+	assert_true(game.left_paddle.power_up_active)
+	assert_eq(
+		game.left_paddle.power_up_accent_color,
+		POWER_UP_SCRIPT.EFFECTS["double_size"]["color"]
+	)
+
+
+func test_key_colors_keep_readable_contrast() -> void:
+	assert_gte(_contrast_ratio(ARENA_SCRIPT.TEXT_COLOR, ARENA_SCRIPT.HUD_PANEL_COLOR), 4.5)
+	assert_gte(_contrast_ratio(ARENA_SCRIPT.MUTED_TEXT_COLOR, ARENA_SCRIPT.HUD_PANEL_COLOR), 4.5)
+	assert_gte(_contrast_ratio(ARENA_SCRIPT.TEXT_COLOR, ARENA_SCRIPT.FIELD_COLOR), 4.5)
+	assert_gte(_contrast_ratio(ARENA_SCRIPT.MUTED_TEXT_COLOR, ARENA_SCRIPT.FIELD_COLOR), 4.5)
+	assert_gte(_contrast_ratio(ARENA_SCRIPT.LEFT_COLOR, ARENA_SCRIPT.SCORE_LEFT_PANEL), 4.5)
+	assert_gte(_contrast_ratio(ARENA_SCRIPT.RIGHT_COLOR, ARENA_SCRIPT.SCORE_RIGHT_PANEL), 4.5)
+	assert_gte(_contrast_ratio(BALL_SCRIPT.BALL_COLOR, ARENA_SCRIPT.FIELD_CENTER_COLOR), 4.5)
+
+	var item_body_color := Color(0.02, 0.035, 0.06)
+	for effect_id in POWER_UP_SCRIPT.EFFECT_IDS:
+		var effect_color: Color = POWER_UP_SCRIPT.EFFECTS[effect_id]["color"]
+		assert_gte(
+			_contrast_ratio(effect_color, item_body_color),
+			4.5,
+			"Low contrast for power-up effect %s" % effect_id
+		)
+
+
+func _contrast_ratio(first: Color, second: Color) -> float:
+	var first_luminance := _relative_luminance(first)
+	var second_luminance := _relative_luminance(second)
+	return (maxf(first_luminance, second_luminance) + 0.05) / (minf(first_luminance, second_luminance) + 0.05)
+
+
+func _relative_luminance(color: Color) -> float:
+	return (
+		0.2126 * _linear_channel(color.r)
+		+ 0.7152 * _linear_channel(color.g)
+		+ 0.0722 * _linear_channel(color.b)
+	)
+
+
+func _linear_channel(value: float) -> float:
+	if value <= 0.03928:
+		return value / 12.92
+	return pow((value + 0.055) / 1.055, 2.4)

@@ -648,6 +648,26 @@ func _draw_team_emblem(
 		])
 		draw_colored_polygon(bolt, draw_color)
 
+func _fit_font_size(
+	font: Font,
+	text: String,
+	preferred_size: int,
+	minimum_size: int,
+	max_width: float
+) -> int:
+	var font_size := maxi(preferred_size, minimum_size)
+	while font_size > minimum_size:
+		var measured_width := font.get_string_size(
+			text,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			font_size
+		).x
+		if measured_width <= max_width:
+			return font_size
+		font_size -= 1
+	return minimum_size
+
 func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 	if power_up_hud_title.is_empty():
 		return
@@ -673,13 +693,27 @@ func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 	draw_colored_polygon(accent_diamond, power_up_hud_accent)
 	var text_x := panel.position.x + 26.0 * ui_scale
 	var text_width := panel.size.x - 34.0 * ui_scale
+	var title_font_size := _fit_font_size(
+		font,
+		power_up_hud_title.to_upper(),
+		maxi(int(12.0 * ui_scale), 10),
+		8,
+		text_width
+	)
+	var detail_font_size := _fit_font_size(
+		font,
+		power_up_hud_detail,
+		maxi(int(9.0 * ui_scale), 8),
+		7,
+		text_width
+	)
 	draw_string(
 		font,
 		Vector2(text_x, panel.position.y + panel.size.y * 0.36),
 		power_up_hud_title.to_upper(),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
-		maxi(int(12.0 * ui_scale), 10),
+		title_font_size,
 		TEXT_COLOR
 	)
 	draw_string(
@@ -688,7 +722,7 @@ func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 		power_up_hud_detail,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
-		maxi(int(9.0 * ui_scale), 8),
+		detail_font_size,
 		MUTED_TEXT_COLOR
 	)
 	if power_up_hud_show_progress:
