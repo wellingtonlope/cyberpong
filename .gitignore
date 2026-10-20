@@ -1,3 +1,4 @@
 .godot/
 reports/
 *.translation
+.DS_Store
