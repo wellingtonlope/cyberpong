@@ -155,6 +155,13 @@ func test_f3_toggles_debug_hud_through_main_input_handler() -> void:
 	game._unhandled_key_input(event)
 	assert_false(game.debug_hud._panel.visible)
 
+func test_hud_scale_keeps_interface_compact_on_narrow_windows() -> void:
+	assert_almost_eq(float(game.arena._hud_scale_for(FIELD_SIZE)), float(3.0), float(0.01))
+	assert_almost_eq(float(game.arena._hud_scale_for(Vector2(1440.0, 810.0))), float(1.5), float(0.01))
+	assert_almost_eq(float(game.arena._hud_scale_for(Vector2(960.0, 540.0))), float(1.0), float(0.01))
+	assert_gte(float(game.arena._hud_scale_for(Vector2(480.0, 270.0))), float(0.55))
+	assert_lte(float(game.arena._hud_scale_for(FIELD_SIZE)), float(3.0))
+
 func test_viewport_resize_keeps_entities_inside_play_area() -> void:
 	game.game_over = false
 	game.power_up.appear(game.field_size)

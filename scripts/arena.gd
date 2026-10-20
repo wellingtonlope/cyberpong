@@ -83,6 +83,7 @@ func show_point_awarded(is_left: bool) -> void:
 
 func _draw() -> void:
 	var size := get_viewport_rect().size
+	var ui_scale := _hud_scale_for(size)
 	draw_rect(Rect2(Vector2.ZERO, size), BACKGROUND_COLOR)
 	var field_margin := 12.0 * game_scale
 	var field_rect := Rect2(
@@ -101,13 +102,16 @@ func _draw() -> void:
 	_draw_goal_lines(size)
 
 	var font := ThemeDB.fallback_font
-	_draw_game_logo(font)
-	_draw_rebound_badge(font)
-	_draw_score(font, size)
-	_draw_power_up_status(font, size)
+	_draw_game_logo(font, ui_scale)
+	_draw_rebound_badge(font, ui_scale)
+	_draw_score(font, size, ui_scale)
+	_draw_power_up_status(font, size, ui_scale)
 
 	if game_over:
 		_draw_winner_panel(font, size)
+
+func _hud_scale_for(size: Vector2) -> float:
+	return minf(game_scale, maxf(size.x / 960.0, 0.55))
 
 func _draw_field_backdrop(field_rect: Rect2) -> void:
 	var strip_width := field_rect.size.x / float(FIELD_GRADIENT_STRIPS)
@@ -211,42 +215,42 @@ func _draw_arena_frame(field_rect: Rect2) -> void:
 				true
 			)
 
-func _draw_game_logo(font: Font) -> void:
-	var center := Vector2(107.0 * game_scale, hud_bar_height * 0.5)
-	var frame_size := Vector2(26.0, 22.0) * game_scale
+func _draw_game_logo(font: Font, ui_scale: float) -> void:
+	var center := Vector2(107.0 * ui_scale, hud_bar_height * 0.5)
+	var frame_size := Vector2(26.0, 22.0) * ui_scale
 	var frame := Rect2(center - frame_size * 0.5, frame_size)
 	draw_rect(frame, Color(FIELD_COLOR, 0.9))
-	draw_rect(frame, Color(DIVIDER_COLOR, 0.9), false, 1.5 * game_scale)
+	draw_rect(frame, Color(DIVIDER_COLOR, 0.9), false, 1.5 * ui_scale)
 	draw_rect(
-		Rect2(center + Vector2(-8.0, -5.0) * game_scale, Vector2(2.5, 10.0) * game_scale),
+		Rect2(center + Vector2(-8.0, -5.0) * ui_scale, Vector2(2.5, 10.0) * ui_scale),
 		LEFT_COLOR
 	)
 	draw_rect(
-		Rect2(center + Vector2(5.5, -5.0) * game_scale, Vector2(2.5, 10.0) * game_scale),
+		Rect2(center + Vector2(5.5, -5.0) * ui_scale, Vector2(2.5, 10.0) * ui_scale),
 		RIGHT_COLOR
 	)
 	var ball_mark := PackedVector2Array([
-		center + Vector2(0.0, -4.0) * game_scale,
-		center + Vector2(4.0, 0.0) * game_scale,
-		center + Vector2(0.0, 4.0) * game_scale,
-		center + Vector2(-4.0, 0.0) * game_scale,
+		center + Vector2(0.0, -4.0) * ui_scale,
+		center + Vector2(4.0, 0.0) * ui_scale,
+		center + Vector2(0.0, 4.0) * ui_scale,
+		center + Vector2(-4.0, 0.0) * ui_scale,
 	])
 	draw_colored_polygon(ball_mark, Color(1.0, 0.92, 0.12))
 
-	var title_position := Vector2(125.0 * game_scale, center.y + 6.0 * game_scale)
-	draw_string(font, title_position, GAME_TITLE, HORIZONTAL_ALIGNMENT_LEFT, 150.0 * game_scale, 13 * int(game_scale), TEXT_COLOR)
+	var title_position := Vector2(125.0 * ui_scale, center.y + 6.0 * ui_scale)
+	draw_string(font, title_position, GAME_TITLE, HORIZONTAL_ALIGNMENT_LEFT, 150.0 * ui_scale, maxi(int(13.0 * ui_scale), 10), TEXT_COLOR)
 	draw_line(
-		Vector2(title_position.x, center.y + 14.0 * game_scale),
-		Vector2(title_position.x + 45.0 * game_scale, center.y + 14.0 * game_scale),
+		Vector2(title_position.x, center.y + 14.0 * ui_scale),
+		Vector2(title_position.x + 45.0 * ui_scale, center.y + 14.0 * ui_scale),
 		LEFT_COLOR,
-		1.5 * game_scale,
+		1.5 * ui_scale,
 		true
 	)
 	draw_line(
-		Vector2(title_position.x + 49.0 * game_scale, center.y + 14.0 * game_scale),
-		Vector2(title_position.x + 72.0 * game_scale, center.y + 14.0 * game_scale),
+		Vector2(title_position.x + 49.0 * ui_scale, center.y + 14.0 * ui_scale),
+		Vector2(title_position.x + 72.0 * ui_scale, center.y + 14.0 * ui_scale),
 		RIGHT_COLOR,
-		1.5 * game_scale,
+		1.5 * ui_scale,
 		true
 	)
 
@@ -295,74 +299,127 @@ func _draw_goal_lines(size: Vector2) -> void:
 		line_width
 	)
 
-func _draw_rebound_badge(font: Font) -> void:
-	var badge_center := Vector2(58.0 * game_scale, hud_bar_height * 0.5)
-	var badge_radius := 23.0 * game_scale
-	draw_circle(badge_center, badge_radius, COUNT_BADGE_COLOR)
-	draw_arc(badge_center, badge_radius, 0.0, TAU, 64, LEFT_COLOR, 2.5 * game_scale, true)
+func _draw_rebound_badge(font: Font, ui_scale: float) -> void:
+	var badge_center := Vector2(58.0 * ui_scale, hud_bar_height * 0.46)
+	var badge_radius := 22.0 * ui_scale
+	draw_circle(badge_center, badge_radius, Color(COUNT_BADGE_COLOR, 0.55))
+	draw_arc(badge_center, badge_radius, 0.0, TAU, 64, Color(DIVIDER_COLOR, 0.92), 1.5 * ui_scale, true)
+	draw_arc(
+		badge_center,
+		badge_radius,
+		-PI * 0.5,
+		PI * 0.5,
+		32,
+		Color(MUTED_TEXT_COLOR, 0.65),
+		1.5 * ui_scale,
+		true
+	)
 	var count_text := str(total_rebounds)
-	var count_font_size := 28 * int(game_scale)
+	var count_font_size := maxi(int(22.0 * ui_scale), 12)
 	if count_text.length() >= 3:
-		count_font_size = 20 * int(game_scale)
+		count_font_size = maxi(int(16.0 * ui_scale), 10)
 	draw_string(
 		font,
-		Vector2(badge_center.x - badge_radius, badge_center.y + 9.0 * game_scale),
+		Vector2(badge_center.x - badge_radius, badge_center.y + count_font_size * 0.34),
 		count_text,
 		HORIZONTAL_ALIGNMENT_CENTER,
 		badge_radius * 2.0,
 		count_font_size,
 		TEXT_COLOR
 	)
+	draw_string(
+		font,
+		Vector2(badge_center.x - badge_radius * 1.4, badge_center.y + badge_radius + 5.0 * ui_scale),
+		"REBATIDAS",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		badge_radius * 2.8,
+		maxi(int(5.0 * ui_scale), 7),
+		MUTED_TEXT_COLOR
+	)
 
-func _draw_score(font: Font, size: Vector2) -> void:
-	var card_size := Vector2(100.0 * game_scale, 52.0 * game_scale)
-	var card_y := 5.0 * game_scale
+func _draw_score(font: Font, size: Vector2, ui_scale: float) -> void:
+	var card_size := Vector2(120.0, 54.0) * ui_scale
+	var card_y := 3.0 * ui_scale
 	var center_x := size.x * 0.5
-	var card_gap := 60.0 * game_scale
+	var card_gap := 56.0 * ui_scale
 	var left_card := Rect2(Vector2(center_x - card_size.x - card_gap * 0.5, card_y), card_size)
 	var right_card := Rect2(Vector2(center_x + card_gap * 0.5, card_y), card_size)
 	draw_rect(left_card, SCORE_LEFT_PANEL)
-	draw_rect(left_card, Color(LEFT_COLOR, 0.8), false, 2.0 * game_scale)
+	draw_rect(left_card, Color(LEFT_COLOR, 0.8), false, 2.0 * ui_scale)
 	draw_rect(right_card, SCORE_RIGHT_PANEL)
-	draw_rect(right_card, Color(RIGHT_COLOR, 0.8), false, 2.0 * game_scale)
-	draw_rect(Rect2(left_card.position, Vector2(3.0 * game_scale, card_size.y)), LEFT_COLOR)
-	draw_rect(Rect2(right_card.position, Vector2(3.0 * game_scale, card_size.y)), RIGHT_COLOR)
-	_draw_team_score(font, left_card, LEFT_TEAM_NAME, left_score, LEFT_COLOR, true)
-	_draw_team_score(font, right_card, RIGHT_TEAM_NAME, right_score, RIGHT_COLOR, false)
-	draw_string(font, Vector2(center_x - card_gap * 0.5, 39.0 * game_scale), ":", HORIZONTAL_ALIGNMENT_CENTER, card_gap, 22 * int(game_scale), MUTED_TEXT_COLOR)
-
-func _draw_team_score(font: Font, card: Rect2, team_name: String, score: int, team_color: Color, is_left: bool) -> void:
-	var emblem_center := card.position + Vector2(20.0, 25.0) * game_scale
-	_draw_team_emblem(emblem_center, team_color, is_left)
+	draw_rect(right_card, Color(RIGHT_COLOR, 0.8), false, 2.0 * ui_scale)
+	draw_rect(Rect2(left_card.position, Vector2(3.0 * ui_scale, card_size.y)), LEFT_COLOR)
+	draw_rect(Rect2(right_card.position, Vector2(3.0 * ui_scale, card_size.y)), RIGHT_COLOR)
+	_draw_team_score(font, left_card, LEFT_TEAM_NAME, left_score, LEFT_COLOR, true, ui_scale)
+	_draw_team_score(font, right_card, RIGHT_TEAM_NAME, right_score, RIGHT_COLOR, false, ui_scale)
 	draw_string(
 		font,
-		card.position + Vector2(34.0, 19.0) * game_scale,
+		Vector2(center_x - card_gap * 0.5, card_y + 36.0 * ui_scale),
+		":",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		card_gap,
+		maxi(int(20.0 * ui_scale), 12),
+		MUTED_TEXT_COLOR
+	)
+
+func _draw_team_score(
+	font: Font,
+	card: Rect2,
+	team_name: String,
+	score: int,
+	team_color: Color,
+	is_left: bool,
+	ui_scale: float
+) -> void:
+	var emblem_center := card.position + Vector2(20.0, 24.0) * ui_scale
+	_draw_team_emblem(emblem_center, team_color, is_left, ui_scale)
+	draw_string(
+		font,
+		card.position + Vector2(34.0, 14.0) * ui_scale,
 		team_name,
 		HORIZONTAL_ALIGNMENT_LEFT,
-		card.size.x - 37.0 * game_scale,
-		7 * int(game_scale),
+		card.size.x - 37.0 * ui_scale,
+		maxi(int(7.0 * ui_scale), 7),
 		team_color
 	)
+	_draw_score_pips(card, score, team_color, ui_scale)
 	draw_string(
 		font,
-		card.position + Vector2(0.0, 47.0) * game_scale,
+		card.position + Vector2(30.0, 48.0) * ui_scale,
 		str(score),
-		HORIZONTAL_ALIGNMENT_CENTER,
-		card.size.x,
-		24 * int(game_scale),
+		HORIZONTAL_ALIGNMENT_RIGHT,
+		card.size.x - 38.0 * ui_scale,
+		maxi(int(26.0 * ui_scale), 14),
 		TEXT_COLOR
 	)
 	if point_flash_remaining > 0.0 and point_flash_is_left == is_left:
 		var flash_strength := point_flash_remaining / POINT_FLASH_DURATION
 		draw_rect(
-			card.grow(3.0 * game_scale),
+			card.grow(3.0 * ui_scale),
 			Color(team_color, 0.9 * flash_strength),
 			false,
-			3.0 * game_scale
+			3.0 * ui_scale
 		)
 
-func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool) -> void:
-	var emblem_scale := game_scale
+func _draw_score_pips(card: Rect2, score: int, team_color: Color, ui_scale: float) -> void:
+	for pip_index in range(3):
+		var pip_center := card.position + Vector2(36.0 + float(pip_index) * 8.0, 22.0) * ui_scale
+		var pip_radius := 2.4 * ui_scale
+		var pip := PackedVector2Array([
+			pip_center + Vector2(0.0, -pip_radius),
+			pip_center + Vector2(pip_radius, 0.0),
+			pip_center + Vector2(0.0, pip_radius),
+			pip_center + Vector2(-pip_radius, 0.0),
+			pip_center + Vector2(0.0, -pip_radius),
+		])
+		if pip_index < score:
+			draw_colored_polygon(pip, team_color)
+		else:
+			draw_polyline(pip, Color(team_color, 0.38), maxf(1.0, ui_scale * 0.8), true)
+
+func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool, emblem_scale: float = -1.0) -> void:
+	if emblem_scale < 0.0:
+		emblem_scale = game_scale
 	if is_left:
 		var hexagon := PackedVector2Array()
 		for point_index in range(7):
@@ -391,43 +448,53 @@ func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool) -> voi
 		])
 		draw_colored_polygon(bolt, team_color)
 
-func _draw_power_up_status(font: Font, size: Vector2) -> void:
+func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 	if power_up_hud_title.is_empty():
 		return
+	var panel_size := Vector2(size.x * 0.3, minf(hud_bar_height - 16.0 * ui_scale, 60.0 * ui_scale))
 	var panel := Rect2(
-		Vector2(size.x * 0.66, 8.0 * game_scale),
-		Vector2(size.x * 0.32, hud_bar_height - 16.0 * game_scale)
+		Vector2(size.x * 0.68, (hud_bar_height - panel_size.y) * 0.5),
+		panel_size
 	)
 	draw_rect(panel, Color(0.035, 0.055, 0.09, 0.88))
-	draw_rect(panel, Color(power_up_hud_accent, 0.48), false, 1.5 * game_scale)
+	draw_rect(panel, Color(power_up_hud_accent, 0.48), false, 1.5 * ui_scale)
 	draw_rect(
-		Rect2(panel.position, Vector2(4.0 * game_scale, panel.size.y)),
+		Rect2(panel.position, Vector2(4.0 * ui_scale, panel.size.y)),
 		power_up_hud_accent
 	)
-	var text_x := panel.position.x + 20.0 * game_scale
-	var text_width := panel.size.x - 36.0 * game_scale
+	var icon_center := panel.position + Vector2(14.0 * ui_scale, panel.size.y * 0.36)
+	var icon_radius := 5.0 * ui_scale
+	var accent_diamond := PackedVector2Array([
+		icon_center + Vector2(0.0, -icon_radius),
+		icon_center + Vector2(icon_radius, 0.0),
+		icon_center + Vector2(0.0, icon_radius),
+		icon_center + Vector2(-icon_radius, 0.0),
+	])
+	draw_colored_polygon(accent_diamond, power_up_hud_accent)
+	var text_x := panel.position.x + 26.0 * ui_scale
+	var text_width := panel.size.x - 34.0 * ui_scale
 	draw_string(
 		font,
-		Vector2(text_x, panel.position.y + 18.0 * game_scale),
+		Vector2(text_x, panel.position.y + panel.size.y * 0.36),
 		power_up_hud_title.to_upper(),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
-		13 * int(game_scale),
+		maxi(int(12.0 * ui_scale), 10),
 		TEXT_COLOR
 	)
 	draw_string(
 		font,
-		Vector2(text_x, panel.position.y + 32.0 * game_scale),
+		Vector2(text_x, panel.position.y + panel.size.y * 0.64),
 		power_up_hud_detail,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
-		10 * int(game_scale),
+		maxi(int(9.0 * ui_scale), 8),
 		MUTED_TEXT_COLOR
 	)
 	if power_up_hud_show_progress:
 		var track := Rect2(
-			Vector2(text_x, panel.position.y + 39.0 * game_scale),
-			Vector2(text_width, 4.0 * game_scale)
+			Vector2(text_x, panel.position.y + panel.size.y * 0.8),
+			Vector2(text_width, maxf(2.0, 3.0 * ui_scale))
 		)
 		draw_rect(track, Color(0.4, 0.48, 0.58, 0.34))
 		draw_rect(Rect2(track.position, Vector2(track.size.x * power_up_hud_progress, track.size.y)), power_up_hud_accent)

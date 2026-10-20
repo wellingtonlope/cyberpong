@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1_game"]
 [ext_resource type="PackedScene" path="res://scenes/paddle.tscn" id="2_paddle"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/spark_effects.gd" id="5_spark_effects"]
 [ext_resource type="Script" path="res://scripts/debug_hud.gd" id="6_debug_hud"]
 [ext_resource type="Script" path="res://scripts/power_up.gd" id="7_power_up"]
+[ext_resource type="Script" path="res://scripts/power_up_symbol.gd" id="8_power_up_symbol"]
 
 [node name="Pong" type="Node2D"]
 script = ExtResource("1_game")
@@ -27,19 +28,17 @@ tint = Color(1, 0.12, 0.72, 1)
 [node name="PowerUp" type="Node2D" parent="."]
 script = ExtResource("7_power_up")
 
+[node name="Glow" type="Polygon2D" parent="PowerUp"]
+
 [node name="Body" type="Polygon2D" parent="PowerUp"]
 
 [node name="Core" type="Polygon2D" parent="PowerUp"]
 
-[node name="Symbol" type="Label" parent="PowerUp"]
-offset_left = -36.0
-offset_top = -36.0
-offset_right = 36.0
-offset_bottom = 36.0
-mouse_filter = 2
-text = "+"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="Frame" type="Line2D" parent="PowerUp"]
+closed = true
+
+[node name="Icon" type="Node2D" parent="PowerUp"]
+script = ExtResource("8_power_up_symbol")
 
 [node name="SparkEffects" type="Node2D" parent="."]
 script = ExtResource("5_spark_effects")
