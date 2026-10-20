@@ -121,7 +121,15 @@ func test_hud_information_tracks_available_and_held_states() -> void:
 	power_up.collect(false)
 	var held_info: Dictionary = power_up.get_hud_info(7)
 	assert_eq(held_info["title"], "Raquete reduzida")
+	assert_true(str(held_info["detail"]).contains("Magenta Volt"))
 	assert_eq(held_info["progress"], 1.0)
+
+	power_up.reset_for_match(FIELD_SIZE)
+	power_up.appear(FIELD_SIZE)
+	power_up.effect_id = "half_size"
+	power_up.collect(true)
+	var left_held_info: Dictionary = power_up.get_hud_info(7)
+	assert_true(str(left_held_info["detail"]).contains("Cyan Circuit"))
 
 func test_resizing_field_keeps_available_item_inside_play_area() -> void:
 	power_up.appear(FIELD_SIZE)

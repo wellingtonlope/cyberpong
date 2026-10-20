@@ -22,8 +22,8 @@ func test_debug_hud_displays_speed_and_per_ai_rebound_counts() -> void:
 
 	assert_true(debug_hud._info_label.text.contains("Velocidade: 1235 px/s"))
 	assert_true(debug_hud._info_label.text.contains("Rebatidas totais: 3"))
-	assert_true(debug_hud._info_label.text.contains("IA Ciano: 2"))
-	assert_true(debug_hud._info_label.text.contains("IA Magenta: 1"))
+	assert_true(debug_hud._info_label.text.contains("Cyan Circuit: 2"))
+	assert_true(debug_hud._info_label.text.contains("Magenta Volt: 1"))
 
 func test_reset_clears_counts_but_preserves_current_speed() -> void:
 	debug_hud.set_ball_speed(1400.0)
@@ -33,5 +33,5 @@ func test_reset_clears_counts_but_preserves_current_speed() -> void:
 
 	assert_true(debug_hud._info_label.text.contains("Velocidade: 1400 px/s"))
 	assert_true(debug_hud._info_label.text.contains("Rebatidas totais: 0"))
-	assert_true(debug_hud._info_label.text.contains("IA Ciano: 0"))
-	assert_true(debug_hud._info_label.text.contains("IA Magenta: 0"))
+	assert_true(debug_hud._info_label.text.contains("Cyan Circuit: 0"))
+	assert_true(debug_hud._info_label.text.contains("Magenta Volt: 0"))

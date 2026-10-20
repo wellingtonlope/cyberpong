@@ -1,6 +1,6 @@
 # Pong Simples
 
-Um jogo de Pong 2D feito em Godot 4 e GDScript. Duas IAs disputam automaticamente em uma arena neon: a raquete esquerda é ciano e a direita é magenta. A partida termina quando uma delas alcança três pontos, o equivalente a uma melhor de cinco.
+Um jogo de Pong 2D feito em Godot 4 e GDScript. Duas IAs disputam automaticamente em uma arena neon: Cyan Circuit joga à esquerda em ciano, e Magenta Volt joga à direita em magenta. A partida termina quando uma delas alcança três pontos, o equivalente a uma melhor de cinco.
 
 ## Como jogar
 
@@ -92,7 +92,7 @@ Complemente a suíte com uma verificação manual no Godot para o que depende de
 - `main.gd` conecta os sinais da bola, atualiza as entidades, conta as rebatidas e reinicia o placar. A escala visual e os parâmetros gerais ficam no início desse script.
 - `ball.gd` implementa o movimento e as colisões por código, sem nós de física. A aceleração normal aumenta a velocidade em 10% a cada segundo rebatimento, até 3.000 px/s; Rebote potente aumenta 18% em cada rebatida da raquete afetada e volta a 3.000 px/s quando a raquete adversária rebate. Freio faz a dona rebater na velocidade de referência e a adversária devolver a bola 8% mais lenta. O primeiro saque de uma partida começa em 1.140 px/s; saques após pontos começam em 1.500 px/s e reiniciam a contagem de rebatimentos do rally. A velocidade é comunicada pelo sinal `speed_changed` no saque e sempre que muda, inclusive pelos power-ups.
 - `power_up.gd` mantém os efeitos em `EFFECTS`, controla a janela de cinco rebatidas e a duração configurável em `active_duration_hits` (padrão: 10 rebatidas totais). Defesa extra tem uma carga e duração própria de até 20 rebatidas. Freio na bola e Rebote potente também têm cinco usos nos rebatimentos da raquete afetada. `main.gd` sorteia intervalos de 5 a 15 rebatidas totais para as aparições. O tipo é sorteado uniformemente a partir de `EFFECT_IDS`. Para adicionar um efeito, inclua sua configuração e seu identificador em `EFFECTS` e `EFFECT_IDS`.
-- `arena.gd` exibe na barra superior o total de rebatidas e o estado do power-up; a área de jogo começa abaixo dessa barra.
+- `arena.gd` desenha o letreiro CYBERPONG, o placar com emblemas e nomes de Cyan Circuit e Magenta Volt, a apresentação da equipe vencedora e o HUD superior; a área de jogo começa abaixo dessa barra.
 - `debug_hud.gd` mostra no canto inferior esquerdo a velocidade e as rebatidas por IA; F3 alterna sua visibilidade.
 - `paddle.gd` calcula onde a bola deve chegar, com atraso de reação, zona de tolerância e velocidade limitada para que a IA possa errar. Quando há um power-up disponível, a IA tenta direcionar a bola ao efeito positivo ou afastá-la do negativo, considerando as reflexões nas bordas. Também atualiza dimensão, colisão e destaque visual quando recebe um efeito.
 - `arena.gd` desenha a arena e a interface diretamente, sem cena de interface separada.

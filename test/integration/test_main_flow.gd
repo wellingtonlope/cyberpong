@@ -36,7 +36,7 @@ func test_three_points_end_match_and_enter_starts_new_match() -> void:
 
 	assert_true(game.game_over)
 	assert_eq(game.right_score, 3)
-	assert_eq(game.arena.winner_name, "IA MAGENTA")
+	assert_eq(game.arena.winner_name, "Magenta Volt")
 
 	var event := InputEventKey.new()
 	event.pressed = true
@@ -54,7 +54,7 @@ func test_left_side_can_also_win_at_three_points() -> void:
 
 	assert_true(game.game_over)
 	assert_eq(game.left_score, 3)
-	assert_eq(game.arena.winner_name, "IA CIANO")
+	assert_eq(game.arena.winner_name, "Cyan Circuit")
 
 func test_new_match_resets_rebound_counts_and_debug_hud() -> void:
 	game.ball.paddle_hit.emit(true, Vector2(100.0, 300.0), 1.0, 1.0, false)

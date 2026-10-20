@@ -155,7 +155,7 @@ func _on_ball_missed(left_side: bool) -> void:
 	var winning_score := left_score if scorer_is_left else right_score
 	if winning_score >= WINNING_SCORE:
 		game_over = true
-		var winner_name := "IA CIANO" if scorer_is_left else "IA MAGENTA"
+		var winner_name := "Cyan Circuit" if scorer_is_left else "Magenta Volt"
 		arena.set_winner(winner_name)
 		return
 

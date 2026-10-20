@@ -61,7 +61,7 @@ func _refresh_text() -> void:
 	if not is_instance_valid(_info_label):
 		return
 	var total_rebounds := _left_rebounds + _right_rebounds
-	_info_label.text = "DEBUG HUD\nVelocidade: %d px/s\nRebatidas totais: %d\nIA Ciano: %d   IA Magenta: %d" % [
+	_info_label.text = "DEBUG HUD\nVelocidade: %d px/s\nRebatidas totais: %d\nCyan Circuit: %d   Magenta Volt: %d" % [
 		roundi(_ball_speed),
 		total_rebounds,
 		_left_rebounds,

@@ -179,7 +179,7 @@ func get_hud_info(hits_until_next_appearance: int) -> Dictionary:
 			}
 		Status.HELD:
 			var effect: Dictionary = EFFECTS[effect_id]
-			var owner_name := "IA ciano" if owner_is_left else "IA magenta"
+			var owner_name := "Cyan Circuit" if owner_is_left else "Magenta Volt"
 			var detail := "%s · %d rebatidas restantes" % [owner_name, hits_remaining]
 			if effect_id == "extra_defense":
 				detail = "%s · 1 defesa · %d rebatidas restantes" % [owner_name, hits_remaining]

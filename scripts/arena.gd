@@ -13,6 +13,9 @@ const GOAL_LINE_COLOR := Color(1.0, 0.08, 0.12, 0.9)
 const SCORE_LEFT_PANEL := Color(0.035, 0.22, 0.26, 0.72)
 const SCORE_RIGHT_PANEL := Color(0.28, 0.035, 0.18, 0.72)
 const COUNT_BADGE_COLOR := Color(0.08, 0.98, 1.0, 0.12)
+const GAME_TITLE := "CYBERPONG"
+const LEFT_TEAM_NAME := "Cyan Circuit"
+const RIGHT_TEAM_NAME := "Magenta Volt"
 
 var game_scale := 3.0
 var hud_bar_height := 180.0
@@ -21,6 +24,7 @@ var game_over := false
 var left_score := 0
 var right_score := 0
 var winner_name := ""
+var winner_is_left := true
 var total_rebounds := 0
 var power_up_hud_title := ""
 var power_up_hud_detail := ""
@@ -56,6 +60,7 @@ func set_match_hud(rebound_count: int, power_up_info: Dictionary) -> void:
 
 func set_winner(name: String) -> void:
 	winner_name = name
+	winner_is_left = name.to_lower() == LEFT_TEAM_NAME.to_lower()
 	game_over = true
 	queue_redraw()
 
@@ -77,17 +82,79 @@ func _draw() -> void:
 	_draw_goal_lines(size)
 
 	var font := ThemeDB.fallback_font
+	_draw_game_logo(font)
 	_draw_rebound_badge(font)
 	_draw_score(font, size)
 	_draw_power_up_status(font, size)
 
 	if game_over:
-		var message_width := 460.0 * game_scale
-		var message_x := (size.x - message_width) * 0.5
-		draw_rect(Rect2(message_x - 24.0 * game_scale, size.y * 0.5 - 80.0 * game_scale, message_width + 48.0 * game_scale, 160.0 * game_scale), Color(0.02, 0.035, 0.06, 0.94))
-		draw_string(font, Vector2(message_x, size.y * 0.5 - 28.0 * game_scale), "%s VENCEU!" % winner_name, HORIZONTAL_ALIGNMENT_CENTER, message_width, 34 * int(game_scale), TEXT_COLOR)
-		draw_string(font, Vector2(message_x, size.y * 0.5 + 5.0 * game_scale), "Fim de jogo: melhor de 5", HORIZONTAL_ALIGNMENT_CENTER, message_width, 18 * int(game_scale), MUTED_TEXT_COLOR)
-		draw_string(font, Vector2(message_x, size.y * 0.5 + 40.0 * game_scale), "Pressione Enter para nova partida", HORIZONTAL_ALIGNMENT_CENTER, message_width, 16 * int(game_scale), TEXT_COLOR)
+		_draw_winner_panel(font, size)
+
+func _draw_game_logo(font: Font) -> void:
+	var center := Vector2(107.0 * game_scale, hud_bar_height * 0.5)
+	var frame_size := Vector2(26.0, 22.0) * game_scale
+	var frame := Rect2(center - frame_size * 0.5, frame_size)
+	draw_rect(frame, Color(FIELD_COLOR, 0.9))
+	draw_rect(frame, Color(DIVIDER_COLOR, 0.9), false, 1.5 * game_scale)
+	draw_rect(
+		Rect2(center + Vector2(-8.0, -5.0) * game_scale, Vector2(2.5, 10.0) * game_scale),
+		LEFT_COLOR
+	)
+	draw_rect(
+		Rect2(center + Vector2(5.5, -5.0) * game_scale, Vector2(2.5, 10.0) * game_scale),
+		RIGHT_COLOR
+	)
+	var ball_mark := PackedVector2Array([
+		center + Vector2(0.0, -4.0) * game_scale,
+		center + Vector2(4.0, 0.0) * game_scale,
+		center + Vector2(0.0, 4.0) * game_scale,
+		center + Vector2(-4.0, 0.0) * game_scale,
+	])
+	draw_colored_polygon(ball_mark, Color(1.0, 0.92, 0.12))
+
+	var title_position := Vector2(125.0 * game_scale, center.y + 6.0 * game_scale)
+	draw_string(font, title_position, GAME_TITLE, HORIZONTAL_ALIGNMENT_LEFT, 150.0 * game_scale, 13 * int(game_scale), TEXT_COLOR)
+	draw_line(
+		Vector2(title_position.x, center.y + 14.0 * game_scale),
+		Vector2(title_position.x + 45.0 * game_scale, center.y + 14.0 * game_scale),
+		LEFT_COLOR,
+		1.5 * game_scale,
+		true
+	)
+	draw_line(
+		Vector2(title_position.x + 49.0 * game_scale, center.y + 14.0 * game_scale),
+		Vector2(title_position.x + 72.0 * game_scale, center.y + 14.0 * game_scale),
+		RIGHT_COLOR,
+		1.5 * game_scale,
+		true
+	)
+
+func _draw_winner_panel(font: Font, size: Vector2) -> void:
+	var panel_size := Vector2(500.0, 160.0) * game_scale
+	var panel := Rect2((size - panel_size) * 0.5, panel_size)
+	var team_color := LEFT_COLOR if winner_is_left else RIGHT_COLOR
+	draw_rect(panel, Color(0.02, 0.035, 0.06, 0.96))
+	draw_rect(panel, Color(team_color, 0.65), false, 2.0 * game_scale)
+
+	var title_font_size := 30 * int(game_scale)
+	var title_text := "%s VENCEU!" % winner_name.to_upper()
+	var title_width := font.get_string_size(title_text, HORIZONTAL_ALIGNMENT_LEFT, -1, title_font_size).x
+	var emblem_radius := 11.0 * game_scale
+	var group_width := emblem_radius * 2.0 + 12.0 * game_scale + title_width
+	var group_left := size.x * 0.5 - group_width * 0.5
+	var title_y := size.y * 0.5 - 24.0 * game_scale
+	_draw_team_emblem(Vector2(group_left + emblem_radius, title_y - 10.0 * game_scale), team_color, winner_is_left)
+	draw_string(
+		font,
+		Vector2(group_left + emblem_radius * 2.0 + 12.0 * game_scale, title_y),
+		title_text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		title_width + 8.0 * game_scale,
+		title_font_size,
+		TEXT_COLOR
+	)
+	draw_string(font, Vector2(panel.position.x, size.y * 0.5 + 10.0 * game_scale), "Fim de jogo: melhor de 5", HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, 18 * int(game_scale), MUTED_TEXT_COLOR)
+	draw_string(font, Vector2(panel.position.x, size.y * 0.5 + 43.0 * game_scale), "Pressione Enter para nova partida", HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, 16 * int(game_scale), TEXT_COLOR)
 
 func _draw_goal_lines(size: Vector2) -> void:
 	var field_margin := 12.0 * game_scale
@@ -127,27 +194,80 @@ func _draw_rebound_badge(font: Font) -> void:
 	)
 
 func _draw_score(font: Font, size: Vector2) -> void:
-	var card_size := Vector2(52.0 * game_scale, 50.0 * game_scale)
+	var card_size := Vector2(100.0 * game_scale, 52.0 * game_scale)
 	var card_y := 5.0 * game_scale
 	var center_x := size.x * 0.5
-	var left_card := Rect2(Vector2(center_x - 58.0 * game_scale - card_size.x, card_y), card_size)
-	var right_card := Rect2(Vector2(center_x + 58.0 * game_scale, card_y), card_size)
+	var card_gap := 60.0 * game_scale
+	var left_card := Rect2(Vector2(center_x - card_size.x - card_gap * 0.5, card_y), card_size)
+	var right_card := Rect2(Vector2(center_x + card_gap * 0.5, card_y), card_size)
 	draw_rect(left_card, SCORE_LEFT_PANEL)
 	draw_rect(left_card, Color(LEFT_COLOR, 0.8), false, 2.0 * game_scale)
 	draw_rect(right_card, SCORE_RIGHT_PANEL)
 	draw_rect(right_card, Color(RIGHT_COLOR, 0.8), false, 2.0 * game_scale)
-	draw_string(font, left_card.position + Vector2(0.0, 14.0 * game_scale), "CIANO", HORIZONTAL_ALIGNMENT_CENTER, card_size.x, 9 * int(game_scale), LEFT_COLOR)
-	draw_string(font, right_card.position + Vector2(0.0, 14.0 * game_scale), "MAGENTA", HORIZONTAL_ALIGNMENT_CENTER, card_size.x, 9 * int(game_scale), RIGHT_COLOR)
-	draw_string(font, left_card.position + Vector2(0.0, 44.0 * game_scale), str(left_score), HORIZONTAL_ALIGNMENT_CENTER, card_size.x, 24 * int(game_scale), TEXT_COLOR)
-	draw_string(font, right_card.position + Vector2(0.0, 44.0 * game_scale), str(right_score), HORIZONTAL_ALIGNMENT_CENTER, card_size.x, 24 * int(game_scale), TEXT_COLOR)
-	draw_string(font, Vector2(center_x - 20.0 * game_scale, 36.0 * game_scale), ":", HORIZONTAL_ALIGNMENT_CENTER, 40.0 * game_scale, 22 * int(game_scale), MUTED_TEXT_COLOR)
+	draw_rect(Rect2(left_card.position, Vector2(3.0 * game_scale, card_size.y)), LEFT_COLOR)
+	draw_rect(Rect2(right_card.position, Vector2(3.0 * game_scale, card_size.y)), RIGHT_COLOR)
+	_draw_team_score(font, left_card, LEFT_TEAM_NAME, left_score, LEFT_COLOR, true)
+	_draw_team_score(font, right_card, RIGHT_TEAM_NAME, right_score, RIGHT_COLOR, false)
+	draw_string(font, Vector2(center_x - card_gap * 0.5, 39.0 * game_scale), ":", HORIZONTAL_ALIGNMENT_CENTER, card_gap, 22 * int(game_scale), MUTED_TEXT_COLOR)
+
+func _draw_team_score(font: Font, card: Rect2, team_name: String, score: int, team_color: Color, is_left: bool) -> void:
+	var emblem_center := card.position + Vector2(20.0, 25.0) * game_scale
+	_draw_team_emblem(emblem_center, team_color, is_left)
+	draw_string(
+		font,
+		card.position + Vector2(34.0, 19.0) * game_scale,
+		team_name,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		card.size.x - 37.0 * game_scale,
+		7 * int(game_scale),
+		team_color
+	)
+	draw_string(
+		font,
+		card.position + Vector2(0.0, 47.0) * game_scale,
+		str(score),
+		HORIZONTAL_ALIGNMENT_CENTER,
+		card.size.x,
+		24 * int(game_scale),
+		TEXT_COLOR
+	)
+
+func _draw_team_emblem(center: Vector2, team_color: Color, is_left: bool) -> void:
+	var emblem_scale := game_scale
+	if is_left:
+		var hexagon := PackedVector2Array()
+		for point_index in range(7):
+			var angle := -PI * 0.5 + TAU * float(point_index % 6) / 6.0
+			hexagon.append(center + Vector2(cos(angle), sin(angle)) * 10.0 * emblem_scale)
+		draw_polyline(hexagon, team_color, 1.8 * emblem_scale, true)
+		draw_line(center, center + Vector2(5.0, -5.0) * emblem_scale, team_color, 1.4 * emblem_scale, true)
+		draw_line(center, center + Vector2(-5.0, 5.0) * emblem_scale, team_color, 1.4 * emblem_scale, true)
+		draw_circle(center, 2.0 * emblem_scale, TEXT_COLOR)
+	else:
+		var diamond := PackedVector2Array([
+			center + Vector2(0.0, -11.0) * emblem_scale,
+			center + Vector2(11.0, 0.0) * emblem_scale,
+			center + Vector2(0.0, 11.0) * emblem_scale,
+			center + Vector2(-11.0, 0.0) * emblem_scale,
+			center + Vector2(0.0, -11.0) * emblem_scale,
+		])
+		draw_polyline(diamond, team_color, 1.8 * emblem_scale, true)
+		var bolt := PackedVector2Array([
+			center + Vector2(1.0, -7.0) * emblem_scale,
+			center + Vector2(-4.0, 1.0) * emblem_scale,
+			center + Vector2(-1.0, 1.0) * emblem_scale,
+			center + Vector2(-2.0, 7.0) * emblem_scale,
+			center + Vector2(4.0, -1.0) * emblem_scale,
+			center + Vector2(1.0, -1.0) * emblem_scale,
+		])
+		draw_colored_polygon(bolt, team_color)
 
 func _draw_power_up_status(font: Font, size: Vector2) -> void:
 	if power_up_hud_title.is_empty():
 		return
 	var panel := Rect2(
-		Vector2(size.x * 0.65, 8.0 * game_scale),
-		Vector2(size.x * 0.33, hud_bar_height - 16.0 * game_scale)
+		Vector2(size.x * 0.66, 8.0 * game_scale),
+		Vector2(size.x * 0.32, hud_bar_height - 16.0 * game_scale)
 	)
 	draw_rect(panel, Color(0.035, 0.055, 0.09, 0.88))
 	draw_rect(panel, Color(power_up_hud_accent, 0.48), false, 1.5 * game_scale)
