@@ -12,6 +12,7 @@ const WINNING_SCORE := 3
 const POWER_UP_MIN_SPAWN_INTERVAL := 5
 const POWER_UP_MAX_SPAWN_INTERVAL := 15
 const HUD_BAR_HEIGHT := 60.0 * GAME_SCALE
+const CREDITS_SCENE := preload("res://scenes/credits_screen.tscn")
 const GAME_MENU_SCENE := preload("res://scenes/game_menu.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 
@@ -39,6 +40,7 @@ var _random := RandomNumberGenerator.new()
 var _game_mode: int = GameMode.AI_VS_AI
 var _menu_shown := false
 var _pause_menu: Control = null
+var _credits: Control = null
 
 func _ready() -> void:
 	_random.randomize()
@@ -53,7 +55,29 @@ func _ready() -> void:
 	ball.power_up_collected.connect(power_up.collect)
 	power_up.effect_changed.connect(_on_power_up_effect_changed)
 	power_up.status_changed.connect(_refresh_match_hud)
+	_show_credits()
+
+func _show_credits() -> void:
+	_menu_shown = true
+	var credits = CREDITS_SCENE.instantiate()
+	credits.name = "CreditsScreen"
+	add_child(credits)
+	credits.connect("finished", _on_credits_finished)
+	_credits = credits
+	get_tree().paused = true
+
+func _on_credits_finished() -> void:
+	_dismiss_credits()
 	_show_menu()
+
+func _dismiss_credits() -> void:
+	if not is_instance_valid(_credits):
+		_credits = null
+		return
+	var credits := _credits
+	_credits = null
+	remove_child(credits)
+	credits.queue_free()
 
 func _show_menu() -> void:
 	var previous_menu := get_node_or_null("GameMenu")
@@ -123,6 +147,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
 		return
 	if not event.pressed or event.echo:
+		return
+	if _credits != null:
 		return
 	if event.keycode == KEY_F3:
 		debug_hud.toggle()

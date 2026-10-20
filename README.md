@@ -4,6 +4,7 @@ CyberPong é um jogo de Pong 2D feito em Godot 4 e GDScript. Duas equipes disput
 
 ## Como jogar
 
+- Ao abrir o jogo, uma tela de créditos mostra o ícone e o nome **Moron Souls Productions** sobre fundo preto. Ela avança sozinha em poucos segundos e pode ser pulada com qualquer tecla ou clique para abrir o menu.
 - No menu inicial, escolha **Jogador VS Jogador**, **Jogador VS AI**, **AI VS AI** ou **Sair**, que fecha o jogo. Use **↑/↓** e **Enter**, ou clique em um cartão.
 - No modo Jogador VS AI, o lado esquerdo é humano e o direito é controlado pela IA.
 - No modo Jogador VS Jogador, o lado esquerdo usa **W/S** ou as setas **↑/↓**, e o direito usa as setas **↑/↓**.
@@ -14,6 +15,8 @@ CyberPong é um jogo de Pong 2D feito em Godot 4 e GDScript. Duas equipes disput
 - Pressione **F3** para mostrar ou ocultar o HUD de debug.
 
 As IAs acompanham a trajetória da bola, mas têm velocidade limitada e uma pequena zona de tolerância. Quando há um power-up disponível, a IA tenta alcançar os efeitos benéficos — raquete dobrada, freio na bola, rebote potente e defesa extra — e evitar a raquete reduzida, considerando as quicadas nas bordas. O HUD de jogo fica em uma barra reservada na parte superior e mostra o total de rebatidas e o estado do power-up, incluindo usos e duração restantes. O placar usa a fonte sans-serif de fallback do Godot, com nomes de equipe e três quadrados de progresso por lado, preenchidos conforme a pontuação; o painel do power-up traz nome, equipe beneficiada, usos e rebatidas restantes. A interface escala com a largura da janela para continuar legível e sem sobreposição. Cada saque é anunciado por um aviso breve com o emblema e a cor da equipe que serve; ao pontuar, a lateral e a linha de gol da equipe acendem por um instante. A tela de vitória escurece a arena e apresenta o vencedor com emblema, nome, placar final e a instrução de tecla para iniciar outra partida. A bola e as raquetes ficam limitadas à arena abaixo dessa barra. O HUD de debug começa oculto; use **F3** para alternar sua visibilidade. Quando aberto, fica no canto inferior esquerdo e mostra a velocidade atual da bola e as rebatidas de cada IA. Os contadores de rebatidas persistem entre pontos e zeram quando uma nova partida começa. O primeiro rally começa a 1.140 px/s para dar tempo de entender o jogo. Depois de cada ponto, o próximo rally começa a 1.500 px/s. A aceleração normal aumenta 10% a cada dois rebatimentos até 3.000 px/s; Rebote potente aumenta a velocidade em cada rebatida do dono, podendo passar desse limite, mas sem ultrapassar 3.540 px/s (3.000 × 1,18). Na rebatida adversária, ela volta a 3.000 px/s. Há efeitos de deformação nas colisões, uma trilha curta que acompanha a velocidade da bola, um anel de impacto e pequenas faíscas coloridas com física quando a bola atinge uma raquete; as faíscas quicam com amortecimento nas bordas da arena. As raquetes têm contorno, faixa interna e brilho em camadas nas cores de cada equipe, e o destaque do power-up troca essas camadas para a cor do efeito ativo.
+
+Antes do menu, o jogo exibe a tela de créditos da **Moron Souls Productions**: fundo preto integral, o avatar do estúdio centralizado acima do nome em branco, com fade de entrada e saída. A tela aparece somente na abertura do jogo; voltar do menu de pausa para o menu principal não a repete.
 
 O menu inicial é uma tela de transmissão sobre a arena escurecida: o letreiro geométrico do HUD reaparece em escala maior, Cyan Circuit e Magenta Volt emolduram a seleção com seus emblemas e o losango amarelo da bola funciona como cursor. Os três modos de jogo e a opção **Sair** aparecem em cartões angulares com foco neon, realce em degradê ciano/magenta e transição rápida ao confirmar; **Sair** encerra o jogo. O menu usa a fonte de fallback do Godot, escala com a janela e não depende de arquivos de arte.
 
@@ -35,15 +38,16 @@ O projeto abre a cena principal `main.tscn` em tela cheia. O renderer configurad
 
 ## Recursos visuais e licenças
 
-O projeto não usa arquivos externos de arte, fonte, ícone ou áudio. Os elementos visuais são gerados em tempo de execução com recursos nativos do Godot:
+O jogo usa um único arquivo de imagem, o avatar exibido na tela de créditos. Os demais elementos visuais são gerados em tempo de execução com recursos nativos do Godot:
 
 | Recurso | Origem | Licença |
 | --- | --- | --- |
-| Arena, HUD, placar, emblemas, power-ups e menu | Código do projeto com `CanvasItem._draw()`, `Polygon2D`, `Line2D` e controles nativos | Código próprio; nenhum arquivo de mídia importado |
+| Avatar da tela de créditos (`assets/icons/moronsouls_avatar.png`) | Avatar do canal do YouTube [@moronsouls4405](https://www.youtube.com/@moronsouls4405), recortado sem o fundo | Arte fornecida pelo autor do projeto; confirmar a licença antes de redistribuir |
+| Arena, HUD, placar, emblemas, power-ups, menus e tela de créditos | Código do projeto com `CanvasItem._draw()`, `Polygon2D`, `Line2D`, `ColorRect`, `TextureRect` e controles nativos | Código próprio |
 | Tipografia | `ThemeDB.fallback_font`, fonte sans-serif embutida no Godot | Conforme a distribuição do Godot; não há fonte própria no repositório |
 | GUT 9.7.1 | `addons/gut/`, usado somente em desenvolvimento e testes | MIT |
 
-Como não há recursos importados, não existe uma pasta `assets/` neste momento. Se um arquivo externo for adicionado, coloque-o em `assets/fonts/`, `assets/icons/` ou `assets/audio/`, conforme o tipo, e registre aqui e em `guia-visual.md` a origem, a licença e qualquer atribuição exigida. O teste `test/integration/test_scene_resources.gd` verifica que as cenas carregam suas dependências e que a fonte de fallback está disponível.
+O ícone fica em `assets/icons/` e pode ser substituído mantendo o caminho referenciado por `scenes/credits_screen.tscn`; a tela mantém o fundo preto e o texto branco independentemente da imagem. Se outro arquivo externo for adicionado, coloque-o em `assets/fonts/`, `assets/icons/` ou `assets/audio/`, conforme o tipo, e registre aqui e em `guia-visual.md` a origem, a licença e qualquer atribuição exigida. O teste `test/integration/test_scene_resources.gd` verifica que as cenas carregam suas dependências, incluindo a tela de créditos, e que a fonte de fallback está disponível.
 
 ## Testes
 
@@ -71,8 +75,10 @@ O GUT mostra no terminal a quantidade de testes aprovados, falhos e ignorados, j
 - `test/unit/test_paddle.gd`: posição e colisão, previsão com reflexão, movimento limitado, zona morta, dimensão dos efeitos, camadas visuais da raquete e decisões de mira.
 - `test/unit/test_power_up.gd`: aparecimento, janela de cinco rebatidas, coleta e proprietário, duração padrão/configurável, duração de 20 rebatidas da Defesa extra, cargas por raquete, sinais, estado do HUD, cores e símbolo do item, pulso disponível e redimensionamento.
 - `test/unit/test_debug_hud.gd` e `test/unit/test_spark_effects.gd`: visibilidade, velocidade e contagens do HUD de debug; quantidade, expiração e quique das partículas, além do anel de impacto.
+- `test/unit/test_credits_screen.gd`: nome do estúdio, fundo preto cobrindo a tela, ícone com textura, ordem ícone acima do nome, centralização e encaixe em diferentes janelas, escala limitada, fade de entrada/permanência/saída, emissão única de `finished`, pulo por tecla ou clique e teclas soltas/eco ignoradas.
 - `test/unit/test_game_menu.gd`: layout do menu em diferentes tamanhos de janela, escala, cartões de modo e Sair, ciclo de foco, cantos do destaque, cursor da bola, seleção única, transição de confirmação, início da partida pelo botão e pedido de saída após a transição.
 - `test/unit/test_pause_menu.gd`: cartões de continuar e menu principal, layout responsivo, ciclo de foco, transição de confirmação, retomada por ESC e manutenção da pausa ao voltar ao menu principal.
+- `test/integration/test_credits_flow.gd`: abertura do jogo pela tela de créditos em vez do menu, entrega ao menu após o fim dos créditos, partida iniciada pelo menu, teclas bloqueadas durante os créditos e ausência de repetição ao voltar da pausa para o menu principal.
 - `test/integration/test_menu_flow.gd`: menu pausando a partida, seleção por botão, retomada do jogo, aplicação dos modos PvP e AI vs AI, estado inicial do rally e conexão do cartão Sair com o encerramento do jogo.
 - `test/integration/test_pause_flow.gd`: abertura da pausa por ESC/P, congelamento da bola e das raquetes, retomada sem alterar posição, direção ou velocidade, e restauração dos valores padrão ao voltar ao menu principal.
 - `test/integration/test_main_flow.gd`: cena e caminhos dos nós, conexões de sinais, velocidades de saque, placar e vitória de ambos os lados, aviso de saque, transição de ponto, revelação da tela de vitória, persistência e reinício de contagens, aplicação de efeitos, Defesa extra contando como rebatida, aparecimento atrasado, intervalo de spawn, teclas Enter/F3, escala responsiva do HUD e limites após redimensionamento.
@@ -94,18 +100,23 @@ Complemente a suíte com uma verificação manual no Godot para o que depende de
 ├── melhoria.md            # Plano de melhorias visuais
 ├── project.godot          # Configuração do projeto, janela e cena de entrada
 ├── main.tscn               # Cena principal e composição do jogo
-├── main.gd                 # Inicialização, atualização e regras da partida
+├── main.gd                 # Inicialização, créditos, menus e regras da partida
 ├── main.gd.uid             # Identificador de recurso do script principal
 ├── addons/
 │   └── gut/                # Framework gratuito de testes, usado no desenvolvimento
+├── assets/
+│   └── icons/
+│       └── moronsouls_avatar.png # Ícone exibido na tela de créditos
 ├── scenes/
 │   ├── ball.tscn           # Nó visual da bola
+│   ├── credits_screen.tscn # Tela de créditos com fundo preto, ícone e nome do estúdio
 │   ├── game_menu.tscn      # Tela de abertura com cartões de modo e foco por teclado
 │   ├── pause_menu.tscn     # Menu de pausa com continuar e voltar ao menu principal
 │   └── paddle.tscn         # Nó visual reutilizado pelas duas raquetes
 ├── scripts/
 │   ├── arena.gd            # Fundo, linha central, placar, HUD e tela de vitória
 │   ├── ball.gd             # Movimento, saques, colisões e velocidade da bola
+│   ├── credits_screen.gd   # Fade, layout e saída da tela de créditos
 │   ├── paddle.gd           # Movimento, controle humano, previsão da IA e animação das raquetes
 │   ├── menu_screen.gd      # Layout, desenho e foco compartilhados pelos menus
 │   ├── game_menu.gd        # Cartões de modo sobre o template visual do menu
@@ -121,8 +132,9 @@ Complemente a suíte com uma verificação manual no Godot para o que depende de
 
 ## Regras e implementação
 
+- `credits_screen.gd` desenha a tela de créditos sobre um `ColorRect` preto que cobre toda a viewport, com o `TextureRect` do avatar acima do nome **Moron Souls Productions** em branco. O layout usa a mesma escala responsiva dos menus, faz fade de entrada, permanência e saída e emite `finished` uma única vez. Qualquer tecla pressionada ou clique pula para o fade de saída; a cena roda com `PROCESS_MODE_ALWAYS` para animar durante a pausa da árvore.
 - `game_menu.gd` desenha a tela de abertura como uma transmissão sobre a arena escurecida, com letreiro, emblemas, cartões angulares, cursor em forma de bola e foco neon; mantém o layout responsivo, a navegação por ↑/↓/Enter/mouse e pausa a partida enquanto o menu está aberto. O cartão **Sair** emite `quit_requested`, que `main.gd` conecta ao encerramento do jogo. `menu_screen.gd` concentra layout, desenho e foco compartilhados; `pause_menu.gd` reutiliza esse template com os cartões Continuar e Menu principal, congela a árvore durante a pausa e só altera o estado da partida ao confirmar uma opção.
-- `main.gd` abre o menu, aplica o modo escolhido, conecta os sinais da bola, atualiza as entidades, conta as rebatidas e reinicia o placar. Ele também abre a pausa por ESC/P, retoma sem tocar em bola ou raquetes e, ao voltar ao menu principal, reinicia placar, rebatidas, power-up, velocidade e tamanho das raquetes antes de recriar o menu inicial.
+- `main.gd` abre os créditos na inicialização, substitui-os pelo menu ao receber `finished` e aplica o modo escolhido. Ele conecta os sinais da bola, atualiza as entidades, conta as rebatidas e reinicia o placar, além de bloquear as teclas da partida enquanto os créditos estão na tela. Também abre a pausa por ESC/P, retoma sem tocar em bola ou raquetes e, ao voltar ao menu principal, reinicia placar, rebatidas, power-up, velocidade e tamanho das raquetes antes de recriar o menu inicial, sem repetir os créditos.
 - `ball.gd` implementa o movimento e as colisões por código, sem nós de física. A aceleração normal aumenta a velocidade em 10% a cada segundo rebatimento, até 3.000 px/s; Rebote potente aumenta 18% em cada rebatida da raquete afetada, limitando a velocidade a 3.540 px/s (3.000 × 1,18), e volta a 3.000 px/s quando a raquete adversária rebate. Freio faz a dona rebater na velocidade de referência e a adversária devolver a bola 8% mais lenta. O primeiro saque de uma partida começa em 1.140 px/s; saques após pontos começam em 1.500 px/s e reiniciam a contagem de rebatimentos do rally. A velocidade é comunicada pelo sinal `speed_changed` no saque e sempre que muda, inclusive pelos power-ups.
 - `power_up.gd` mantém os efeitos em `EFFECTS`, cada um com sua duração própria em `duration_hits` (raquete dobrada 6, raquete reduzida 5, Freio na bola e Rebote potente 8, Defesa extra 14), e `active_duration_hits` (padrão: 10) serve de reserva para efeitos sem `duration_hits`. Defesa extra tem uma carga e termina ao salvar uma falha. Freio na bola e Rebote potente também têm quatro usos nos rebatimentos da raquete afetada. `main.gd` sorteia intervalos de 5 a 15 rebatidas totais para as aparições. O tipo é sorteado uniformemente a partir de `EFFECT_IDS`. Para adicionar um efeito, inclua sua configuração e seu identificador em `EFFECTS` e `EFFECT_IDS`.
 - `arena.gd` desenha o campo em camadas (degradê central, vinheta e marcações discretas), a moldura recortada com cantos nas cores das equipes, as linhas de gol ciano e magenta, o letreiro CYBERPONG, o placar com emblemas, nomes de Cyan Circuit e Magenta Volt e pips de pontos, o aviso de saque, a transição de ponto, a apresentação da equipe vencedora e o HUD superior com escala responsiva, cujos textos do painel reduzem para caber em janelas menores; a área de jogo começa abaixo dessa barra. Ao pontuar, a lateral e a linha de gol da equipe acendem e o cartão recebe um destaque breve que desaparece sozinho ou ao iniciar uma nova partida. A tela de vitória tem entrada animada, placar final e uma tecla Enter desenhada para deixar clara a reinicialização.

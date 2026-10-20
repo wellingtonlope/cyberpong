@@ -50,6 +50,16 @@ Use a fonte sans-serif de fallback do Godot enquanto não houver necessidade de 
 
 Ordem de leitura: placar e bola; raquetes e limites da quadra; item e estado do power-up; detalhes do HUD. Mantenha o fundo e as marcações de campo discretos. O símbolo e a cor devem identificar cada lado rapidamente, e os dados do power-up devem continuar legíveis na barra superior. Bola, raquetes e item permanecem abaixo do HUD e dentro dos limites da arena.
 
+## Tela de créditos
+
+Antes da transmissão, a tela de créditos apresenta o estúdio sem competir com a arena:
+
+- Fundo preto integral (`#000000`), cobrindo toda a janela; nenhum elemento da arena deve aparecer atrás.
+- O avatar fica centralizado acima do nome, com largura/altura proporcionais à janela e sem moldura.
+- O nome **Moron Souls Productions** é escrito em branco puro, centralizado, com a fonte de fallback do Godot e uma linha de separação clara entre ícone e texto.
+- A entrada e a saída usam fade curto; a permanência deve dar tempo de ler o nome sem atrasar o acesso ao menu. Qualquer tecla ou clique encerra a tela.
+- Não adicione cartões, botões, emblemas das equipes ou o letreiro CYBERPONG a essa tela.
+
 ## Menu inicial
 
 A tela de abertura deve parecer parte da transmissão, não uma caixa de diálogo sobre o jogo. Use a arena escurecida como fundo, mantenha o letreiro geométrico e os emblemas das equipes e trate os modos como cartões de transmissão.
@@ -67,4 +77,4 @@ O menu de pausa reutiliza o mesmo template de transmissão do menu inicial, com 
 
 ## Recursos e licenças
 
-Não são necessários arquivos de arte, fontes ou ícones externos. Use os recursos nativos do Godot já adotados pelo projeto, como `Polygon2D`, `Label` e os métodos de desenho de `CanvasItem`. Assim, não há licenças externas ou créditos adicionais a registrar. Se um asset externo for adotado no futuro, registre neste guia sua origem, licença e atribuição exigida.
+O único arquivo de imagem é o avatar da tela de créditos, `assets/icons/moronsouls_avatar.png`, originado do canal do YouTube [@moronsouls4405](https://www.youtube.com/@moronsouls4405) e recortado sem o fundo. Registre neste guia a origem e a licença de qualquer novo asset externo. Para todo o restante, use os recursos nativos do Godot já adotados pelo projeto, como `Polygon2D`, `Label`, `ColorRect`, `TextureRect` e os métodos de desenho de `CanvasItem`. O ícone deve manter transparência nas bordas e pode ser substituído sem alterar o fundo preto ou o texto branco da tela.

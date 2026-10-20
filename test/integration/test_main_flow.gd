@@ -8,6 +8,10 @@ var game
 func before_each() -> void:
 	get_viewport().size = FIELD_SIZE
 	game = add_child_autofree(MAIN_SCENE.instantiate())
+	var credits = game.get_node_or_null("CreditsScreen")
+	assert_not_null(credits)
+	credits.skip()
+	credits._process(credits.SKIP_FADE_OUT_DURATION)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
 	menu._select(game.GameMode.AI_VS_AI)
