@@ -1,6 +1,6 @@
-# Pong Simples
+# CyberPong
 
-Um jogo de Pong 2D feito em Godot 4 e GDScript. Duas IAs disputam automaticamente em uma arena neon: Cyan Circuit joga à esquerda em ciano, e Magenta Volt joga à direita em magenta. A partida termina quando uma delas alcança três pontos, o equivalente a uma melhor de cinco.
+CyberPong é um jogo de Pong 2D feito em Godot 4 e GDScript. Duas IAs disputam automaticamente em uma arena neon: Cyan Circuit joga à esquerda em ciano, e Magenta Volt joga à direita em magenta. A partida termina quando uma delas alcança três pontos, o equivalente a uma melhor de cinco.
 
 ## Como jogar
 
