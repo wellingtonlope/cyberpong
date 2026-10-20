@@ -47,6 +47,20 @@ func test_power_up_updates_size_collision_and_visual_highlight() -> void:
 	assert_eq(paddle.paddle_height, 100.0)
 	assert_false(paddle.power_up_highlight.visible)
 
+func test_paddle_visual_layers_follow_team_and_power_up_colors() -> void:
+	assert_eq(paddle.body.color, paddle.tint)
+	assert_eq(paddle.outline.default_color, Color(paddle.tint, 0.95))
+	assert_gt(float(paddle.glow.color.a), float(0.0))
+	assert_gt(float(paddle.core.color.a), float(0.0))
+	assert_eq(paddle.outline.points.size(), 4)
+	assert_true(paddle.outline.closed)
+
+	var accent := Color(0.25, 1.0, 0.42)
+	paddle.apply_power_up(2.0, accent)
+	assert_eq(paddle.outline.default_color, Color(accent, 0.95))
+	assert_true(paddle.power_up_highlight.visible)
+	assert_eq(paddle.glow.color, Color(accent, 0.2))
+
 func test_oversized_paddle_is_clamped_to_available_play_area() -> void:
 	paddle.apply_power_up(10.0, Color.WHITE)
 

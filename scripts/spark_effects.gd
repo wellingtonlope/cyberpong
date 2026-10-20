@@ -2,12 +2,16 @@ extends Node2D
 
 const BOUNCE_RESTITUTION := 0.72
 const TANGENTIAL_DAMPING := 0.9
+const RING_LIFETIME := 0.3
+const RING_START_RADIUS := 2.0
+const RING_END_RADIUS := 22.0
 
 var game_scale := 3.0
 var top_boundary := 180.0
 var side_boundary := 36.0
 var _random := RandomNumberGenerator.new()
 var _particles: Array[Dictionary] = []
+var _rings: Array[Dictionary] = []
 
 func _ready() -> void:
 	_random.randomize()
@@ -22,6 +26,14 @@ func play_paddle_hit(position: Vector2, tint: Color, horizontal_direction: float
 	var amount := clampi(roundi(16.0 * size_factor), 10, 28)
 	var base_direction := Vector2(horizontal_direction, -0.1).normalized()
 	var lifetime := clampf(0.24 * size_factor, 0.2, 0.34)
+	_rings.append({
+		"position": position,
+		"color": tint,
+		"age": 0.0,
+		"lifetime": RING_LIFETIME,
+		"start_radius": RING_START_RADIUS * game_scale,
+		"end_radius": RING_END_RADIUS * game_scale * size_factor,
+	})
 
 	for _index in range(amount):
 		var direction := base_direction.rotated(_random.randf_range(-0.9, 0.9))
@@ -39,8 +51,16 @@ func play_paddle_hit(position: Vector2, tint: Color, horizontal_direction: float
 	queue_redraw()
 
 func _physics_process(delta: float) -> void:
-	if _particles.is_empty():
+	if _particles.is_empty() and _rings.is_empty():
 		return
+
+	for index in range(_rings.size() - 1, -1, -1):
+		var ring: Dictionary = _rings[index]
+		ring["age"] = float(ring["age"]) + delta
+		if float(ring["age"]) >= float(ring["lifetime"]):
+			_rings.remove_at(index)
+		else:
+			_rings[index] = ring
 
 	var viewport_size := get_viewport_rect().size
 	for index in range(_particles.size() - 1, -1, -1):
@@ -92,6 +112,27 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	for ring in _rings:
+		var ring_age: float = ring["age"]
+		var ring_lifetime: float = ring["lifetime"]
+		var progress := clampf(ring_age / ring_lifetime, 0.0, 1.0)
+		var eased_progress := 1.0 - pow(1.0 - progress, 2.0)
+		var ring_position: Vector2 = ring["position"]
+		var ring_tint: Color = ring["color"]
+		var ring_radius := lerpf(float(ring["start_radius"]), float(ring["end_radius"]), eased_progress)
+		var ring_alpha := pow(1.0 - progress, 2.0)
+		draw_arc(
+			ring_position,
+			ring_radius,
+			0.0,
+			TAU,
+			48,
+			Color(ring_tint, ring_alpha * 0.72),
+			maxf(1.0, 2.0 * game_scale * (1.0 - progress * 0.5)),
+			true
+		)
+		draw_circle(ring_position, ring_radius * 0.92, Color(ring_tint, ring_alpha * 0.05))
+
 	for particle in _particles:
 		var fade := 1.0 - float(particle["age"]) / float(particle["lifetime"])
 		var alpha := fade * fade

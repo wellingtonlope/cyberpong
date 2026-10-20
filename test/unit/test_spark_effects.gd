@@ -16,6 +16,20 @@ func test_paddle_hit_creates_speed_scaled_particle_count() -> void:
 	spark_effects.play_paddle_hit(Vector2(100.0, 100.0), Color.CYAN, 1.0, 4.0)
 	assert_eq(spark_effects._particles.size(), 28)
 
+func test_paddle_hit_creates_impact_ring_that_expires() -> void:
+	spark_effects.play_paddle_hit(Vector2(100.0, 100.0), Color.CYAN, 1.0, 1.0)
+
+	assert_eq(spark_effects._rings.size(), 1)
+	var ring: Dictionary = spark_effects._rings[0]
+	assert_eq(ring["position"], Vector2(100.0, 100.0))
+	assert_eq(ring["color"], Color.CYAN)
+	assert_gt(float(ring["end_radius"]), float(ring["start_radius"]))
+
+	ring["age"] = ring["lifetime"] - 0.01
+	spark_effects._rings[0] = ring
+	spark_effects._physics_process(0.02)
+	assert_eq(spark_effects._rings.size(), 0)
+
 func test_particles_expire_after_their_lifetime() -> void:
 	spark_effects.play_paddle_hit(Vector2(100.0, 100.0), Color.CYAN, 1.0, 1.0)
 	for index in range(spark_effects._particles.size()):

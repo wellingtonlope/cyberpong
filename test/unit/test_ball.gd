@@ -135,6 +135,22 @@ func test_swept_collision_collects_power_up_between_frames() -> void:
 
 	assert_signal_emitted_with_parameters(ball, "power_up_collected", [true])
 
+func test_ball_trail_tracks_movement_and_fades_out() -> void:
+	ball._trail.clear()
+	ball.position = Vector2(500.0, 300.0)
+	ball.velocity = Vector2(1000.0, 0.0)
+	ball.advance(0.016, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0)
+
+	assert_eq(ball._trail.size(), 1)
+	ball.serve_from_paddle(LEFT_PADDLE, RIGHT_PADDLE, true, 1140.0)
+	assert_eq(ball._trail.size(), 0)
+
+	ball.position = Vector2(500.0, 300.0)
+	ball.velocity = Vector2(1000.0, 0.0)
+	ball.advance(0.016, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0)
+	ball._process(ball.TRAIL_DURATION)
+	assert_eq(ball._trail.size(), 0)
+
 func test_power_up_collection_reports_last_paddle_that_hit_ball() -> void:
 	ball._bounce_from_paddle(RIGHT_PADDLE, -1.0, false)
 	ball.position = Vector2(100.0, 300.0)

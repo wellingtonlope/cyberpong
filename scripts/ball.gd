@@ -19,6 +19,8 @@ const BRAKE_SPEED_MULTIPLIER := 0.92
 const BRAKE_MINIMUM_SPEED_RATIO := 0.65
 const POWERFUL_BOUNCE_SPEED_MULTIPLIER := 1.18
 const POWERFUL_BOUNCE_VISUAL_SCALE := 1.2
+const TRAIL_DURATION := 0.16
+const TRAIL_MAX_SAMPLES := 12
 
 @onready var body: Polygon2D = $Body
 
@@ -36,11 +38,24 @@ var _ball_brake_active := false
 var _stopped := false
 var _deformation_tween: Tween
 var _random := RandomNumberGenerator.new()
+var _trail: Array[Dictionary] = []
 
 func _ready() -> void:
 	_random.randomize()
 	body.color = BALL_COLOR
 	body.z_index = 3
+
+func _process(delta: float) -> void:
+	if _trail.is_empty():
+		return
+	for index in range(_trail.size() - 1, -1, -1):
+		var sample: Dictionary = _trail[index]
+		sample["age"] = float(sample["age"]) + delta
+		if float(sample["age"]) >= TRAIL_DURATION:
+			_trail.remove_at(index)
+		else:
+			_trail[index] = sample
+	queue_redraw()
 
 func restart(
 	size: Vector2,
@@ -55,6 +70,7 @@ func restart(
 	play_top = play_top_boundary
 	body.polygon = _make_circle_polygon(radius, 48)
 	body.scale = Vector2.ONE
+	_trail.clear()
 	if _deformation_tween != null and _deformation_tween.is_running():
 		_deformation_tween.kill()
 	serve_from_paddle(left_paddle, right_paddle, true, starting_speed)
@@ -64,6 +80,7 @@ func serve_from_paddle(left_paddle: Rect2, right_paddle: Rect2, server_is_left: 
 		_deformation_tween.kill()
 	_powerful_bounce_visual_scale = 1.0
 	body.scale = Vector2.ONE
+	_trail.clear()
 	base_speed = starting_speed
 	current_speed = base_speed
 	_ball_brake_reference_speed = current_speed
@@ -105,6 +122,7 @@ func advance(
 
 	var previous_position := position
 	position += velocity * delta
+	_record_trail(previous_position)
 
 	if position.y - radius <= play_top:
 		position.y = play_top + radius
@@ -215,6 +233,45 @@ func _animate_body(impact_scale: Vector2) -> void:
 		Vector2.ONE * _powerful_bounce_visual_scale,
 		0.14
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _record_trail(point: Vector2) -> void:
+	_trail.append({"position": point, "age": 0.0})
+	while _trail.size() > TRAIL_MAX_SAMPLES:
+		_trail.pop_front()
+	queue_redraw()
+
+func _draw() -> void:
+	_draw_trail()
+	_draw_glow()
+
+func _draw_trail() -> void:
+	if _trail.is_empty():
+		return
+	var first_sample: Dictionary = _trail[0]
+	var previous_position: Vector2 = first_sample["position"]
+	var previous_local := previous_position - position
+	for index in range(1, _trail.size()):
+		var sample: Dictionary = _trail[index]
+		var sample_position: Vector2 = sample["position"]
+		var sample_local := sample_position - position
+		var age: float = sample["age"]
+		var fade := clampf(1.0 - age / TRAIL_DURATION, 0.0, 1.0)
+		var ratio := float(index) / float(maxi(_trail.size() - 1, 1))
+		var width := radius * lerpf(0.35, 0.95, ratio)
+		draw_line(previous_local, sample_local, Color(BALL_COLOR, fade * 0.16), width * 2.4, true)
+		draw_line(previous_local, sample_local, Color(BALL_COLOR, fade * 0.58), width, true)
+		previous_local = sample_local
+
+	var newest: Dictionary = _trail[_trail.size() - 1]
+	var newest_age: float = newest["age"]
+	var newest_fade := clampf(1.0 - newest_age / TRAIL_DURATION, 0.0, 1.0)
+	draw_line(previous_local, Vector2.ZERO, Color(BALL_COLOR, newest_fade * 0.16), radius * 2.4, true)
+	draw_line(previous_local, Vector2.ZERO, Color(BALL_COLOR, newest_fade * 0.58), radius * 0.95, true)
+
+func _draw_glow() -> void:
+	var glow_radius := radius * _powerful_bounce_visual_scale
+	draw_circle(Vector2.ZERO, glow_radius * 1.55, Color(BALL_COLOR, 0.055))
+	draw_circle(Vector2.ZERO, glow_radius * 1.2, Color(BALL_COLOR, 0.11))
 
 func _make_circle_polygon(circle_radius: float, point_count: int) -> PackedVector2Array:
 	var points := PackedVector2Array()

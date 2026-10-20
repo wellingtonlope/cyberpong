@@ -10,8 +10,12 @@ const BOUNCE_VERTICAL_FACTOR := 0.85
 @export var is_left := true
 @export var tint := Color(0.08, 0.98, 1.0)
 
-@onready var body: Polygon2D = $Body
-@onready var power_up_highlight: Polygon2D = $PowerUpHighlight
+@onready var visual_root: Node2D = $Visual
+@onready var body: Polygon2D = $Visual/Body
+@onready var power_up_highlight: Polygon2D = $Visual/PowerUpHighlight
+@onready var glow: Polygon2D = $Visual/Glow
+@onready var core: Polygon2D = $Visual/Core
+@onready var outline: Line2D = $Visual/Outline
 
 var field_size := Vector2.ZERO
 var paddle_width := 0.0
@@ -29,10 +33,13 @@ var power_up_active := false
 var _deformation_tween: Tween
 
 func _ready() -> void:
-	body.color = tint
+	power_up_highlight.z_index = 0
+	glow.z_index = 1
 	body.z_index = 2
-	power_up_highlight.z_index = 1
+	core.z_index = 3
+	outline.z_index = 4
 	power_up_highlight.hide()
+	_apply_visual_colors()
 
 func configure(
 	size: Vector2,
@@ -205,19 +212,38 @@ func _update_size_and_visuals() -> void:
 	paddle_width = base_paddle_width
 	paddle_height = base_paddle_height * effective_height_multiplier
 	body.polygon = _make_rectangle_polygon(paddle_width, paddle_height)
+	core.polygon = _make_rectangle_polygon(
+		maxf(paddle_width * 0.32, 2.0),
+		paddle_height * 0.84
+	)
+	outline.points = _make_rectangle_polygon(paddle_width, paddle_height)
+	outline.width = maxf(2.0, paddle_width * 0.055)
 	var glow_padding := 5.0 * maxf(power_up_size_multiplier, 1.0)
-	power_up_highlight.polygon = _make_rectangle_polygon(
+	var highlight_padding := glow_padding * 0.55
+	glow.polygon = _make_rectangle_polygon(
 		paddle_width + glow_padding * 2.0,
 		paddle_height + glow_padding * 2.0
 	)
+	power_up_highlight.polygon = _make_rectangle_polygon(
+		paddle_width + highlight_padding * 2.0,
+		paddle_height + highlight_padding * 2.0
+	)
+	_apply_visual_colors()
+	position.x = _paddle_x()
+
+func _apply_visual_colors() -> void:
+	var accent_color := power_up_accent_color if power_up_active else tint
 	if power_up_active:
 		body.color = tint.lerp(power_up_accent_color, 0.72)
 		power_up_highlight.color = Color(power_up_accent_color, 0.42)
 		power_up_highlight.show()
+		glow.color = Color(power_up_accent_color, 0.2)
 	else:
 		body.color = tint
 		power_up_highlight.hide()
-	position.x = _paddle_x()
+		glow.color = Color(tint, 0.11)
+	core.color = Color(accent_color.lightened(0.35), 0.58)
+	outline.default_color = Color(accent_color, 0.95)
 
 func _make_rectangle_polygon(width: float, height: float) -> PackedVector2Array:
 	return PackedVector2Array([
@@ -230,11 +256,11 @@ func _make_rectangle_polygon(width: float, height: float) -> PackedVector2Array:
 func _animate_body(impact_scale: Vector2) -> void:
 	if _deformation_tween != null and _deformation_tween.is_running():
 		_deformation_tween.kill()
-	body.scale = impact_scale
+	visual_root.scale = impact_scale
 	_deformation_tween = create_tween()
-	_deformation_tween.tween_property(body, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_deformation_tween.tween_property(visual_root, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _reset_deformation() -> void:
 	if _deformation_tween != null and _deformation_tween.is_running():
 		_deformation_tween.kill()
-	body.scale = Vector2.ONE
+	visual_root.scale = Vector2.ONE
