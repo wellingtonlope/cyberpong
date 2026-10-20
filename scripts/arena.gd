@@ -595,14 +595,30 @@ func _draw_score_pips(card: Rect2, score: int, team_color: Color, ui_scale: floa
 	var start_x := content_left + (content_right - content_left - total_width) * 0.5
 	var start_y := card.end.y - 6.0 * ui_scale - pip_size
 	for pip_index in range(pip_count):
-		var pip := Rect2(
-			Vector2(start_x + float(pip_index) * (pip_size + pip_gap), start_y),
-			Vector2(pip_size, pip_size)
+		var pip_center := Vector2(
+			start_x + float(pip_index) * (pip_size + pip_gap) + pip_size * 0.5,
+			start_y + pip_size * 0.5
 		)
+		var pip_points := _score_pip_points(pip_center, pip_size * 0.5)
 		if pip_index < score:
-			draw_rect(pip, team_color)
+			draw_colored_polygon(pip_points, team_color)
 		else:
-			draw_rect(pip, Color(team_color, 0.38), false, maxf(1.0, 1.5 * ui_scale))
+			var pip_outline := pip_points.duplicate()
+			pip_outline.append(pip_points[0])
+			draw_polyline(
+				pip_outline,
+				Color(team_color, 0.38),
+				maxf(1.0, 1.5 * ui_scale),
+				true
+			)
+
+func _score_pip_points(center: Vector2, radius: float) -> PackedVector2Array:
+	return PackedVector2Array([
+		center + Vector2(0.0, -radius),
+		center + Vector2(radius, 0.0),
+		center + Vector2(0.0, radius),
+		center + Vector2(-radius, 0.0),
+	])
 
 func _draw_team_emblem(
 	center: Vector2,

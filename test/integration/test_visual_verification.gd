@@ -150,6 +150,19 @@ func test_hud_panels_and_text_fit_without_overlap_across_window_sizes() -> void:
 			assert_lte(name_size, name_width, "Team name overflows at %s: %s" % [window_size, team_name])
 
 
+func test_score_pips_use_diamond_orientation() -> void:
+	var arena = add_child_autofree(ARENA_SCRIPT.new())
+	var center := Vector2(48.0, 36.0)
+	var radius := 7.0
+	var points: PackedVector2Array = arena._score_pip_points(center, radius)
+
+	assert_eq(points.size(), 4)
+	assert_eq(points[0], center + Vector2(0.0, -radius))
+	assert_eq(points[1], center + Vector2(radius, 0.0))
+	assert_eq(points[2], center + Vector2(0.0, radius))
+	assert_eq(points[3], center + Vector2(-radius, 0.0))
+
+
 func test_match_updates_collision_effects_and_power_up_highlight() -> void:
 	game.ball.paddle_hit.emit(true, Vector2(200.0, 300.0), 1.0, 1.0, false)
 
