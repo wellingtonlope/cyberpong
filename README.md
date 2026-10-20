@@ -73,7 +73,7 @@ A dificuldade altera apenas o comportamento das IAs; regras, velocidade da bola 
 
 ## Power-ups
 
-O primeiro item aparece após **5 a 15 rebatidas totais**; os próximos seguem o mesmo intervalo. Se um efeito ainda estiver ativo, o item seguinte espera ele terminar. A bola precisa tocar o item para coletá-lo, e ele pertence à última raquete que rebateu. Sem coleta, o item desaparece após **cinco rebatidas**.
+O primeiro item aparece após **5 a 15 rebatidas totais**; os próximos seguem o mesmo intervalo. Se um efeito ainda estiver ativo, o item seguinte espera ele terminar. A bola precisa tocar o item para coletá-lo, e ele pertence à última raquete que rebateu. Sem coleta, o item desaparece após **cinco rebatidas**. Quando alguém marca um ponto, um item disponível no campo some como se a área tivesse sido resetada.
 
 | Efeito | Duração | O que faz |
 | --- | --- | --- |

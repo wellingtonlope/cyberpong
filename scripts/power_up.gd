@@ -116,6 +116,20 @@ func appear(size: Vector2) -> bool:
 	_spawn()
 	return true
 
+func clear_available_item() -> void:
+	if status != Status.AVAILABLE:
+		return
+	status = Status.INACTIVE
+	owner_is_left = false
+	hits_remaining = 0
+	effect_id = ""
+	rotation = 0.0
+	scale = Vector2.ONE
+	_pulse_time = 0.0
+	_apply_default_visuals()
+	hide()
+	_emit_status()
+
 func update_field_size(size: Vector2) -> void:
 	field_size = size
 	if status == Status.AVAILABLE:

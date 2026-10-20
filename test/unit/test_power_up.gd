@@ -66,6 +66,32 @@ func test_available_item_expires_after_five_rebounds() -> void:
 	assert_eq(power_up.hits_remaining, 0)
 	assert_false(power_up.visible)
 
+func test_clear_available_item_resets_state_and_emits_status() -> void:
+	power_up.appear(FIELD_SIZE)
+	power_up._process(0.2)
+	watch_signals(power_up)
+	power_up.clear_available_item()
+
+	assert_false(power_up.is_available())
+	assert_eq(power_up.hits_remaining, 0)
+	assert_eq(power_up.effect_id, "")
+	assert_false(power_up.visible)
+	assert_eq(power_up.rotation, 0.0)
+	assert_eq(power_up.scale, Vector2.ONE)
+	assert_signal_emitted(power_up, "status_changed")
+	assert_signal_not_emitted(power_up, "effect_changed")
+
+func test_clear_available_item_ignores_held_effect() -> void:
+	power_up.appear(FIELD_SIZE)
+	power_up.effect_id = "double_size"
+	power_up.collect(true)
+	watch_signals(power_up)
+	power_up.clear_available_item()
+
+	assert_eq(power_up.get_active_effect_id(), "double_size")
+	assert_eq(power_up.hits_remaining, 6)
+	assert_signal_not_emitted(power_up, "status_changed")
+
 func test_collect_assigns_owner_and_emits_effect_data() -> void:
 	power_up.appear(FIELD_SIZE)
 	power_up.effect_id = "double_size"

@@ -165,6 +165,17 @@ func test_extra_defense_save_counts_as_a_rebound_and_consumes_effect() -> void:
 	assert_false(game.left_paddle.power_up_active)
 	assert_gt(float(game.ball.velocity.x), float(0.0))
 
+func test_scoring_point_clears_available_power_up_from_field() -> void:
+	game.power_up.appear(game.field_size)
+	assert_true(game.power_up.is_available())
+
+	game._on_ball_missed(true)
+
+	assert_false(game.power_up.is_available())
+	assert_false(game.power_up.visible)
+	assert_eq(game.power_up.hits_remaining, 0)
+	assert_eq(game.arena.power_up_hud_title, "Próximo power-up")
+
 func test_due_power_up_appears_when_previous_effect_expires() -> void:
 	game._next_power_up_rebound = 0
 	game.power_up.appear(game.field_size)

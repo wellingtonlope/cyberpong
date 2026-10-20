@@ -252,6 +252,7 @@ func _on_power_up_effect_changed(is_left: bool, is_active: bool, size_multiplier
 		paddle.clear_power_up()
 
 func _on_ball_missed(left_side: bool) -> void:
+	power_up.clear_available_item()
 	var scorer_is_left := not left_side
 	if scorer_is_left:
 		left_score += 1
