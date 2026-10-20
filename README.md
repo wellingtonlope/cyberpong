@@ -64,6 +64,8 @@ Complemente a suíte com uma verificação manual no Godot para o que depende de
 .
 ├── AGENTS.md              # Orientações para agentes que alterarem o projeto
 ├── README.md              # Visão geral, regras e instruções de execução
+├── guia-visual.md         # Paleta, identidade das equipes e critérios visuais
+├── melhoria.md            # Plano de melhorias visuais
 ├── project.godot          # Configuração do projeto, janela e cena de entrada
 ├── main.tscn               # Cena principal e composição do jogo
 ├── main.gd                 # Inicialização, atualização e regras da partida
