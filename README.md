@@ -4,7 +4,7 @@ CyberPong é um jogo de Pong 2D feito em Godot 4 e GDScript. Duas equipes disput
 
 ## Como jogar
 
-- No menu inicial, escolha **Jogador VS Jogador**, **Jogador VS AI** ou **AI VS AI**.
+- No menu inicial, escolha **Jogador VS Jogador**, **Jogador VS AI** ou **AI VS AI**. Use **↑/↓** e **Enter**, ou clique em um cartão.
 - No modo Jogador VS AI, o lado esquerdo é humano e o direito é controlado pela IA.
 - No modo Jogador VS Jogador, o lado esquerdo usa **W/S** ou as setas **↑/↓**, e o direito usa as setas **↑/↓**.
 - No modo AI VS AI, as duas raquetes são controladas automaticamente.
@@ -13,6 +13,8 @@ CyberPong é um jogo de Pong 2D feito em Godot 4 e GDScript. Duas equipes disput
 - Pressione **F3** para mostrar ou ocultar o HUD de debug.
 
 As IAs acompanham a trajetória da bola, mas têm velocidade limitada e uma pequena zona de tolerância. Quando há um power-up disponível, a IA tenta alcançar os efeitos benéficos — raquete dobrada, freio na bola, rebote potente e defesa extra — e evitar a raquete reduzida, considerando as quicadas nas bordas. O HUD de jogo fica em uma barra reservada na parte superior e mostra o total de rebatidas e o estado do power-up, incluindo usos e duração restantes. O placar usa a fonte sans-serif de fallback do Godot, com números grandes, nomes de equipe e três losangos de progresso por lado; o painel do power-up traz nome, equipe beneficiada, usos e rebatidas restantes. A interface escala com a largura da janela para continuar legível e sem sobreposição. Cada saque é anunciado por um aviso breve com o emblema e a cor da equipe que serve; ao pontuar, a lateral e a linha de gol da equipe acendem por um instante. A tela de vitória escurece a arena e apresenta o vencedor com emblema, nome, placar final e a instrução de tecla para iniciar outra partida. A bola e as raquetes ficam limitadas à arena abaixo dessa barra. O HUD de debug começa oculto; use **F3** para alternar sua visibilidade. Quando aberto, fica no canto inferior esquerdo e mostra a velocidade atual da bola e as rebatidas de cada IA. Os contadores de rebatidas persistem entre pontos e zeram quando uma nova partida começa. O primeiro rally começa a 1.140 px/s para dar tempo de entender o jogo. Depois de cada ponto, o próximo rally começa a 1.500 px/s. A aceleração normal aumenta 10% a cada dois rebatimentos até 3.000 px/s; Rebote potente aumenta a velocidade em cada rebatida do dono, podendo passar desse limite, mas sem ultrapassar 3.540 px/s (3.000 × 1,18). Na rebatida adversária, ela volta a 3.000 px/s. Há efeitos de deformação nas colisões, uma trilha curta que acompanha a velocidade da bola, um anel de impacto e pequenas faíscas coloridas com física quando a bola atinge uma raquete; as faíscas quicam com amortecimento nas bordas da arena. As raquetes têm contorno, faixa interna e brilho em camadas nas cores de cada equipe, e o destaque do power-up troca essas camadas para a cor do efeito ativo.
+
+O menu inicial é uma tela de transmissão sobre a arena escurecida: o letreiro geométrico do HUD reaparece em escala maior, Cyan Circuit e Magenta Volt emolduram a seleção com seus emblemas e o losango amarelo da bola funciona como cursor. Os três modos aparecem em cartões angulares com foco neon, realce em degradê ciano/magenta e transição rápida ao confirmar. O menu usa a fonte de fallback do Godot, escala com a janela e não depende de arquivos de arte.
 
 O primeiro power-up e as aparições seguintes são agendados após intervalos aleatórios de 5 a 15 rebatidas totais da partida. Se o efeito anterior ainda estiver ativo quando o intervalo terminar, o próximo item aparece assim que ele terminar. A bola precisa tocar o item para coletá-lo; quem recebe é a IA da última raquete que rebateu a bola. Se ninguém coletar o item em cinco rebatidas, ele desaparece. Cada efeito tem um símbolo geométrico próprio no item, e a moldura, o brilho e os detalhes usam a cor do efeito; enquanto disponível, o item pulsa e gira discretamente. O catálogo contém: dobrar ou reduzir pela metade a altura da raquete; Freio na bola, que deixa a dona rebater na velocidade atual e faz a adversária devolvê-la 8% mais lenta; aumentar a velocidade em 18% nos até quatro rebatimentos da raquete afetada, podendo passar de 3.000 px/s, mas sem ultrapassar 3.540 px/s (3.000 × 1,18). Quando a raquete adversária rebate a bola durante Rebote potente, a velocidade volta a 3.000 px/s e o tamanho visual volta ao normal. Defesa extra tem uma carga e permanece ativa por até 14 rebatidas totais, mas termina ao salvar uma falha. Cada efeito tem duração própria em rebatidas totais: raquete dobrada 6, raquete reduzida 5, Freio na bola e Rebote potente 8 e Defesa extra 14; efeitos sem `duration_hits` no catálogo usam o padrão de `active_duration_hits` (10) no nó `PowerUp`, e rebatidas das duas IAs contam. A raquete afetada ganha brilho e os efeitos de velocidade atualizam o HUD de debug.
 
@@ -66,6 +68,8 @@ O GUT mostra no terminal a quantidade de testes aprovados, falhos e ignorados, j
 - `test/unit/test_paddle.gd`: posição e colisão, previsão com reflexão, movimento limitado, zona morta, dimensão dos efeitos, camadas visuais da raquete e decisões de mira.
 - `test/unit/test_power_up.gd`: aparecimento, janela de cinco rebatidas, coleta e proprietário, duração padrão/configurável, duração de 20 rebatidas da Defesa extra, cargas por raquete, sinais, estado do HUD, cores e símbolo do item, pulso disponível e redimensionamento.
 - `test/unit/test_debug_hud.gd` e `test/unit/test_spark_effects.gd`: visibilidade, velocidade e contagens do HUD de debug; quantidade, expiração e quique das partículas, além do anel de impacto.
+- `test/unit/test_game_menu.gd`: layout do menu em diferentes tamanhos de janela, escala, cartões de modo, ciclo de foco, cursor da bola, seleção única, transição de confirmação e início da partida pelo botão.
+- `test/integration/test_menu_flow.gd`: menu pausando a partida, seleção por botão, retomada do jogo, aplicação dos modos PvP e AI vs AI e estado inicial do rally.
 - `test/integration/test_main_flow.gd`: cena e caminhos dos nós, conexões de sinais, velocidades de saque, placar e vitória de ambos os lados, aviso de saque, transição de ponto, revelação da tela de vitória, persistência e reinício de contagens, aplicação de efeitos, Defesa extra contando como rebatida, aparecimento atrasado, intervalo de spawn, teclas Enter/F3, escala responsiva do HUD e limites após redimensionamento.
 - `test/integration/test_scene_resources.gd`: carregamento e instanciação de `main.tscn`, das cenas de bola, raquete e menu, além da disponibilidade da fonte sans-serif de fallback sem arquivo de fonte externo.
 - `test/integration/test_visual_verification.gd`: limites de bola, raquetes e power-up em várias resoluções, ausência de sobreposição entre logo, placar e painel do power-up, ajuste de fonte do painel, contraste das cores principais e atualização dos efeitos de colisão e do destaque do power-up durante a partida.
@@ -74,7 +78,7 @@ Os testes validam intervalos e invariantes quando há aleatoriedade, sem depende
 
 ### Verificação visual e regressão
 
-Complemente a suíte com uma verificação manual no Godot para o que depende de apresentação: painel do HUD e placar, destaque da raquete, animações, faíscas, tela de vitória e layout após redimensionamento. Para cada bug que possa ser reproduzido automaticamente, mantenha um teste de regressão. Toda funcionalidade nova deve ter testes unitários; mudanças que conectam sistemas também precisam de testes de integração.
+Complemente a suíte com uma verificação manual no Godot para o que depende de apresentação: tela de abertura e foco entre cartões, painel do HUD e placar, destaque da raquete, animações, faíscas, tela de vitória e layout após redimensionamento. Para cada bug que possa ser reproduzido automaticamente, mantenha um teste de regressão. Toda funcionalidade nova deve ter testes unitários; mudanças que conectam sistemas também precisam de testes de integração.
 ## Estrutura
 
 ```text
@@ -91,13 +95,13 @@ Complemente a suíte com uma verificação manual no Godot para o que depende de
 │   └── gut/                # Framework gratuito de testes, usado no desenvolvimento
 ├── scenes/
 │   ├── ball.tscn           # Nó visual da bola
-│   ├── game_menu.tscn      # Menu inicial de modos de jogo
+│   ├── game_menu.tscn      # Tela de abertura com cartões de modo e foco por teclado
 │   └── paddle.tscn         # Nó visual reutilizado pelas duas raquetes
 ├── scripts/
 │   ├── arena.gd            # Fundo, linha central, placar, HUD e tela de vitória
 │   ├── ball.gd             # Movimento, saques, colisões e velocidade da bola
 │   ├── paddle.gd           # Movimento, controle humano, previsão da IA e animação das raquetes
-│   ├── game_menu.gd        # Seleção de modo e navegação por teclado no menu
+│   ├── game_menu.gd        # Desenho do menu, layout responsivo, foco e seleção de modo
 │   ├── spark_effects.gd    # Faíscas físicas geradas nos rebatimentos
 │   ├── debug_hud.gd        # HUD alternável de velocidade e rebatidas por IA
 │   ├── power_up.gd         # Catálogo de efeitos, aparecimento, coleta e duração
@@ -110,12 +114,12 @@ Complemente a suíte com uma verificação manual no Godot para o que depende de
 ## Regras e implementação
 
 - `main.gd` abre o menu, aplica o modo escolhido, conecta os sinais da bola, atualiza as entidades, conta as rebatidas e reinicia o placar. A escala visual e os parâmetros gerais ficam no início desse script.
-- `game_menu.gd` seleciona entre Jogador VS Jogador, Jogador VS AI e AI VS AI, mantém o foco nos botões e pausa a partida enquanto o menu está aberto.
+- `game_menu.gd` desenha a tela de abertura como uma transmissão sobre a arena escurecida, com letreiro, emblemas, cartões angulares, cursor em forma de bola e foco neon; mantém o layout responsivo, a navegação por ↑/↓/Enter/mouse e pausa a partida enquanto o menu está aberto.
 - `ball.gd` implementa o movimento e as colisões por código, sem nós de física. A aceleração normal aumenta a velocidade em 10% a cada segundo rebatimento, até 3.000 px/s; Rebote potente aumenta 18% em cada rebatida da raquete afetada, limitando a velocidade a 3.540 px/s (3.000 × 1,18), e volta a 3.000 px/s quando a raquete adversária rebate. Freio faz a dona rebater na velocidade de referência e a adversária devolver a bola 8% mais lenta. O primeiro saque de uma partida começa em 1.140 px/s; saques após pontos começam em 1.500 px/s e reiniciam a contagem de rebatimentos do rally. A velocidade é comunicada pelo sinal `speed_changed` no saque e sempre que muda, inclusive pelos power-ups.
 - `power_up.gd` mantém os efeitos em `EFFECTS`, cada um com sua duração própria em `duration_hits` (raquete dobrada 6, raquete reduzida 5, Freio na bola e Rebote potente 8, Defesa extra 14), e `active_duration_hits` (padrão: 10) serve de reserva para efeitos sem `duration_hits`. Defesa extra tem uma carga e termina ao salvar uma falha. Freio na bola e Rebote potente também têm quatro usos nos rebatimentos da raquete afetada. `main.gd` sorteia intervalos de 5 a 15 rebatidas totais para as aparições. O tipo é sorteado uniformemente a partir de `EFFECT_IDS`. Para adicionar um efeito, inclua sua configuração e seu identificador em `EFFECTS` e `EFFECT_IDS`.
 - `arena.gd` desenha o campo em camadas (degradê central, vinheta e marcações discretas), a moldura recortada com cantos nas cores das equipes, as linhas de gol ciano e magenta, o letreiro CYBERPONG, o placar com emblemas, nomes de Cyan Circuit e Magenta Volt e pips de pontos, o aviso de saque, a transição de ponto, a apresentação da equipe vencedora e o HUD superior com escala responsiva, cujos textos do painel reduzem para caber em janelas menores; a área de jogo começa abaixo dessa barra. Ao pontuar, a lateral e a linha de gol da equipe acendem e o cartão recebe um destaque breve que desaparece sozinho ou ao iniciar uma nova partida. A tela de vitória tem entrada animada, placar final e uma tecla Enter desenhada para deixar clara a reinicialização.
 - `debug_hud.gd` mostra no canto inferior esquerdo a velocidade e as rebatidas por IA; F3 alterna sua visibilidade.
 - `paddle.gd` calcula onde a bola deve chegar, com atraso de reação, zona de tolerância e velocidade limitada para que a IA possa errar. No modo humano, o lado esquerdo responde a W/S ou às setas, e o direito às setas. Quando há um power-up disponível, a IA tenta direcionar a bola ao efeito positivo ou afastá-la do negativo, considerando as reflexões nas bordas. Também atualiza dimensão, colisão e destaque visual quando recebe um efeito.
-- `arena.gd` desenha a arena e a interface diretamente, sem cena de interface separada.
+- `arena.gd` desenha a arena e o HUD diretamente, sem cena de interface separada; a tela de abertura é uma cena `Control` própria, desenhada por `game_menu.gd`.
 - `spark_effects.gd` simula faíscas com gravidade e quique amortecido nas bordas da área de jogo, removendo-as ao fim do efeito.
 - A resolução de viewport configurada em `project.godot` é 2880 × 1620, com modo de janela em tela cheia.

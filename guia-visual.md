@@ -50,6 +50,17 @@ Use a fonte sans-serif de fallback do Godot enquanto não houver necessidade de 
 
 Ordem de leitura: placar e bola; raquetes e limites da quadra; item e estado do power-up; detalhes do HUD. Mantenha o fundo e as marcações de campo discretos. O símbolo e a cor devem identificar cada lado rapidamente, e os dados do power-up devem continuar legíveis na barra superior. Bola, raquetes e item permanecem abaixo do HUD e dentro dos limites da arena.
 
+## Menu inicial
+
+A tela de abertura deve parecer parte da transmissão, não uma caixa de diálogo sobre o jogo. Use a arena escurecida como fundo, mantenha o letreiro geométrico e os emblemas das equipes e trate os modos como cartões de transmissão.
+
+- O conteúdo fica em uma coluna central com largura limitada; use a mesma escala responsiva do HUD e mantenha margem livre da barra superior.
+- Cada modo é um cartão angular com título, descrição curta e uma etiqueta (`LOCAL`, `SOLO`, `AUTO`). O cartão em foco recebe contorno mais claro, brilho curto, cantos ciano/magenta e a linha superior em degradê.
+- O cursor é o losango amarelo da bola, com uma trilha curta; ele desliza entre os cartões e não substitui o foco de teclado.
+- O rodapé mostra as teclas de navegação e confirmação no mesmo estilo de keycap da tela de vitória. O foco precisa continuar visível sem depender apenas de cor.
+- A entrada e a confirmação podem usar fade, varredura e um pulso breve, mas nenhuma animação deve atrasar a leitura das opções.
+- Não use `PanelContainer`, botões com o tema padrão do Godot, cantos arredondados ou assets externos.
+
 ## Recursos e licenças
 
 Não são necessários arquivos de arte, fontes ou ícones externos. Use os recursos nativos do Godot já adotados pelo projeto, como `Polygon2D`, `Label` e os métodos de desenho de `CanvasItem`. Assim, não há licenças externas ou créditos adicionais a registrar. Se um asset externo for adotado no futuro, registre neste guia sua origem, licença e atribuição exigida.
