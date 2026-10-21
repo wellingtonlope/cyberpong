@@ -58,6 +58,8 @@ func _ready() -> void:
 	ball.power_up_collected.connect(power_up.collect)
 	power_up.effect_changed.connect(_on_power_up_effect_changed)
 	power_up.status_changed.connect(_refresh_match_hud)
+	arena.new_match_requested.connect(_on_victory_new_match_requested)
+	arena.main_menu_requested.connect(_on_victory_main_menu_requested)
 	_show_credits()
 
 func _show_credits() -> void:
@@ -170,6 +172,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_restart_match()
 	elif event.keycode == KEY_M:
 		_return_to_main_menu()
+
+func _on_victory_new_match_requested() -> void:
+	if not game_over:
+		return
+	_restart_match()
+
+func _on_victory_main_menu_requested() -> void:
+	if not game_over:
+		return
+	_return_to_main_menu()
 
 func _on_ball_wall_hit(_impact_position: Vector2) -> void:
 	SoundManager.play_wall_bounce()

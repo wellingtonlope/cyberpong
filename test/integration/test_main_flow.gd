@@ -187,6 +187,70 @@ func test_match_point_highlight_is_cleared_when_the_match_ends_or_restarts() -> 
 	assert_false(game.arena.right_match_point)
 	assert_eq(game.arena.winning_score, 3)
 
+func test_clicking_the_new_match_button_restarts_the_match() -> void:
+	for _index in range(3):
+		game._on_ball_missed(true)
+	assert_true(game.game_over)
+
+	var position: Vector2 = game.arena._winner_action_position(
+		game.arena.WINNER_ACTION_NEW_MATCH
+	)
+	assert_ne(position, Vector2.ZERO)
+	game.arena._unhandled_input(_click_event(position))
+
+	assert_false(game.game_over)
+	assert_eq(game.left_score, 0)
+	assert_eq(game.right_score, 0)
+	assert_eq(game.ball.current_speed, 1140.0)
+
+func test_clicking_the_main_menu_button_returns_to_the_main_menu() -> void:
+	for _index in range(3):
+		game._on_ball_missed(true)
+	assert_true(game.game_over)
+
+	var position: Vector2 = game.arena._winner_action_position(
+		game.arena.WINNER_ACTION_MAIN_MENU
+	)
+	assert_ne(position, Vector2.ZERO)
+	game.arena._unhandled_input(_click_event(position))
+
+	assert_false(game.game_over)
+	assert_true(game._menu_shown)
+	assert_true(get_tree().paused)
+	var menu = game.get_node_or_null("GameMenu")
+	assert_not_null(menu)
+	assert_true(menu.visible)
+
+func test_clicking_outside_the_victory_buttons_does_nothing() -> void:
+	for _index in range(3):
+		game._on_ball_missed(true)
+	assert_true(game.game_over)
+
+	game.arena._unhandled_input(_click_event(Vector2(40.0, 40.0)))
+
+	assert_true(game.game_over)
+	assert_false(game._menu_shown)
+
+func test_hovering_the_victory_buttons_highlights_the_pressed_action() -> void:
+	for _index in range(3):
+		game._on_ball_missed(true)
+
+	var position: Vector2 = game.arena._winner_action_position(
+		game.arena.WINNER_ACTION_NEW_MATCH
+	)
+	var motion := InputEventMouseMotion.new()
+	motion.position = position
+	game.arena._unhandled_input(motion)
+
+	assert_eq(game.arena._hovered_winner_action, game.arena.WINNER_ACTION_NEW_MATCH)
+
+func _click_event(position: Vector2) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.pressed = true
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.position = position
+	return event
+
 func test_new_match_resets_rebound_counts_and_debug_hud() -> void:
 	game.ball.paddle_hit.emit(true, Vector2(100.0, 300.0), 1.0, 1.0, false)
 	game.ball.paddle_hit.emit(false, Vector2(900.0, 300.0), -1.0, 1.0, false)

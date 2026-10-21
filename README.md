@@ -52,7 +52,7 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 - As ações de movimento ficam no InputMap (`p1_up`, `p1_down`, `p2_up`, `p2_down`), permitindo remapeamento sem alterar os scripts.
 - O seletor de dificuldade aparece no menu somente quando o cartão **Jogador VS AI** está focado; no PvP ele fica oculto e a dificuldade não altera a partida.
 - No menu de pausa, **Continuar** retoma o rally no mesmo estado, **Reiniciar partida** zera o placar e começa um novo rally, **Configurações** abre volume, som e tela cheia, e **Menu principal** encerra a partida e restaura placar, rebatidas, power-ups, velocidade e tamanho das raquetes.
-- Na tela de vitória, **Enter** inicia outra partida e **M** volta ao menu principal restaurando os valores padrão.
+- Na tela de vitória, **Enter** inicia outra partida e **M** volta ao menu principal restaurando os valores padrão. As linhas **NOVA PARTIDA** e **MENU PRINCIPAL** também são clicáveis com o mouse.
 - A tela de créditos da **Moron Souls Productions** aparece somente na abertura do jogo.
 
 ### Dificuldades

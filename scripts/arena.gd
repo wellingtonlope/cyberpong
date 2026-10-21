@@ -1,5 +1,8 @@
 extends Node2D
 
+signal new_match_requested
+signal main_menu_requested
+
 const BACKGROUND_COLOR := Color(0.018, 0.03, 0.052)
 const FIELD_COLOR := Color(0.035, 0.055, 0.09)
 const FIELD_CENTER_COLOR := Color(0.047, 0.069, 0.105)
@@ -23,6 +26,8 @@ const FIELD_GRADIENT_STRIPS := 48
 const VIGNETTE_BANDS := 8
 const MATCH_POINT_LABEL := "MATCH POINT"
 const MATCH_POINT_PULSE_SPEED := 4.0
+const WINNER_ACTION_NEW_MATCH := "new_match"
+const WINNER_ACTION_MAIN_MENU := "main_menu"
 
 var game_scale := 3.0
 var hud_bar_height := 180.0
@@ -47,6 +52,7 @@ var rally_intro_remaining := 0.0
 var rally_intro_is_left := true
 var winner_reveal := 0.0
 var _pulse_time := 0.0
+var _hovered_winner_action := ""
 
 func _process(delta: float) -> void:
 	var should_redraw := false
@@ -78,6 +84,7 @@ func set_game_over(value: bool) -> void:
 		point_flash_remaining = 0.0
 		rally_intro_remaining = 0.0
 		winner_reveal = 0.0
+		_clear_winner_hover()
 	_refresh_match_point()
 	queue_redraw()
 
@@ -384,10 +391,9 @@ func _draw_rally_intro(font: Font, size: Vector2, ui_scale: float) -> void:
 func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 	var reveal := 1.0 - pow(1.0 - clampf(winner_reveal, 0.0, 1.0), 3.0)
 	var team_color := LEFT_COLOR if winner_is_left else RIGHT_COLOR
+	var layout := _winner_panel_layout(size, winner_reveal)
+	var panel: Rect2 = layout["panel"]
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.003, 0.008, 0.016, 0.78 * reveal))
-	var panel_size := Vector2(560.0, 280.0) * ui_scale * lerpf(0.94, 1.0, reveal)
-	var panel_center := size * 0.5 + Vector2(0.0, (1.0 - reveal) * 16.0 * ui_scale)
-	var panel := Rect2(panel_center - panel_size * 0.5, panel_size)
 	draw_rect(panel.grow(18.0 * ui_scale), Color(team_color, 0.05 * reveal))
 	draw_rect(panel, Color(0.02, 0.035, 0.06, 0.97 * reveal))
 	draw_rect(panel, Color(team_color, 0.7 * reveal), false, 2.0 * ui_scale)
@@ -466,14 +472,27 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		ui_scale,
 		true
 	)
-	var hint_layout := _winner_key_hint_layout(font, panel, ui_scale)
+	var hint_layout: Dictionary = layout["hints"]
 	for item in hint_layout["items"]:
 		_draw_winner_key_hint_item(font, item, ui_scale, reveal, team_color)
 
+func _winner_panel_layout(size: Vector2, reveal_value: float) -> Dictionary:
+	var ui_scale := _hud_scale_for(size)
+	var reveal := 1.0 - pow(1.0 - clampf(reveal_value, 0.0, 1.0), 3.0)
+	var panel_size := Vector2(560.0, 280.0) * ui_scale * lerpf(0.94, 1.0, reveal)
+	var panel_center := size * 0.5 + Vector2(0.0, (1.0 - reveal) * 16.0 * ui_scale)
+	var panel := Rect2(panel_center - panel_size * 0.5, panel_size)
+	return {
+		"panel": panel,
+		"ui_scale": ui_scale,
+		"reveal": reveal,
+		"hints": _winner_key_hint_layout(ThemeDB.fallback_font, panel, ui_scale),
+	}
+
 func _winner_key_hint_layout(font: Font, panel: Rect2, ui_scale: float) -> Dictionary:
 	var hints: Array = [
-		["ENTER", "NOVA PARTIDA", 204.0],
-		["M", "MENU PRINCIPAL", 242.0],
+		["ENTER", "NOVA PARTIDA", 204.0, WINNER_ACTION_NEW_MATCH],
+		["M", "MENU PRINCIPAL", 242.0, WINNER_ACTION_MAIN_MENU],
 	]
 	var label_font_size := maxi(int(12.0 * ui_scale), 9)
 	var max_label_width := 0.0
@@ -502,7 +521,12 @@ func _winner_key_hint_layout(font: Font, panel: Rect2, ui_scale: float) -> Dicti
 			"key_text": hint[0],
 			"label_text": hint[1],
 			"top_offset": float(hint[2]),
+			"action": String(hint[3]),
 			"key_rect": key_rect,
+			"row_rect": Rect2(
+				Vector2(group_left, group_top),
+				Vector2(block_width, key_size.y)
+			),
 			"label_pos": label_pos,
 			"label_width": label_widths[i],
 			"label_font_size": label_font_size,
@@ -529,7 +553,20 @@ func _draw_winner_key_hint_item(
 	var label_pos: Vector2 = item["label_pos"]
 	var label_width: float = item["label_width"]
 	var label_font_size: int = item["label_font_size"]
+	var action: String = item["action"]
+	var row_rect: Rect2 = item["row_rect"]
+	var hovered := action == _hovered_winner_action
 
+	draw_rect(
+		row_rect.grow(2.0 * ui_scale),
+		Color(team_color, (0.14 if hovered else 0.07) * reveal)
+	)
+	draw_rect(
+		row_rect.grow(2.0 * ui_scale),
+		Color(team_color, (0.7 if hovered else 0.25) * reveal),
+		false,
+		maxf(1.0, 1.0 * ui_scale)
+	)
 	draw_rect(key_rect, Color(0.04, 0.07, 0.11, reveal))
 	draw_rect(key_rect, Color(team_color, 0.75 * reveal), false, 1.5 * ui_scale)
 	draw_string(
@@ -550,6 +587,62 @@ func _draw_winner_key_hint_item(
 		label_font_size,
 		Color(TEXT_COLOR, reveal)
 	)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not game_over:
+		return
+	if event is InputEventMouseMotion:
+		_update_hovered_winner_action(to_local((event as InputEventMouseMotion).position))
+		return
+	if not event is InputEventMouseButton:
+		return
+	var button_event := event as InputEventMouseButton
+	if not button_event.pressed or button_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	var action := _winner_action_at(to_local(button_event.position))
+	if action == WINNER_ACTION_NEW_MATCH:
+		new_match_requested.emit()
+	elif action == WINNER_ACTION_MAIN_MENU:
+		main_menu_requested.emit()
+
+func _update_hovered_winner_action(local_position: Vector2) -> void:
+	var action := _winner_action_at(local_position)
+	if action == _hovered_winner_action:
+		return
+	_hovered_winner_action = action
+	Input.set_default_cursor_shape(
+		Input.CURSOR_POINTING_HAND if not action.is_empty() else Input.CURSOR_ARROW
+	)
+	queue_redraw()
+
+func _winner_action_at(local_position: Vector2) -> String:
+	if not game_over:
+		return ""
+	var layout := _winner_panel_layout(get_viewport_rect().size, winner_reveal)
+	var items: Array = layout["hints"]["items"]
+	for item in items:
+		var row_rect: Rect2 = item["row_rect"]
+		if row_rect.has_point(local_position):
+			return String(item["action"])
+	return ""
+
+func _winner_action_position(action: String) -> Vector2:
+	if not game_over:
+		return Vector2.ZERO
+	var layout := _winner_panel_layout(get_viewport_rect().size, winner_reveal)
+	var items: Array = layout["hints"]["items"]
+	for item in items:
+		if String(item["action"]) == action:
+			var row_rect: Rect2 = item["row_rect"]
+			return row_rect.get_center()
+	return Vector2.ZERO
+
+func _clear_winner_hover() -> void:
+	if _hovered_winner_action.is_empty():
+		return
+	_hovered_winner_action = ""
+	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+	queue_redraw()
 
 func _draw_goal_lines(size: Vector2) -> void:
 	var field_margin := 12.0 * game_scale
