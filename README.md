@@ -138,9 +138,9 @@ O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pu
 
 - `test_credits_flow.gd`: abertura pelos créditos, entrega ao menu, bloqueio de teclas e ausência de repetição ao voltar da pausa.
 - `test_menu_flow.gd`: pausa da partida, seleção de modo e dificuldade, aplicação na IA, retomada, modos PvP/Jogador VS AI e encerramento.
-- `test_pause_flow.gd`: abertura por ESC/P, congelamento, retomada sem alterar o estado e restauração dos padrões.
+- `test_pause_flow.gd`: abertura por ESC/P, congelamento, retomada sem alterar o estado, reinício da partida, abertura das configurações e restauração dos padrões.
 - `test_sound_flow.gd`: integração de áudio com rebatidas, paredes, power-ups, saques, pontos, vitória e transições de pausa.
-- `test_main_flow.gd`: nós e sinais, saques, placar, vitória, retorno ao menu pelo `M`, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.
+- `test_main_flow.gd`: nós e sinais, saques, placar, match point, vitória, retorno ao menu pelo `M`, clique nos botões da tela de vitória, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.
 - `test_scene_resources.gd`: carregamento das cenas e disponibilidade da fonte de fallback.
 - `test_visual_verification.gd`: limites em várias resoluções, sobreposição do HUD, contraste e efeitos visuais.
 
@@ -160,10 +160,11 @@ Os testes validam intervalos e invariantes quando há aleatoriedade e rodam em m
 ├── guia-visual.md          # Paleta, identidade das equipes e critérios visuais
 ├── assets/icons/           # Avatar da tela de créditos
 ├── assets/audio/           # Efeitos sonoros sintetizados (WAV)
-├── scenes/                 # Cenas de bola, raquetes, créditos, menu e pausa
+├── scenes/                 # Cenas de bola, raquetes, créditos, menu, pausa e configurações
 ├── scripts/                # Arena, bola, raquetes, áudio, dificuldade, menus, HUD, power-ups e efeitos
 ├── test/unit/              # Testes unitários
 ├── test/integration/       # Testes de cenas, sinais e fluxos
+├── .github/workflows/      # CI com GUT headless e relatório JUnit XML
 ├── docs/screenshots/       # Capturas usadas neste README
 └── addons/gut/             # GUT 9.7.1, somente desenvolvimento e testes
 ```
