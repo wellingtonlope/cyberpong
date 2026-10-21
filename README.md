@@ -82,7 +82,7 @@ O primeiro item aparece após **5 a 15 rebatidas totais**; os próximos seguem o
 | Efeito | Duração | O que faz |
 | --- | --- | --- |
 | **Raquete dobrada** | 6 rebatidas | Dobra a altura da raquete beneficiada. |
-| **Raquete reduzida** | 5 rebatidas | Reduz a altura da raquete adversária pela metade. |
+| **Raquete reduzida** | 5 rebatidas | Reduz pela metade a altura da própria raquete de quem coletou. |
 | **Freio na bola** | 8 rebatidas | A dona rebate na velocidade atual; a adversária devolve 8% mais devagar. |
 | **Rebote potente** | 8 rebatidas | A dona acelera a bola em 18% por rebatida, até 3.540 px/s. A raquete adversária devolve a 3.000 px/s. |
 | **Defesa extra** | 14 rebatidas | Salva uma falha e termina ao ser usada. |
