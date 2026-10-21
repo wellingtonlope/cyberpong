@@ -1,9 +1,6 @@
 class_name Paddle
 extends Node2D
 
-const AI_SPEED_FACTOR := 0.82
-const AI_REACTION_DELAY := 0.14
-const AI_DEAD_ZONE := 24.0
 const POWER_UP_AIM_MAX_HIT_OFFSET := 0.72
 const POWER_UP_AVOIDANCE_STEPS := 48
 const BOUNCE_VERTICAL_FACTOR := 0.85
@@ -36,9 +33,9 @@ var power_up_size_multiplier := 1.0
 var effective_height_multiplier := 1.0
 var power_up_accent_color := Color.TRANSPARENT
 var power_up_active := false
-var ai_speed_factor := AI_SPEED_FACTOR
-var ai_reaction_delay := AI_REACTION_DELAY
-var ai_dead_zone := AI_DEAD_ZONE
+var ai_speed_factor := Difficulty.preset(Difficulty.DEFAULT_LEVEL).ai_speed_factor
+var ai_reaction_delay := Difficulty.preset(Difficulty.DEFAULT_LEVEL).ai_reaction_delay
+var ai_dead_zone := Difficulty.preset(Difficulty.DEFAULT_LEVEL).ai_dead_zone
 var control_up_actions: Array[String] = ["p1_up"]
 var control_down_actions: Array[String] = ["p1_down"]
 var _deformation_tween: Tween
@@ -103,10 +100,10 @@ func set_control_actions(up_actions: Array, down_actions: Array) -> void:
 	control_up_actions.assign(up_actions)
 	control_down_actions.assign(down_actions)
 
-func apply_difficulty(config: Dictionary) -> void:
-	ai_speed_factor = maxf(float(config.get("ai_speed_factor", AI_SPEED_FACTOR)), 0.0)
-	ai_reaction_delay = maxf(float(config.get("ai_reaction_delay", AI_REACTION_DELAY)), 0.0)
-	ai_dead_zone = maxf(float(config.get("ai_dead_zone", AI_DEAD_ZONE)), 0.0)
+func apply_difficulty(preset: Difficulty.Preset) -> void:
+	ai_speed_factor = maxf(preset.ai_speed_factor, 0.0)
+	ai_reaction_delay = maxf(preset.ai_reaction_delay, 0.0)
+	ai_dead_zone = maxf(preset.ai_dead_zone, 0.0)
 
 func update_ai(
 	ball_position: Vector2,

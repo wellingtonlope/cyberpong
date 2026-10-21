@@ -8,11 +8,11 @@ func test_presets_are_ordered_from_easiest_to_hardest() -> void:
 	assert_eq(Difficulty.level_at(1), Difficulty.Level.NORMAL)
 	assert_eq(Difficulty.level_at(2), Difficulty.Level.HARD)
 	for index in range(1, Difficulty.PRESETS.size()):
-		var previous: Dictionary = Difficulty.PRESETS[index - 1]
-		var current: Dictionary = Difficulty.PRESETS[index]
-		assert_gt(float(current["ai_speed_factor"]), float(previous["ai_speed_factor"]))
-		assert_lt(float(current["ai_reaction_delay"]), float(previous["ai_reaction_delay"]))
-		assert_lt(float(current["ai_dead_zone"]), float(previous["ai_dead_zone"]))
+		var previous: Difficulty.Preset = Difficulty.PRESETS[index - 1]
+		var current: Difficulty.Preset = Difficulty.PRESETS[index]
+		assert_gt(current.ai_speed_factor, previous.ai_speed_factor)
+		assert_lt(current.ai_reaction_delay, previous.ai_reaction_delay)
+		assert_lt(current.ai_dead_zone, previous.ai_dead_zone)
 
 
 func test_default_level_is_normal_and_titles_are_defined() -> void:

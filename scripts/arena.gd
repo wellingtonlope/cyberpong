@@ -101,13 +101,13 @@ func _refresh_match_point() -> void:
 		and left_score < winning_score
 	)
 
-func set_match_hud(rebound_count: int, power_up_info: Dictionary) -> void:
+func set_match_hud(rebound_count: int, power_up_info: PowerUpHudInfo) -> void:
 	total_rebounds = rebound_count
-	power_up_hud_title = str(power_up_info.get("title", ""))
-	power_up_hud_detail = str(power_up_info.get("detail", ""))
-	power_up_hud_progress = clampf(float(power_up_info.get("progress", 0.0)), 0.0, 1.0)
-	power_up_hud_accent = power_up_info.get("accent_color", Palette.MUTED_TEXT_COLOR)
-	power_up_hud_show_progress = bool(power_up_info.get("show_progress", false))
+	power_up_hud_title = power_up_info.title
+	power_up_hud_detail = power_up_info.detail
+	power_up_hud_progress = power_up_info.progress
+	power_up_hud_accent = power_up_info.accent_color
+	power_up_hud_show_progress = power_up_info.show_progress
 	queue_redraw()
 
 func set_winner(is_left: bool) -> void:

@@ -58,7 +58,7 @@ func _ready() -> void:
 	_setup_menu(buttons, cards)
 	var difficulty_titles := []
 	for candidate in Difficulty.PRESETS:
-		difficulty_titles.append(candidate["title"])
+		difficulty_titles.append(candidate.title)
 	_setup_selector("DIFICULDADE", [btn_easy, btn_normal, btn_hard], difficulty_titles)
 	_set_selector_selection(Difficulty.index_of(selected_difficulty))
 	_set_selector_visible(false)

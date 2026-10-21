@@ -148,17 +148,17 @@ func record_paddle_hit(is_left: bool, used_extra_defense: bool = false) -> void:
 		hide()
 	_emit_status()
 
-func get_hud_info(hits_until_next_appearance: int) -> Dictionary:
+func get_hud_info(hits_until_next_appearance: int) -> PowerUpHudInfo:
 	match status:
 		Status.AVAILABLE:
 			var available_effect: Dictionary = PowerUpEffect.data(effect_id)
-			return {
-				"title": "Item no campo",
-				"detail": "%s · %d rebatidas para coletar" % [available_effect["name"], hits_remaining],
-				"progress": float(hits_remaining) / AVAILABLE_HITS,
-				"accent_color": available_effect["color"],
-				"show_progress": true,
-			}
+			return PowerUpHudInfo.new(
+				"Item no campo",
+				"%s · %d rebatidas para coletar" % [available_effect["name"], hits_remaining],
+				float(hits_remaining) / AVAILABLE_HITS,
+				available_effect["color"],
+				true
+			)
 		Status.HELD:
 			var effect: Dictionary = PowerUpEffect.data(effect_id)
 			var owner_name := Palette.team_name(owner_is_left)
@@ -167,21 +167,18 @@ func get_hud_info(hits_until_next_appearance: int) -> Dictionary:
 				detail = "%s · 1 defesa · %d rebatidas restantes" % [owner_name, hits_remaining]
 			elif effect_uses_remaining > 0:
 				detail = "%s · %d usos · %d rebatidas restantes" % [owner_name, effect_uses_remaining, hits_remaining]
-			return {
-				"title": effect["name"],
-				"detail": detail,
-				"progress": float(hits_remaining) / maxf(effect_duration_hits, 1),
-				"accent_color": effect["color"],
-				"show_progress": true,
-			}
+			return PowerUpHudInfo.new(
+				effect["name"],
+				detail,
+				float(hits_remaining) / maxf(effect_duration_hits, 1),
+				effect["color"],
+				true
+			)
 		_:
-			return {
-				"title": "Próximo power-up",
-				"detail": "em %d rebatidas" % hits_until_next_appearance,
-				"progress": 0.0,
-				"accent_color": Palette.MUTED_TEXT_COLOR,
-				"show_progress": false,
-			}
+			return PowerUpHudInfo.new(
+				"Próximo power-up",
+				"em %d rebatidas" % hits_until_next_appearance
+			)
 
 func _process(delta: float) -> void:
 	if status != Status.AVAILABLE:

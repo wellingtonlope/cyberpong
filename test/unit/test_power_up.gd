@@ -193,29 +193,29 @@ func test_extra_defense_overrides_default_duration_and_consumes_on_save() -> voi
 	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.NONE)
 
 func test_hud_information_tracks_available_and_held_states() -> void:
-	var inactive_info: Dictionary = power_up.get_hud_info(7)
-	assert_eq(inactive_info["title"], "Próximo power-up")
-	assert_false(inactive_info["show_progress"])
+	var inactive_info: PowerUpHudInfo = power_up.get_hud_info(7)
+	assert_eq(inactive_info.title, "Próximo power-up")
+	assert_false(inactive_info.show_progress)
 
 	power_up.appear(FIELD_SIZE)
 	power_up.effect_id = POWER_UP_EFFECT.Id.HALF_SIZE
-	var available_info: Dictionary = power_up.get_hud_info(7)
-	assert_eq(available_info["title"], "Item no campo")
-	assert_true(str(available_info["detail"]).contains("Raquete reduzida"))
-	assert_true(available_info["show_progress"])
+	var available_info: PowerUpHudInfo = power_up.get_hud_info(7)
+	assert_eq(available_info.title, "Item no campo")
+	assert_true(available_info.detail.contains("Raquete reduzida"))
+	assert_true(available_info.show_progress)
 
 	power_up.collect(false)
-	var held_info: Dictionary = power_up.get_hud_info(7)
-	assert_eq(held_info["title"], "Raquete reduzida")
-	assert_true(str(held_info["detail"]).contains("Magenta Volt"))
-	assert_eq(held_info["progress"], 1.0)
+	var held_info: PowerUpHudInfo = power_up.get_hud_info(7)
+	assert_eq(held_info.title, "Raquete reduzida")
+	assert_true(held_info.detail.contains("Magenta Volt"))
+	assert_eq(held_info.progress, 1.0)
 
 	power_up.reset_for_match(FIELD_SIZE)
 	power_up.appear(FIELD_SIZE)
 	power_up.effect_id = POWER_UP_EFFECT.Id.HALF_SIZE
 	power_up.collect(true)
-	var left_held_info: Dictionary = power_up.get_hud_info(7)
-	assert_true(str(left_held_info["detail"]).contains("Cyan Circuit"))
+	var left_held_info: PowerUpHudInfo = power_up.get_hud_info(7)
+	assert_true(left_held_info.detail.contains("Cyan Circuit"))
 
 func test_resizing_field_keeps_available_item_inside_play_area() -> void:
 	power_up.appear(FIELD_SIZE)

@@ -201,7 +201,7 @@ O avatar pode ser substituído mantendo o caminho referenciado por `scenes/credi
 - `main.gd` coordena créditos, menus, modos, placar e o estado da partida; conecta os sinais da bola e reinicia os valores padrão ao voltar ao menu principal.
 - `ball.gd` implementa movimento e colisões por código, sem nós de física, e emite `speed_changed` no saque e a cada mudança de velocidade.
 - `paddle.gd` controla movimento humano e IA, aplica os parâmetros da dificuldade, calcula a previsão com reflexões nas bordas e atualiza colisão e visual quando recebe um efeito.
-- `difficulty.gd` define os presets Fácil, Médio e Difícil, com velocidade, atraso de reação e zona morta das IAs.
+- `difficulty.gd` define os presets Fácil, Médio e Difícil (`Difficulty.Preset`), com velocidade, atraso de reação e zona morta das IAs; `power_up_hud_info.gd` transporta os dados do painel de power-up entre o power-up e a arena.
 - `power_up_effect.gd` centraliza os IDs (`PowerUpEffect.Id`) e o catálogo (`PowerUpEffect.CATALOG`) dos efeitos; `power_up.gd` agenda aparições a cada 5–15 rebatidas totais e controla coleta, proprietário e duração.
 - `palette.gd` centraliza a paleta compartilhada e a identidade das equipes (`Palette.team_color`, `Palette.team_name`); `game_mode.gd` define a enumeração única dos modos de jogo; `ui_draw.gd` concentra os helpers de desenho (ajuste de fonte, geometria dos cartões, pips e emblemas das equipes).
 - `arena.gd` desenha a arena em camadas, o placar, o aviso de saque, a transição de ponto, a tela de vitória e o HUD superior.
