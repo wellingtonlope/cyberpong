@@ -74,8 +74,8 @@ func test_layout_scale_is_clamped_for_huge_and_small_windows() -> void:
 
 func test_mode_cards_map_to_expected_game_modes() -> void:
 	var expected_modes := [
-		menu.GameMode.PLAYER_VS_PLAYER,
-		menu.GameMode.PLAYER_VS_AI,
+		GameMode.Mode.PLAYER_VS_PLAYER,
+		GameMode.Mode.PLAYER_VS_AI,
 	]
 	assert_eq(menu.MODE_CARDS.size(), expected_modes.size())
 	for index in range(menu.MODE_CARDS.size()):
@@ -120,9 +120,9 @@ func test_mode_selection_emits_the_chosen_difficulty() -> void:
 		func(mode: int, difficulty: int) -> void: emitted.append([mode, difficulty])
 	)
 
-	menu._select(menu.GameMode.PLAYER_VS_AI)
+	menu._select(GameMode.Mode.PLAYER_VS_AI)
 
-	assert_eq(emitted, [[menu.GameMode.PLAYER_VS_AI, Difficulty.Level.EASY]])
+	assert_eq(emitted, [[GameMode.Mode.PLAYER_VS_AI, Difficulty.Level.EASY]])
 
 func test_difficulty_selector_only_appears_for_player_vs_ai() -> void:
 	var pvp: Button = menu.get_node("BtnPvP")
@@ -200,9 +200,9 @@ func test_select_emits_mode_and_resumes_the_paused_tree() -> void:
 	var emitted_modes: Array = []
 	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
-	menu._select(menu.GameMode.PLAYER_VS_AI)
+	menu._select(GameMode.Mode.PLAYER_VS_AI)
 
-	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_AI])
+	assert_eq(emitted_modes, [GameMode.Mode.PLAYER_VS_AI])
 	assert_false(menu.visible)
 	assert_false(menu.is_processing())
 	assert_false(get_tree().paused)
@@ -212,16 +212,16 @@ func test_select_ignores_a_second_choice() -> void:
 	var emitted_modes: Array = []
 	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
-	menu._select(menu.GameMode.PLAYER_VS_PLAYER)
-	menu._select(menu.GameMode.PLAYER_VS_AI)
+	menu._select(GameMode.Mode.PLAYER_VS_PLAYER)
+	menu._select(GameMode.Mode.PLAYER_VS_AI)
 
-	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_PLAYER])
+	assert_eq(emitted_modes, [GameMode.Mode.PLAYER_VS_PLAYER])
 
 func test_activate_waits_for_the_close_transition_before_selecting() -> void:
 	var emitted_modes: Array = []
 	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
-	menu._activate(menu.GameMode.PLAYER_VS_AI, 1)
+	menu._activate(GameMode.Mode.PLAYER_VS_AI, 1)
 	assert_true(menu._closing)
 	assert_false(menu._selected)
 
@@ -231,7 +231,7 @@ func test_activate_waits_for_the_close_transition_before_selecting() -> void:
 
 	menu._process(menu.CLOSE_DURATION)
 	assert_true(menu._selected)
-	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_AI])
+	assert_eq(emitted_modes, [GameMode.Mode.PLAYER_VS_AI])
 
 func test_focus_brackets_point_inward_at_every_corner() -> void:
 	var rect := Rect2(100.0, 100.0, 200.0, 60.0)
@@ -255,7 +255,7 @@ func test_button_press_starts_the_same_selection_flow() -> void:
 	assert_true(menu._closing)
 
 	menu._process(menu.CLOSE_DURATION)
-	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_PLAYER])
+	assert_eq(emitted_modes, [GameMode.Mode.PLAYER_VS_PLAYER])
 
 func test_exit_card_is_the_last_item_and_requests_to_quit() -> void:
 	assert_eq(menu._cards.size(), 4)

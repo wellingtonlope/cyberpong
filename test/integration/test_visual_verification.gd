@@ -29,7 +29,7 @@ func before_each() -> void:
 	credits._process(credits.SKIP_FADE_OUT_DURATION)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
-	menu._select(game.GameMode.PLAYER_VS_AI)
+	menu._select(GameMode.Mode.PLAYER_VS_AI)
 
 
 func after_each() -> void:
@@ -146,7 +146,7 @@ func test_hud_panels_and_text_fit_without_overlap_across_window_sizes() -> void:
 
 		var name_font_size := maxi(int(7.0 * ui_scale), 7)
 		var name_width: float = 120.0 * ui_scale - 37.0 * ui_scale
-		for team_name in [ARENA_SCRIPT.LEFT_TEAM_NAME, ARENA_SCRIPT.RIGHT_TEAM_NAME]:
+		for team_name in [Palette.LEFT_TEAM_NAME, Palette.RIGHT_TEAM_NAME]:
 			var name_size: float = font.get_string_size(
 				team_name,
 				HORIZONTAL_ALIGNMENT_LEFT,
@@ -225,13 +225,13 @@ func test_match_updates_collision_effects_and_power_up_highlight() -> void:
 
 
 func test_key_colors_keep_readable_contrast() -> void:
-	assert_gte(_contrast_ratio(ARENA_SCRIPT.TEXT_COLOR, ARENA_SCRIPT.HUD_PANEL_COLOR), 4.5)
-	assert_gte(_contrast_ratio(ARENA_SCRIPT.MUTED_TEXT_COLOR, ARENA_SCRIPT.HUD_PANEL_COLOR), 4.5)
-	assert_gte(_contrast_ratio(ARENA_SCRIPT.TEXT_COLOR, ARENA_SCRIPT.FIELD_COLOR), 4.5)
-	assert_gte(_contrast_ratio(ARENA_SCRIPT.MUTED_TEXT_COLOR, ARENA_SCRIPT.FIELD_COLOR), 4.5)
-	assert_gte(_contrast_ratio(ARENA_SCRIPT.LEFT_COLOR, ARENA_SCRIPT.SCORE_LEFT_PANEL), 4.5)
-	assert_gte(_contrast_ratio(ARENA_SCRIPT.RIGHT_COLOR, ARENA_SCRIPT.SCORE_RIGHT_PANEL), 4.5)
-	assert_gte(_contrast_ratio(BALL_SCRIPT.BALL_COLOR, ARENA_SCRIPT.FIELD_CENTER_COLOR), 4.5)
+	assert_gte(_contrast_ratio(Palette.TEXT_COLOR, ARENA_SCRIPT.HUD_PANEL_COLOR), 4.5)
+	assert_gte(_contrast_ratio(Palette.MUTED_TEXT_COLOR, ARENA_SCRIPT.HUD_PANEL_COLOR), 4.5)
+	assert_gte(_contrast_ratio(Palette.TEXT_COLOR, ARENA_SCRIPT.FIELD_COLOR), 4.5)
+	assert_gte(_contrast_ratio(Palette.MUTED_TEXT_COLOR, ARENA_SCRIPT.FIELD_COLOR), 4.5)
+	assert_gte(_contrast_ratio(Palette.LEFT_COLOR, ARENA_SCRIPT.SCORE_LEFT_PANEL), 4.5)
+	assert_gte(_contrast_ratio(Palette.RIGHT_COLOR, ARENA_SCRIPT.SCORE_RIGHT_PANEL), 4.5)
+	assert_gte(_contrast_ratio(Palette.BALL_COLOR, ARENA_SCRIPT.FIELD_CENTER_COLOR), 4.5)
 
 	var item_body_color := Color(0.02, 0.035, 0.06)
 	for effect_id in POWER_UP_EFFECT.ALL:

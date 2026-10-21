@@ -8,8 +8,13 @@ const POWER_UP_AIM_MAX_HIT_OFFSET := 0.72
 const POWER_UP_AVOIDANCE_STEPS := 48
 const BOUNCE_VERTICAL_FACTOR := 0.85
 
+enum ControlMode {
+	AI,
+	HUMAN
+}
+
 @export var is_left := true
-@export var tint := Color(0.08, 0.98, 1.0)
+@export var tint := Palette.LEFT_COLOR
 
 @onready var visual_root: Node2D = $Visual
 @onready var body: Polygon2D = $Visual/Body
@@ -38,7 +43,7 @@ var control_up_actions: Array[String] = ["p1_up"]
 var control_down_actions: Array[String] = ["p1_down"]
 var _deformation_tween: Tween
 
-var control_mode := 0  # 0 = AI, 1 = Human
+var control_mode: ControlMode = ControlMode.AI
 
 func _ready() -> void:
 	power_up_highlight.z_index = 0
@@ -91,7 +96,7 @@ func clear_power_up() -> void:
 	_update_size_and_visuals()
 	position.y = clampf(position.y, play_top + paddle_height * 0.5, field_size.y - paddle_height * 0.5)
 
-func set_control_mode(mode: int) -> void:
+func set_control_mode(mode: ControlMode) -> void:
 	control_mode = mode
 
 func set_control_actions(up_actions: Array, down_actions: Array) -> void:
@@ -111,7 +116,7 @@ func update_ai(
 	power_up_position: Vector2 = Vector2.ZERO,
 	power_up_is_beneficial: bool = false
 ) -> void:
-	if control_mode == 1:
+	if control_mode == ControlMode.HUMAN:
 		var direction := _read_human_direction()
 		if absf(direction) > 0.0:
 			position.y += direction * paddle_speed * delta

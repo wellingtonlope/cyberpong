@@ -161,7 +161,7 @@ func get_hud_info(hits_until_next_appearance: int) -> Dictionary:
 			}
 		Status.HELD:
 			var effect: Dictionary = PowerUpEffect.data(effect_id)
-			var owner_name := "Cyan Circuit" if owner_is_left else "Magenta Volt"
+			var owner_name := Palette.team_name(owner_is_left)
 			var detail := "%s · %d rebatidas restantes" % [owner_name, hits_remaining]
 			if effect_id == PowerUpEffect.Id.EXTRA_DEFENSE:
 				detail = "%s · 1 defesa · %d rebatidas restantes" % [owner_name, hits_remaining]
@@ -179,7 +179,7 @@ func get_hud_info(hits_until_next_appearance: int) -> Dictionary:
 				"title": "Próximo power-up",
 				"detail": "em %d rebatidas" % hits_until_next_appearance,
 				"progress": 0.0,
-				"accent_color": Color(0.58, 0.68, 0.8),
+				"accent_color": Palette.MUTED_TEXT_COLOR,
 				"show_progress": false,
 			}
 

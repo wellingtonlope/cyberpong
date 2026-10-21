@@ -1,16 +1,6 @@
 class_name MenuScreen
 extends Control
 
-const LEFT_COLOR := Color(0.08, 0.98, 1.0)
-const RIGHT_COLOR := Color(1.0, 0.12, 0.72)
-const TEXT_COLOR := Color(0.9, 0.94, 1.0)
-const MUTED_TEXT_COLOR := Color(0.58, 0.68, 0.8)
-const DIVIDER_COLOR := Color(0.18, 0.24, 0.32)
-const BALL_COLOR := Color(1.0, 0.92, 0.12)
-const PANEL_COLOR := Color(0.008, 0.016, 0.028, 0.94)
-const PANEL_HOVER_COLOR := Color(0.018, 0.038, 0.062, 0.96)
-const PANEL_FOCUS_COLOR := Color(0.028, 0.058, 0.092, 0.97)
-const OVERLAY_COLOR := Color(0.003, 0.008, 0.016, 0.9)
 
 const CARD_HEIGHT := 60.0
 const CARD_GAP := 16.0
@@ -367,7 +357,7 @@ func _draw() -> void:
 		_draw_close_flash(surface_size, alpha)
 
 func _draw_backdrop(surface_size: Vector2, scale_factor: float, alpha: float) -> void:
-	draw_rect(Rect2(Vector2.ZERO, surface_size), _alpha(OVERLAY_COLOR, alpha))
+	draw_rect(Rect2(Vector2.ZERO, surface_size), _alpha(Palette.OVERLAY_COLOR, alpha))
 
 	var strip_count := 18
 	var strip_width := maxf(6.0 * scale_factor, 4.0)
@@ -377,11 +367,11 @@ func _draw_backdrop(surface_size: Vector2, scale_factor: float, alpha: float) ->
 		var x := float(index) * strip_width
 		draw_rect(
 			Rect2(x, 0.0, strip_width, surface_size.y),
-			_alpha(LEFT_COLOR, glow_alpha)
+			_alpha(Palette.LEFT_COLOR, glow_alpha)
 		)
 		draw_rect(
 			Rect2(surface_size.x - x - strip_width, 0.0, strip_width, surface_size.y),
-			_alpha(RIGHT_COLOR, glow_alpha)
+			_alpha(Palette.RIGHT_COLOR, glow_alpha)
 		)
 
 	var band_height := maxf(4.0 * scale_factor, 3.0)
@@ -442,7 +432,7 @@ func _draw_header(scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		title_width,
 		title_font_size,
-		_alpha(TEXT_COLOR, alpha)
+		_alpha(Palette.TEXT_COLOR, alpha)
 	)
 	var subtitle_font_size := maxi(int(8.5 * scale_factor), 9)
 	draw_string(
@@ -452,7 +442,7 @@ func _draw_header(scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		title_width,
 		subtitle_font_size,
-		_alpha(MUTED_TEXT_COLOR, alpha)
+		_alpha(Palette.MUTED_TEXT_COLOR, alpha)
 	)
 
 	var underline_y := header.position.y + 61.0 * scale_factor
@@ -460,14 +450,14 @@ func _draw_header(scale_factor: float, alpha: float) -> void:
 	draw_line(
 		Vector2(title_x, underline_y),
 		Vector2(title_x + 64.0 * scale_factor, underline_y),
-		_alpha(LEFT_COLOR, alpha),
+		_alpha(Palette.LEFT_COLOR, alpha),
 		line_width,
 		true
 	)
 	draw_line(
 		Vector2(title_x + 68.0 * scale_factor, underline_y),
 		Vector2(title_x + 112.0 * scale_factor, underline_y),
-		_alpha(RIGHT_COLOR, alpha),
+		_alpha(Palette.RIGHT_COLOR, alpha),
 		line_width,
 		true
 	)
@@ -480,7 +470,7 @@ func _draw_header(scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_RIGHT,
 		status_width,
 		maxi(int(9.0 * scale_factor), 8),
-		_alpha(MUTED_TEXT_COLOR, alpha)
+		_alpha(Palette.MUTED_TEXT_COLOR, alpha)
 	)
 	var live_text := _header_live_label()
 	var live_font_size := maxi(int(8.0 * scale_factor), 8)
@@ -497,7 +487,7 @@ func _draw_header(scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		live_width + 2.0,
 		live_font_size,
-		_alpha(TEXT_COLOR, alpha)
+		_alpha(Palette.TEXT_COLOR, alpha)
 	)
 	draw_circle(
 		Vector2(
@@ -505,7 +495,7 @@ func _draw_header(scale_factor: float, alpha: float) -> void:
 			header.position.y + 47.0 * scale_factor
 		),
 		maxf(2.4 * scale_factor, 2.0),
-		_alpha(BALL_COLOR, alpha)
+		_alpha(Palette.BALL_COLOR, alpha)
 	)
 
 func _header_title() -> String:
@@ -526,17 +516,17 @@ func _draw_logo_mark(center: Vector2, scale_factor: float, alpha: float) -> void
 	draw_rect(frame, _alpha(Color(0.035, 0.055, 0.09), 0.92 * alpha))
 	draw_rect(
 		frame,
-		_alpha(DIVIDER_COLOR, alpha),
+		_alpha(Palette.DIVIDER_COLOR, alpha),
 		false,
 		maxf(1.0, 1.5 * scale_factor)
 	)
 	draw_rect(
 		Rect2(center + Vector2(-8.0, -6.0) * scale_factor, Vector2(2.5, 12.0) * scale_factor),
-		_alpha(LEFT_COLOR, alpha)
+		_alpha(Palette.LEFT_COLOR, alpha)
 	)
 	draw_rect(
 		Rect2(center + Vector2(5.5, -6.0) * scale_factor, Vector2(2.5, 12.0) * scale_factor),
-		_alpha(RIGHT_COLOR, alpha)
+		_alpha(Palette.RIGHT_COLOR, alpha)
 	)
 	var radius := 4.5 * scale_factor
 	var ball_mark := PackedVector2Array([
@@ -545,7 +535,7 @@ func _draw_logo_mark(center: Vector2, scale_factor: float, alpha: float) -> void
 		center + Vector2(0.0, radius),
 		center + Vector2(-radius, 0.0),
 	])
-	draw_colored_polygon(ball_mark, _alpha(BALL_COLOR, alpha))
+	draw_colored_polygon(ball_mark, _alpha(Palette.BALL_COLOR, alpha))
 
 func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 	var strip: Rect2 = _layout["strip"]
@@ -554,28 +544,28 @@ func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 	draw_line(
 		Vector2(strip.position.x, center.y),
 		Vector2(center.x - 36.0 * scale_factor, center.y),
-		_alpha(Color(DIVIDER_COLOR, 0.55), alpha),
+		_alpha(Color(Palette.DIVIDER_COLOR, 0.55), alpha),
 		line_width,
 		true
 	)
 	draw_line(
 		Vector2(center.x + 36.0 * scale_factor, center.y),
 		Vector2(strip.end.x, center.y),
-		_alpha(Color(DIVIDER_COLOR, 0.55), alpha),
+		_alpha(Color(Palette.DIVIDER_COLOR, 0.55), alpha),
 		line_width,
 		true
 	)
 
 	_draw_team_emblem(
 		Vector2(strip.position.x + 14.0 * scale_factor, center.y),
-		LEFT_COLOR,
+		Palette.LEFT_COLOR,
 		true,
 		scale_factor,
 		alpha
 	)
 	_draw_team_emblem(
 		Vector2(strip.end.x - 14.0 * scale_factor, center.y),
-		RIGHT_COLOR,
+		Palette.RIGHT_COLOR,
 		false,
 		scale_factor,
 		alpha
@@ -590,7 +580,7 @@ func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		name_width,
 		name_font_size,
-		_alpha(LEFT_COLOR, alpha)
+		_alpha(Palette.LEFT_COLOR, alpha)
 	)
 	draw_string(
 		_font,
@@ -602,7 +592,7 @@ func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_RIGHT,
 		name_width,
 		name_font_size,
-		_alpha(RIGHT_COLOR, alpha)
+		_alpha(Palette.RIGHT_COLOR, alpha)
 	)
 
 	var bracket_size := 8.0 * scale_factor
@@ -612,7 +602,7 @@ func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 			Vector2(center.x - 42.0 * scale_factor, center.y),
 			Vector2(center.x - 34.0 * scale_factor, center.y + bracket_size),
 		]),
-		_alpha(Color(LEFT_COLOR, 0.8), alpha),
+		_alpha(Color(Palette.LEFT_COLOR, 0.8), alpha),
 		maxf(1.0, 1.5 * scale_factor),
 		true
 	)
@@ -622,7 +612,7 @@ func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 			Vector2(center.x + 42.0 * scale_factor, center.y),
 			Vector2(center.x + 34.0 * scale_factor, center.y + bracket_size),
 		]),
-		_alpha(Color(RIGHT_COLOR, 0.8), alpha),
+		_alpha(Color(Palette.RIGHT_COLOR, 0.8), alpha),
 		maxf(1.0, 1.5 * scale_factor),
 		true
 	)
@@ -633,7 +623,7 @@ func _draw_team_strip(scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		60.0 * scale_factor,
 		maxi(int(14.0 * scale_factor), 11),
-		_alpha(TEXT_COLOR, alpha)
+		_alpha(Palette.TEXT_COLOR, alpha)
 	)
 
 func _draw_selector(scale_factor: float, alpha: float) -> void:
@@ -652,7 +642,7 @@ func _draw_selector(scale_factor: float, alpha: float) -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			label_rect.size.x,
 			label_font_size,
-			_alpha(MUTED_TEXT_COLOR, alpha)
+			_alpha(Palette.MUTED_TEXT_COLOR, alpha)
 		)
 
 	for index in range(_selector_rects.size()):
@@ -662,18 +652,18 @@ func _draw_selector(scale_factor: float, alpha: float) -> void:
 		var hovered := button.is_hovered()
 		var cut := maxf(6.0 * scale_factor, 4.0)
 		var points := _angular_points(rect, cut)
-		var fill := PANEL_COLOR
+		var fill := Palette.PANEL_COLOR
 		if selected:
 			fill = Color(0.035, 0.075, 0.115, 0.97)
 		elif hovered:
-			fill = PANEL_HOVER_COLOR
+			fill = Palette.PANEL_HOVER_COLOR
 		draw_colored_polygon(points, _alpha(fill, alpha))
 
 		var outline := points.duplicate()
 		outline.append(points[0])
-		var border_color := Color(DIVIDER_COLOR, 0.62 if hovered else 0.42)
+		var border_color := Color(Palette.DIVIDER_COLOR, 0.62 if hovered else 0.42)
 		if selected:
-			border_color = LEFT_COLOR.lerp(RIGHT_COLOR, float(index) / float(maxi(_selector_rects.size() - 1, 1)))
+			border_color = Palette.LEFT_COLOR.lerp(Palette.RIGHT_COLOR, float(index) / float(maxi(_selector_rects.size() - 1, 1)))
 			border_color.a = 0.9
 		elif hovered:
 			border_color = Color(0.55, 0.75, 0.95, 0.55)
@@ -687,7 +677,7 @@ func _draw_selector(scale_factor: float, alpha: float) -> void:
 			draw_line(
 				Vector2(rect.position.x + cut, rect.end.y - maxf(1.0, 2.0 * scale_factor)),
 				Vector2(rect.end.x - cut, rect.end.y - maxf(1.0, 2.0 * scale_factor)),
-				_alpha(BALL_COLOR, 0.9 * alpha),
+				_alpha(Palette.BALL_COLOR, 0.9 * alpha),
 				maxf(1.0, 2.0 * scale_factor),
 				true
 			)
@@ -710,7 +700,7 @@ func _draw_selector(scale_factor: float, alpha: float) -> void:
 			HORIZONTAL_ALIGNMENT_CENTER,
 			rect.size.x,
 			title_font_size,
-			_alpha(TEXT_COLOR if selected or hovered else MUTED_TEXT_COLOR, alpha)
+			_alpha(Palette.TEXT_COLOR if selected or hovered else Palette.MUTED_TEXT_COLOR, alpha)
 		)
 
 func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
@@ -721,9 +711,9 @@ func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 	var hovered := button.is_hovered()
 	var cut := maxf(8.0 * scale_factor, 6.0)
 	var points := _angular_points(rect, cut)
-	var fill := PANEL_FOCUS_COLOR
+	var fill := Palette.PANEL_FOCUS_COLOR
 	if not focused:
-		fill = PANEL_HOVER_COLOR if hovered else PANEL_COLOR
+		fill = Palette.PANEL_HOVER_COLOR if hovered else Palette.PANEL_COLOR
 	draw_colored_polygon(points, _alpha(fill, alpha))
 
 	var outline := points.duplicate()
@@ -737,7 +727,7 @@ func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 		)
 	var border_color := Color(0.55, 0.75, 0.95, 0.85)
 	if not focused:
-		border_color = Color(DIVIDER_COLOR, 0.62 if hovered else 0.42)
+		border_color = Color(Palette.DIVIDER_COLOR, 0.62 if hovered else 0.42)
 	draw_polyline(
 		outline,
 		_alpha(border_color, alpha),
@@ -750,7 +740,7 @@ func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 			rect.position + Vector2(0.0, cut),
 			Vector2(maxf(2.0, 3.0 * scale_factor), rect.size.y - cut * 2.0)
 		),
-		_alpha(BALL_COLOR if focused else DIVIDER_COLOR, (0.9 if focused else 0.45) * alpha)
+		_alpha(Palette.BALL_COLOR if focused else Palette.DIVIDER_COLOR, (0.9 if focused else 0.45) * alpha)
 	)
 
 	var padding_left := 20.0 * scale_factor
@@ -771,7 +761,7 @@ func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		tag_width + 2.0,
 		tag_font_size,
-		_alpha(MUTED_TEXT_COLOR, 0.9 * alpha)
+		_alpha(Palette.MUTED_TEXT_COLOR, 0.9 * alpha)
 	)
 
 	var title_max_width := tag_x - (rect.position.x + padding_left) - 10.0 * scale_factor
@@ -790,7 +780,7 @@ func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		title_max_width,
 		title_font_size,
-		_alpha(TEXT_COLOR, alpha)
+		_alpha(Palette.TEXT_COLOR, alpha)
 	)
 
 	var detail_width := rect.size.x - padding_left - 16.0 * scale_factor
@@ -809,13 +799,13 @@ func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		detail_width,
 		detail_font_size,
-		_alpha(MUTED_TEXT_COLOR, alpha)
+		_alpha(Palette.MUTED_TEXT_COLOR, alpha)
 	)
 
 	if focused:
 		_draw_focus_brackets(rect, cut, scale_factor, alpha)
 	if _closing and index == _closing_index:
-		draw_colored_polygon(points, _alpha(BALL_COLOR, 0.16 * (1.0 - _close_progress)))
+		draw_colored_polygon(points, _alpha(Palette.BALL_COLOR, 0.16 * (1.0 - _close_progress)))
 
 func _draw_top_gradient(
 	rect: Rect2,
@@ -831,7 +821,7 @@ func _draw_top_gradient(
 	for segment in range(segments):
 		var start_ratio := float(segment) / float(segments)
 		var end_ratio := float(segment + 1) / float(segments)
-		var color := LEFT_COLOR.lerp(RIGHT_COLOR, (start_ratio + end_ratio) * 0.5)
+		var color := Palette.LEFT_COLOR.lerp(Palette.RIGHT_COLOR, (start_ratio + end_ratio) * 0.5)
 		draw_line(
 			Vector2(lerpf(start_x, end_x, start_ratio), rect.position.y),
 			Vector2(lerpf(start_x, end_x, end_ratio), rect.position.y),
@@ -864,14 +854,14 @@ func _focus_bracket_segments(rect: Rect2, cut: float, scale_factor: float) -> Ar
 	var right_top := Vector2(rect.end.x - cut - inset, rect.position.y + inset)
 	var right_bottom := Vector2(rect.end.x - cut - inset, rect.end.y - inset)
 	return [
-		[left_top, left_top + Vector2(arm, 0.0), LEFT_COLOR],
-		[left_top, left_top + Vector2(0.0, arm), LEFT_COLOR],
-		[left_bottom, left_bottom + Vector2(arm, 0.0), LEFT_COLOR],
-		[left_bottom, left_bottom - Vector2(0.0, arm), LEFT_COLOR],
-		[right_top, right_top - Vector2(arm, 0.0), RIGHT_COLOR],
-		[right_top, right_top + Vector2(0.0, arm), RIGHT_COLOR],
-		[right_bottom, right_bottom - Vector2(arm, 0.0), RIGHT_COLOR],
-		[right_bottom, right_bottom - Vector2(0.0, arm), RIGHT_COLOR],
+		[left_top, left_top + Vector2(arm, 0.0), Palette.LEFT_COLOR],
+		[left_top, left_top + Vector2(0.0, arm), Palette.LEFT_COLOR],
+		[left_bottom, left_bottom + Vector2(arm, 0.0), Palette.LEFT_COLOR],
+		[left_bottom, left_bottom - Vector2(0.0, arm), Palette.LEFT_COLOR],
+		[right_top, right_top - Vector2(arm, 0.0), Palette.RIGHT_COLOR],
+		[right_top, right_top + Vector2(0.0, arm), Palette.RIGHT_COLOR],
+		[right_bottom, right_bottom - Vector2(arm, 0.0), Palette.RIGHT_COLOR],
+		[right_bottom, right_bottom - Vector2(0.0, arm), Palette.RIGHT_COLOR],
 	]
 
 func _draw_cursor(scale_factor: float, alpha: float) -> void:
@@ -883,13 +873,13 @@ func _draw_cursor(scale_factor: float, alpha: float) -> void:
 		cursor_y = _card_rects[_focused_index].get_center().y
 	var pulse := 1.0 + 0.12 * sin(_time * 4.0)
 	var radius := maxf(5.0 * scale_factor, 3.0) * pulse
-	draw_circle(Vector2(cursor_x, cursor_y), radius * 2.6, _alpha(Color(BALL_COLOR, 0.07), alpha))
+	draw_circle(Vector2(cursor_x, cursor_y), radius * 2.6, _alpha(Color(Palette.BALL_COLOR, 0.07), alpha))
 	for index in range(3):
 		var offset := float(index + 1) * 7.0 * scale_factor
 		draw_line(
 			Vector2(cursor_x - offset - 8.0 * scale_factor, cursor_y),
 			Vector2(cursor_x - offset, cursor_y),
-			_alpha(Color(BALL_COLOR, 0.25 - float(index) * 0.06), alpha),
+			_alpha(Color(Palette.BALL_COLOR, 0.25 - float(index) * 0.06), alpha),
 			maxf(1.0, 1.5 * scale_factor),
 			true
 		)
@@ -899,7 +889,7 @@ func _draw_cursor(scale_factor: float, alpha: float) -> void:
 		Vector2(cursor_x, cursor_y + radius),
 		Vector2(cursor_x - radius, cursor_y),
 	])
-	draw_colored_polygon(cursor_points, _alpha(BALL_COLOR, alpha))
+	draw_colored_polygon(cursor_points, _alpha(Palette.BALL_COLOR, alpha))
 	draw_circle(
 		Vector2(cursor_x, cursor_y),
 		maxf(1.2 * scale_factor, 1.0),
@@ -942,7 +932,7 @@ func _draw_footer(scale_factor: float, alpha: float) -> void:
 		draw_rect(key_rect, _alpha(Color(0.04, 0.07, 0.11), 0.9 * alpha))
 		draw_rect(
 			key_rect,
-			_alpha(Color(DIVIDER_COLOR, 0.8), alpha),
+			_alpha(Color(Palette.DIVIDER_COLOR, 0.8), alpha),
 			false,
 			maxf(1.0, 1.0 * scale_factor)
 		)
@@ -953,7 +943,7 @@ func _draw_footer(scale_factor: float, alpha: float) -> void:
 			HORIZONTAL_ALIGNMENT_CENTER,
 			key_width,
 			key_font_size,
-			_alpha(TEXT_COLOR, alpha)
+			_alpha(Palette.TEXT_COLOR, alpha)
 		)
 		draw_string(
 			_font,
@@ -962,7 +952,7 @@ func _draw_footer(scale_factor: float, alpha: float) -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			label_width + 2.0,
 			label_font_size,
-			_alpha(MUTED_TEXT_COLOR, alpha)
+			_alpha(Palette.MUTED_TEXT_COLOR, alpha)
 		)
 		x += key_width + 6.0 * scale_factor + label_width
 		if index < hints.size() - 1:
@@ -977,7 +967,7 @@ func _draw_close_flash(surface_size: Vector2, alpha: float) -> void:
 		return
 	if _closing_index >= 0 and _closing_index < _card_rects.size():
 		var rect: Rect2 = _card_rects[_closing_index]
-		draw_rect(rect, _alpha(BALL_COLOR, 0.08 * strength))
+		draw_rect(rect, _alpha(Palette.BALL_COLOR, 0.08 * strength))
 	draw_rect(
 		Rect2(Vector2.ZERO, surface_size),
 		Color(0.55, 0.85, 1.0, 0.035 * strength * alpha)
@@ -1011,7 +1001,7 @@ func _draw_team_emblem(
 			maxf(1.0, 1.4 * emblem_scale),
 			true
 		)
-		draw_circle(center, 2.0 * emblem_scale, _alpha(TEXT_COLOR, alpha))
+		draw_circle(center, 2.0 * emblem_scale, _alpha(Palette.TEXT_COLOR, alpha))
 	else:
 		var diamond := PackedVector2Array([
 			center + Vector2(0.0, -11.0) * emblem_scale,

@@ -16,7 +16,6 @@ signal wall_hit(hit_position: Vector2)
 const DEFAULT_RADIUS := 30.0
 const DEFAULT_SPEED := 1140.0
 const MAX_SPEED := 3000.0
-const BALL_COLOR := Color(1.0, 0.92, 0.12)
 const BRAKE_SPEED_MULTIPLIER := 0.92
 const BRAKE_MINIMUM_SPEED_RATIO := 0.65
 const POWERFUL_BOUNCE_SPEED_MULTIPLIER := 1.18
@@ -44,7 +43,7 @@ var _trail: Array[Dictionary] = []
 
 func _ready() -> void:
 	_random.randomize()
-	body.color = BALL_COLOR
+	body.color = Palette.BALL_COLOR
 	body.z_index = 3
 
 func _process(delta: float) -> void:
@@ -265,20 +264,20 @@ func _draw_trail() -> void:
 		var fade := clampf(1.0 - age / TRAIL_DURATION, 0.0, 1.0)
 		var ratio := float(index) / float(maxi(_trail.size() - 1, 1))
 		var width := radius * lerpf(0.35, 0.95, ratio)
-		draw_line(previous_local, sample_local, Color(BALL_COLOR, fade * 0.16), width * 2.4, true)
-		draw_line(previous_local, sample_local, Color(BALL_COLOR, fade * 0.58), width, true)
+		draw_line(previous_local, sample_local, Color(Palette.BALL_COLOR, fade * 0.16), width * 2.4, true)
+		draw_line(previous_local, sample_local, Color(Palette.BALL_COLOR, fade * 0.58), width, true)
 		previous_local = sample_local
 
 	var newest: Dictionary = _trail[_trail.size() - 1]
 	var newest_age: float = newest["age"]
 	var newest_fade := clampf(1.0 - newest_age / TRAIL_DURATION, 0.0, 1.0)
-	draw_line(previous_local, Vector2.ZERO, Color(BALL_COLOR, newest_fade * 0.16), radius * 2.4, true)
-	draw_line(previous_local, Vector2.ZERO, Color(BALL_COLOR, newest_fade * 0.58), radius * 0.95, true)
+	draw_line(previous_local, Vector2.ZERO, Color(Palette.BALL_COLOR, newest_fade * 0.16), radius * 2.4, true)
+	draw_line(previous_local, Vector2.ZERO, Color(Palette.BALL_COLOR, newest_fade * 0.58), radius * 0.95, true)
 
 func _draw_glow() -> void:
 	var glow_radius := radius * _powerful_bounce_visual_scale
-	draw_circle(Vector2.ZERO, glow_radius * 1.55, Color(BALL_COLOR, 0.055))
-	draw_circle(Vector2.ZERO, glow_radius * 1.2, Color(BALL_COLOR, 0.11))
+	draw_circle(Vector2.ZERO, glow_radius * 1.55, Color(Palette.BALL_COLOR, 0.055))
+	draw_circle(Vector2.ZERO, glow_radius * 1.2, Color(Palette.BALL_COLOR, 0.11))
 
 func _make_circle_polygon(circle_radius: float, point_count: int) -> PackedVector2Array:
 	var points := PackedVector2Array()

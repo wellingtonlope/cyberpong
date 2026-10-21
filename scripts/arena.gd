@@ -7,19 +7,11 @@ signal main_menu_requested
 const BACKGROUND_COLOR := Color(0.018, 0.03, 0.052)
 const FIELD_COLOR := Color(0.035, 0.055, 0.09)
 const FIELD_CENTER_COLOR := Color(0.047, 0.069, 0.105)
-const DIVIDER_COLOR := Color(0.18, 0.24, 0.32)
-const TEXT_COLOR := Color(0.9, 0.94, 1.0)
-const MUTED_TEXT_COLOR := Color(0.58, 0.68, 0.8)
-const LEFT_COLOR := Color(0.08, 0.98, 1.0)
-const RIGHT_COLOR := Color(1.0, 0.12, 0.72)
 const HUD_PANEL_COLOR := Color(0.012, 0.022, 0.04)
 const FIELD_BORDER_COLOR := Color(0.08, 0.98, 1.0, 0.45)
 const SCORE_LEFT_PANEL := Color(0.035, 0.22, 0.26, 0.72)
 const SCORE_RIGHT_PANEL := Color(0.28, 0.035, 0.18, 0.72)
 const COUNT_BADGE_COLOR := Color(0.08, 0.98, 1.0, 0.12)
-const GAME_TITLE := "CYBERPONG"
-const LEFT_TEAM_NAME := "Cyan Circuit"
-const RIGHT_TEAM_NAME := "Magenta Volt"
 const POINT_FLASH_DURATION := 0.72
 const RALLY_INTRO_DURATION := 1.0
 const WINNER_REVEAL_DURATION := 0.55
@@ -45,7 +37,7 @@ var total_rebounds := 0
 var power_up_hud_title := ""
 var power_up_hud_detail := ""
 var power_up_hud_progress := 0.0
-var power_up_hud_accent := MUTED_TEXT_COLOR
+var power_up_hud_accent := Palette.MUTED_TEXT_COLOR
 var power_up_hud_show_progress := false
 var point_flash_remaining := 0.0
 var point_flash_is_left := true
@@ -114,13 +106,13 @@ func set_match_hud(rebound_count: int, power_up_info: Dictionary) -> void:
 	power_up_hud_title = str(power_up_info.get("title", ""))
 	power_up_hud_detail = str(power_up_info.get("detail", ""))
 	power_up_hud_progress = clampf(float(power_up_info.get("progress", 0.0)), 0.0, 1.0)
-	power_up_hud_accent = power_up_info.get("accent_color", MUTED_TEXT_COLOR)
+	power_up_hud_accent = power_up_info.get("accent_color", Palette.MUTED_TEXT_COLOR)
 	power_up_hud_show_progress = bool(power_up_info.get("show_progress", false))
 	queue_redraw()
 
 func set_winner(name: String) -> void:
 	winner_name = name
-	winner_is_left = name.to_lower() == LEFT_TEAM_NAME.to_lower()
+	winner_is_left = name.to_lower() == Palette.LEFT_TEAM_NAME.to_lower()
 	game_over = true
 	rally_intro_remaining = 0.0
 	point_flash_remaining = 0.0
@@ -155,7 +147,7 @@ func _draw() -> void:
 	draw_rect(Rect2(0.0, hud_bar_height - 2.0 * game_scale, size.x, 2.0 * game_scale), FIELD_BORDER_COLOR)
 
 	for y in range(int(hud_bar_height + 12.0 * game_scale), int(size.y - 12.0 * game_scale), 30 * int(game_scale)):
-		draw_rect(Rect2(size.x * 0.5 - 2.0 * game_scale, float(y), 4.0 * game_scale, 14.0 * game_scale), DIVIDER_COLOR)
+		draw_rect(Rect2(size.x * 0.5 - 2.0 * game_scale, float(y), 4.0 * game_scale, 14.0 * game_scale), Palette.DIVIDER_COLOR)
 	_draw_goal_lines(size)
 	_draw_point_flash(size)
 	var font := ThemeDB.fallback_font
@@ -209,22 +201,22 @@ func _draw_field_backdrop(field_rect: Rect2) -> void:
 
 func _draw_field_markings(field_rect: Rect2) -> void:
 	var center := field_rect.get_center()
-	draw_arc(center, 56.0 * game_scale, 0.0, TAU, 64, Color(DIVIDER_COLOR, 0.34), 1.0 * game_scale, true)
-	draw_circle(center, 2.0 * game_scale, Color(MUTED_TEXT_COLOR, 0.42))
+	draw_arc(center, 56.0 * game_scale, 0.0, TAU, 64, Color(Palette.DIVIDER_COLOR, 0.34), 1.0 * game_scale, true)
+	draw_circle(center, 2.0 * game_scale, Color(Palette.MUTED_TEXT_COLOR, 0.42))
 
 	for height_fraction in [0.25, 0.75]:
 		var marker_y: float = field_rect.position.y + field_rect.size.y * height_fraction
 		draw_line(
 			Vector2(field_rect.position.x + 10.0 * game_scale, marker_y),
 			Vector2(field_rect.position.x + 22.0 * game_scale, marker_y),
-			Color(LEFT_COLOR, 0.28),
+			Color(Palette.LEFT_COLOR, 0.28),
 			1.0 * game_scale,
 			true
 		)
 		draw_line(
 			Vector2(field_rect.end.x - 22.0 * game_scale, marker_y),
 			Vector2(field_rect.end.x - 10.0 * game_scale, marker_y),
-			Color(RIGHT_COLOR, 0.28),
+			Color(Palette.RIGHT_COLOR, 0.28),
 			1.0 * game_scale,
 			true
 		)
@@ -247,15 +239,15 @@ func _draw_arena_frame(field_rect: Rect2) -> void:
 		Vector2(left, top + corner_cut),
 		Vector2(left + corner_cut, top),
 	])
-	draw_polyline(outline, Color(DIVIDER_COLOR, 0.78), 1.5 * game_scale, true)
-	draw_rect(field_rect.grow(-8.0 * game_scale), Color(DIVIDER_COLOR, 0.13), false, 1.0 * game_scale)
-	draw_line(Vector2(left, top + corner_cut), Vector2(left, bottom - corner_cut), Color(LEFT_COLOR, 0.74), 2.0 * game_scale, true)
-	draw_line(Vector2(right, top + corner_cut), Vector2(right, bottom - corner_cut), Color(RIGHT_COLOR, 0.74), 2.0 * game_scale, true)
+	draw_polyline(outline, Color(Palette.DIVIDER_COLOR, 0.78), 1.5 * game_scale, true)
+	draw_rect(field_rect.grow(-8.0 * game_scale), Color(Palette.DIVIDER_COLOR, 0.13), false, 1.0 * game_scale)
+	draw_line(Vector2(left, top + corner_cut), Vector2(left, bottom - corner_cut), Color(Palette.LEFT_COLOR, 0.74), 2.0 * game_scale, true)
+	draw_line(Vector2(right, top + corner_cut), Vector2(right, bottom - corner_cut), Color(Palette.RIGHT_COLOR, 0.74), 2.0 * game_scale, true)
 
 	for is_left in [true, false]:
 		var side_x := left if is_left else right
 		var horizontal_direction := 1.0 if is_left else -1.0
-		var team_color := LEFT_COLOR if is_left else RIGHT_COLOR
+		var team_color := Palette.LEFT_COLOR if is_left else Palette.RIGHT_COLOR
 		for is_top in [true, false]:
 			var corner_y := top if is_top else bottom
 			var vertical_direction := 1.0 if is_top else -1.0
@@ -279,14 +271,14 @@ func _draw_game_logo(font: Font, ui_scale: float) -> void:
 	var frame_size := Vector2(26.0, 22.0) * ui_scale
 	var frame := Rect2(center - frame_size * 0.5, frame_size)
 	draw_rect(frame, Color(FIELD_COLOR, 0.9))
-	draw_rect(frame, Color(DIVIDER_COLOR, 0.9), false, 1.5 * ui_scale)
+	draw_rect(frame, Color(Palette.DIVIDER_COLOR, 0.9), false, 1.5 * ui_scale)
 	draw_rect(
 		Rect2(center + Vector2(-8.0, -5.0) * ui_scale, Vector2(2.5, 10.0) * ui_scale),
-		LEFT_COLOR
+		Palette.LEFT_COLOR
 	)
 	draw_rect(
 		Rect2(center + Vector2(5.5, -5.0) * ui_scale, Vector2(2.5, 10.0) * ui_scale),
-		RIGHT_COLOR
+		Palette.RIGHT_COLOR
 	)
 	var ball_mark := PackedVector2Array([
 		center + Vector2(0.0, -4.0) * ui_scale,
@@ -297,18 +289,18 @@ func _draw_game_logo(font: Font, ui_scale: float) -> void:
 	draw_colored_polygon(ball_mark, Color(1.0, 0.92, 0.12))
 
 	var title_position := Vector2(125.0 * ui_scale, center.y + 6.0 * ui_scale)
-	draw_string(font, title_position, GAME_TITLE, HORIZONTAL_ALIGNMENT_LEFT, 150.0 * ui_scale, maxi(int(13.0 * ui_scale), 10), TEXT_COLOR)
+	draw_string(font, title_position, Palette.GAME_TITLE, HORIZONTAL_ALIGNMENT_LEFT, 150.0 * ui_scale, maxi(int(13.0 * ui_scale), 10), Palette.TEXT_COLOR)
 	draw_line(
 		Vector2(title_position.x, center.y + 14.0 * ui_scale),
 		Vector2(title_position.x + 45.0 * ui_scale, center.y + 14.0 * ui_scale),
-		LEFT_COLOR,
+		Palette.LEFT_COLOR,
 		1.5 * ui_scale,
 		true
 	)
 	draw_line(
 		Vector2(title_position.x + 49.0 * ui_scale, center.y + 14.0 * ui_scale),
 		Vector2(title_position.x + 72.0 * ui_scale, center.y + 14.0 * ui_scale),
-		RIGHT_COLOR,
+		Palette.RIGHT_COLOR,
 		1.5 * ui_scale,
 		true
 	)
@@ -317,7 +309,7 @@ func _draw_point_flash(size: Vector2) -> void:
 	if point_flash_remaining <= 0.0:
 		return
 	var strength := point_flash_remaining / POINT_FLASH_DURATION
-	var team_color := LEFT_COLOR if point_flash_is_left else RIGHT_COLOR
+	var team_color := Palette.LEFT_COLOR if point_flash_is_left else Palette.RIGHT_COLOR
 	var field_margin := 12.0 * game_scale
 	var field_left := field_margin
 	var field_right := size.x - field_margin
@@ -352,8 +344,8 @@ func _draw_rally_intro(font: Font, size: Vector2, ui_scale: float) -> void:
 	var alpha := minf(fade_in, fade_out)
 	if alpha <= 0.0:
 		return
-	var team_color := LEFT_COLOR if rally_intro_is_left else RIGHT_COLOR
-	var team_name := LEFT_TEAM_NAME if rally_intro_is_left else RIGHT_TEAM_NAME
+	var team_color := Palette.LEFT_COLOR if rally_intro_is_left else Palette.RIGHT_COLOR
+	var team_name := Palette.LEFT_TEAM_NAME if rally_intro_is_left else Palette.RIGHT_TEAM_NAME
 	var banner_size := Vector2(minf(size.x * 0.34, 330.0 * ui_scale), maxf(44.0 * ui_scale, 26.0))
 	var banner_position := Vector2(
 		(size.x - banner_size.x) * 0.5,
@@ -377,7 +369,7 @@ func _draw_rally_intro(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
 		maxi(int(7.0 * ui_scale), 7),
-		Color(MUTED_TEXT_COLOR, alpha)
+		Color(Palette.MUTED_TEXT_COLOR, alpha)
 	)
 	draw_string(
 		font,
@@ -386,12 +378,12 @@ func _draw_rally_intro(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
 		maxi(int(13.0 * ui_scale), 9),
-		Color(TEXT_COLOR, alpha)
+		Color(Palette.TEXT_COLOR, alpha)
 	)
 
 func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 	var reveal := 1.0 - pow(1.0 - clampf(winner_reveal, 0.0, 1.0), 3.0)
-	var team_color := LEFT_COLOR if winner_is_left else RIGHT_COLOR
+	var team_color := Palette.LEFT_COLOR if winner_is_left else Palette.RIGHT_COLOR
 	var layout := _winner_panel_layout(size, winner_reveal)
 	var panel: Rect2 = layout["panel"]
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.003, 0.008, 0.016, 0.78 * reveal))
@@ -409,7 +401,7 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		panel.size.x,
 		maxi(int(8.0 * ui_scale), 8),
-		Color(MUTED_TEXT_COLOR, reveal)
+		Color(Palette.MUTED_TEXT_COLOR, reveal)
 	)
 	_draw_team_emblem(
 		Vector2(panel.get_center().x, panel.position.y + 62.0 * ui_scale),
@@ -437,7 +429,7 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_RIGHT,
 		panel.size.x * 0.5 - 48.0 * ui_scale,
 		score_font_size,
-		Color(LEFT_COLOR, reveal)
+		Color(Palette.LEFT_COLOR, reveal)
 	)
 	draw_string(
 		font,
@@ -446,7 +438,7 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		32.0 * ui_scale,
 		score_font_size,
-		Color(MUTED_TEXT_COLOR, reveal)
+		Color(Palette.MUTED_TEXT_COLOR, reveal)
 	)
 	draw_string(
 		font,
@@ -455,7 +447,7 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		panel.size.x * 0.5 - 48.0 * ui_scale,
 		score_font_size,
-		Color(RIGHT_COLOR, reveal)
+		Color(Palette.RIGHT_COLOR, reveal)
 	)
 	draw_string(
 		font,
@@ -464,7 +456,7 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		panel.size.x,
 		maxi(int(8.0 * ui_scale), 8),
-		Color(MUTED_TEXT_COLOR, reveal)
+		Color(Palette.MUTED_TEXT_COLOR, reveal)
 	)
 	draw_line(
 		Vector2(panel.position.x + 40.0 * ui_scale, panel.position.y + 194.0 * ui_scale),
@@ -577,7 +569,7 @@ func _draw_winner_key_hint_item(
 		HORIZONTAL_ALIGNMENT_CENTER,
 		key_rect.size.x,
 		maxi(int(9.0 * ui_scale), 8),
-		Color(TEXT_COLOR, reveal)
+		Color(Palette.TEXT_COLOR, reveal)
 	)
 	draw_string(
 		font,
@@ -586,7 +578,7 @@ func _draw_winner_key_hint_item(
 		HORIZONTAL_ALIGNMENT_LEFT,
 		label_width + 4.0,
 		label_font_size,
-		Color(TEXT_COLOR, reveal)
+		Color(Palette.TEXT_COLOR, reveal)
 	)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -653,13 +645,13 @@ func _draw_goal_lines(size: Vector2) -> void:
 	draw_line(
 		Vector2(left_line_x, hud_bar_height),
 		Vector2(left_line_x, size.y),
-		LEFT_COLOR,
+		Palette.LEFT_COLOR,
 		line_width
 	)
 	draw_line(
 		Vector2(right_line_x, hud_bar_height),
 		Vector2(right_line_x, size.y),
-		RIGHT_COLOR,
+		Palette.RIGHT_COLOR,
 		line_width
 	)
 
@@ -667,14 +659,14 @@ func _draw_rebound_badge(font: Font, ui_scale: float) -> void:
 	var badge_center := Vector2(58.0 * ui_scale, hud_bar_height * 0.46)
 	var badge_radius := 22.0 * ui_scale
 	draw_circle(badge_center, badge_radius, Color(COUNT_BADGE_COLOR, 0.55))
-	draw_arc(badge_center, badge_radius, 0.0, TAU, 64, Color(DIVIDER_COLOR, 0.92), 1.5 * ui_scale, true)
+	draw_arc(badge_center, badge_radius, 0.0, TAU, 64, Color(Palette.DIVIDER_COLOR, 0.92), 1.5 * ui_scale, true)
 	draw_arc(
 		badge_center,
 		badge_radius,
 		-PI * 0.5,
 		PI * 0.5,
 		32,
-		Color(MUTED_TEXT_COLOR, 0.65),
+		Color(Palette.MUTED_TEXT_COLOR, 0.65),
 		1.5 * ui_scale,
 		true
 	)
@@ -689,7 +681,7 @@ func _draw_rebound_badge(font: Font, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		badge_radius * 2.0,
 		count_font_size,
-		TEXT_COLOR
+		Palette.TEXT_COLOR
 	)
 	draw_string(
 		font,
@@ -698,7 +690,7 @@ func _draw_rebound_badge(font: Font, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		badge_radius * 2.8,
 		maxi(int(5.0 * ui_scale), 7),
-		MUTED_TEXT_COLOR
+		Palette.MUTED_TEXT_COLOR
 	)
 
 func _draw_score(font: Font, size: Vector2, ui_scale: float) -> void:
@@ -709,13 +701,13 @@ func _draw_score(font: Font, size: Vector2, ui_scale: float) -> void:
 	var left_card := Rect2(Vector2(center_x - card_size.x - card_gap * 0.5, card_y), card_size)
 	var right_card := Rect2(Vector2(center_x + card_gap * 0.5, card_y), card_size)
 	draw_rect(left_card, SCORE_LEFT_PANEL)
-	draw_rect(left_card, Color(LEFT_COLOR, 0.8), false, 2.0 * ui_scale)
+	draw_rect(left_card, Color(Palette.LEFT_COLOR, 0.8), false, 2.0 * ui_scale)
 	draw_rect(right_card, SCORE_RIGHT_PANEL)
-	draw_rect(right_card, Color(RIGHT_COLOR, 0.8), false, 2.0 * ui_scale)
-	draw_rect(Rect2(left_card.position, Vector2(3.0 * ui_scale, card_size.y)), LEFT_COLOR)
-	draw_rect(Rect2(right_card.position, Vector2(3.0 * ui_scale, card_size.y)), RIGHT_COLOR)
-	_draw_team_score(font, left_card, LEFT_TEAM_NAME, left_score, LEFT_COLOR, true, ui_scale)
-	_draw_team_score(font, right_card, RIGHT_TEAM_NAME, right_score, RIGHT_COLOR, false, ui_scale)
+	draw_rect(right_card, Color(Palette.RIGHT_COLOR, 0.8), false, 2.0 * ui_scale)
+	draw_rect(Rect2(left_card.position, Vector2(3.0 * ui_scale, card_size.y)), Palette.LEFT_COLOR)
+	draw_rect(Rect2(right_card.position, Vector2(3.0 * ui_scale, card_size.y)), Palette.RIGHT_COLOR)
+	_draw_team_score(font, left_card, Palette.LEFT_TEAM_NAME, left_score, Palette.LEFT_COLOR, true, ui_scale)
+	_draw_team_score(font, right_card, Palette.RIGHT_TEAM_NAME, right_score, Palette.RIGHT_COLOR, false, ui_scale)
 	draw_string(
 		font,
 		Vector2(center_x - card_gap * 0.5, card_y + 30.0 * ui_scale),
@@ -723,7 +715,7 @@ func _draw_score(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		card_gap,
 		maxi(int(20.0 * ui_scale), 12),
-		MUTED_TEXT_COLOR
+		Palette.MUTED_TEXT_COLOR
 	)
 
 func _draw_team_score(
@@ -794,7 +786,7 @@ func _draw_match_point_badge(font: Font, card: Rect2, team_color: Color, ui_scal
 		HORIZONTAL_ALIGNMENT_CENTER,
 		label_rect.size.x,
 		label_font_size,
-		Color(TEXT_COLOR, 0.85 + 0.15 * pulse)
+		Color(Palette.TEXT_COLOR, 0.85 + 0.15 * pulse)
 	)
 
 func _match_point_badge_rect(card: Rect2, ui_scale: float) -> Rect2:
@@ -857,7 +849,7 @@ func _draw_team_emblem(
 		draw_polyline(hexagon, draw_color, 1.8 * emblem_scale, true)
 		draw_line(center, center + Vector2(5.0, -5.0) * emblem_scale, draw_color, 1.4 * emblem_scale, true)
 		draw_line(center, center + Vector2(-5.0, 5.0) * emblem_scale, draw_color, 1.4 * emblem_scale, true)
-		draw_circle(center, 2.0 * emblem_scale, Color(TEXT_COLOR, alpha))
+		draw_circle(center, 2.0 * emblem_scale, Color(Palette.TEXT_COLOR, alpha))
 	else:
 		var diamond := PackedVector2Array([
 			center + Vector2(0.0, -11.0) * emblem_scale,
@@ -943,7 +935,7 @@ func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
 		title_font_size,
-		TEXT_COLOR
+		Palette.TEXT_COLOR
 	)
 	draw_string(
 		font,
@@ -952,7 +944,7 @@ func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		text_width,
 		detail_font_size,
-		MUTED_TEXT_COLOR
+		Palette.MUTED_TEXT_COLOR
 	)
 	if power_up_hud_show_progress:
 		var track := Rect2(

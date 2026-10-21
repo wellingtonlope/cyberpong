@@ -16,7 +16,7 @@ func before_each() -> void:
 	credits._process(credits.SKIP_FADE_OUT_DURATION)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
-	menu._select(game.GameMode.PLAYER_VS_AI)
+	menu._select(GameMode.Mode.PLAYER_VS_AI)
 
 func after_each() -> void:
 	Input.action_release("ui_up")
@@ -31,7 +31,7 @@ func _press_key(keycode: Key) -> void:
 	game._unhandled_key_input(event)
 
 func test_pause_freezes_ball_and_paddles_and_resume_keeps_the_same_state() -> void:
-	game.left_paddle.set_control_mode(1)
+	game.left_paddle.set_control_mode(Paddle.ControlMode.HUMAN)
 	Input.action_press("ui_up")
 	game.ball.position = Vector2(1200.0, 700.0)
 	game.ball.velocity = Vector2(-2100.0, 480.0)
@@ -204,12 +204,12 @@ func test_returning_to_main_menu_restores_all_default_match_values() -> void:
 	assert_eq(game.arena.right_score, 0)
 	assert_false(game.game_over)
 
-	game_menu._select(game.GameMode.PLAYER_VS_AI)
+	game_menu._select(GameMode.Mode.PLAYER_VS_AI)
 
 	assert_false(get_tree().paused)
-	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_AI)
-	assert_eq(game.left_paddle.control_mode, 1)
-	assert_eq(game.right_paddle.control_mode, 0)
+	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_AI)
+	assert_eq(game.left_paddle.control_mode, Paddle.ControlMode.HUMAN)
+	assert_eq(game.right_paddle.control_mode, Paddle.ControlMode.AI)
 	assert_eq(game.ball.current_speed, 1140.0)
 	assert_eq(game.total_rebounds, 0)
 	assert_eq(game.power_up.status, game.power_up.Status.INACTIVE)

@@ -17,7 +17,7 @@ func before_each() -> void:
 		credits._process(credits.SKIP_FADE_OUT_DURATION)
 	var menu = game.get_node_or_null("GameMenu")
 	if menu != null:
-		menu._select(game.GameMode.PLAYER_VS_AI)
+		menu._select(GameMode.Mode.PLAYER_VS_AI)
 	game.game_over = true
 	SoundManager.play_count = 0
 	SoundManager.last_played_sound = ""

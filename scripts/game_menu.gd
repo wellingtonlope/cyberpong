@@ -1,15 +1,10 @@
 class_name GameMenu
 extends MenuScreen
 
-signal mode_selected(mode: int, difficulty: int)
+signal mode_selected(mode: GameMode.Mode, difficulty: Difficulty.Level)
 signal quit_requested
 
 const SETTINGS_SCENE := preload("res://scenes/settings_menu.tscn")
-
-enum GameMode {
-	PLAYER_VS_PLAYER,
-	PLAYER_VS_AI
-}
 
 const EXIT_CARD := {
 	"title": "SAIR",
@@ -28,13 +23,13 @@ const EXIT_CARD_INDEX := 3
 
 const MODE_CARDS := [
 	{
-		"mode": GameMode.PLAYER_VS_PLAYER,
+		"mode": GameMode.Mode.PLAYER_VS_PLAYER,
 		"title": "JOGADOR VS JOGADOR",
 		"detail": "W/S e setas · dois jogadores locais",
 		"tag": "LOCAL"
 	},
 	{
-		"mode": GameMode.PLAYER_VS_AI,
+		"mode": GameMode.Mode.PLAYER_VS_AI,
 		"title": "JOGADOR VS AI",
 		"detail": "W/S ou setas · você contra a IA",
 		"tag": "SOLO"
@@ -49,7 +44,7 @@ const MODE_CARDS := [
 @onready var btn_normal: Button = $BtnNormal
 @onready var btn_hard: Button = $BtnHard
 
-var selected_difficulty: int = Difficulty.DEFAULT_LEVEL
+var selected_difficulty: Difficulty.Level = Difficulty.DEFAULT_LEVEL
 var _pending_mode := -1
 var _pending_quit := false
 var _settings: SettingsMenu = null
@@ -78,7 +73,7 @@ func _on_card_focused(index: int) -> void:
 func _is_player_vs_ai_card(index: int) -> bool:
 	if index < 0 or index >= MODE_CARDS.size():
 		return false
-	return int(MODE_CARDS[index]["mode"]) == GameMode.PLAYER_VS_AI
+	return int(MODE_CARDS[index]["mode"]) == GameMode.Mode.PLAYER_VS_AI
 
 func _input(event: InputEvent) -> void:
 	if _selected or _closing or _settings != null:

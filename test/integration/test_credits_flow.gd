@@ -43,9 +43,9 @@ func test_credits_hand_off_to_the_menu_and_the_match_can_start() -> void:
 	menu._process(menu.CLOSE_DURATION)
 
 	assert_false(get_tree().paused)
-	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_AI)
-	assert_eq(game.left_paddle.control_mode, 1)
-	assert_eq(game.right_paddle.control_mode, 0)
+	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_AI)
+	assert_eq(game.left_paddle.control_mode, Paddle.ControlMode.HUMAN)
+	assert_eq(game.right_paddle.control_mode, Paddle.ControlMode.AI)
 	assert_eq(game.ball.current_speed, 1140.0)
 
 func test_keys_during_the_credits_do_not_reach_the_match() -> void:
@@ -61,7 +61,7 @@ func test_keys_during_the_credits_do_not_reach_the_match() -> void:
 func test_returning_to_the_menu_does_not_replay_the_credits() -> void:
 	_finish_credits()
 	var menu = game.get_node_or_null("GameMenu")
-	menu._select(game.GameMode.PLAYER_VS_AI)
+	menu._select(GameMode.Mode.PLAYER_VS_AI)
 
 	game._open_pause_menu()
 	game._on_pause_main_menu_requested()

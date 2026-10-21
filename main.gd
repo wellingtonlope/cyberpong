@@ -17,11 +17,6 @@ const CREDITS_SCENE := preload("res://scenes/credits_screen.tscn")
 const GAME_MENU_SCENE := preload("res://scenes/game_menu.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 
-enum GameMode {
-	PLAYER_VS_PLAYER,
-	PLAYER_VS_AI
-}
-
 @onready var arena: Arena = $Arena
 @onready var left_paddle: Paddle = $Paddles/Left
 @onready var right_paddle: Paddle = $Paddles/Right
@@ -37,8 +32,8 @@ var right_score := 0
 var total_rebounds := 0
 var _next_power_up_rebound := 0
 var _random := RandomNumberGenerator.new()
-var _game_mode: int = GameMode.PLAYER_VS_AI
-var _difficulty: int = Difficulty.DEFAULT_LEVEL
+var _game_mode: GameMode.Mode = GameMode.Mode.PLAYER_VS_AI
+var _difficulty: Difficulty.Level = Difficulty.DEFAULT_LEVEL
 var _menu_shown := false
 var _pause_menu: PauseMenu = null
 var _credits: CreditsScreen = null
@@ -99,7 +94,7 @@ func _show_menu() -> void:
 func _on_quit_requested() -> void:
 	get_tree().quit()
 
-func _on_mode_selected(mode: int, difficulty: int) -> void:
+func _on_mode_selected(mode: GameMode.Mode, difficulty: Difficulty.Level) -> void:
 	_game_mode = mode
 	_difficulty = difficulty
 	_menu_shown = false
@@ -110,13 +105,13 @@ func _apply_game_mode() -> void:
 	left_paddle.set_control_actions(["p1_up"], ["p1_down"])
 	right_paddle.set_control_actions(["p2_up"], ["p2_down"])
 	match _game_mode:
-		GameMode.PLAYER_VS_PLAYER:
-			left_paddle.set_control_mode(1)
-			right_paddle.set_control_mode(1)
-		GameMode.PLAYER_VS_AI:
+		GameMode.Mode.PLAYER_VS_PLAYER:
+			left_paddle.set_control_mode(Paddle.ControlMode.HUMAN)
+			right_paddle.set_control_mode(Paddle.ControlMode.HUMAN)
+		GameMode.Mode.PLAYER_VS_AI:
 			left_paddle.set_control_actions(["p1_up", "p2_up"], ["p1_down", "p2_down"])
-			left_paddle.set_control_mode(1)
-			right_paddle.set_control_mode(0)
+			left_paddle.set_control_mode(Paddle.ControlMode.HUMAN)
+			right_paddle.set_control_mode(Paddle.ControlMode.AI)
 
 func _physics_process(delta: float) -> void:
 	if game_over or _menu_shown or _pause_menu != null:
@@ -312,7 +307,7 @@ func _on_ball_missed(left_side: bool) -> void:
 	var winning_score := left_score if scorer_is_left else right_score
 	if winning_score >= WINNING_SCORE:
 		game_over = true
-		var winner_name := "Cyan Circuit" if scorer_is_left else "Magenta Volt"
+		var winner_name := Palette.team_name(scorer_is_left)
 		arena.set_winner(winner_name)
 		SoundManager.play_win(scorer_is_left)
 		return

@@ -90,7 +90,7 @@ func test_project_defines_separate_actions_for_both_players() -> void:
 		assert_true(InputMap.has_action(action), "Missing input action: %s" % action)
 
 func test_human_paddle_ignores_actions_not_assigned_to_it() -> void:
-	paddle.set_control_mode(1)
+	paddle.set_control_mode(Paddle.ControlMode.HUMAN)
 	paddle.set_control_actions(["p1_up"], ["p1_down"])
 	var starting_y: float = paddle.position.y
 
@@ -101,7 +101,7 @@ func test_human_paddle_ignores_actions_not_assigned_to_it() -> void:
 	assert_eq(paddle.position.y, starting_y)
 
 func test_human_paddle_moves_with_its_assigned_action() -> void:
-	paddle.set_control_mode(1)
+	paddle.set_control_mode(Paddle.ControlMode.HUMAN)
 	paddle.set_control_actions(["p1_up"], ["p1_down"])
 	var starting_y: float = paddle.position.y
 
@@ -112,7 +112,7 @@ func test_human_paddle_moves_with_its_assigned_action() -> void:
 	assert_lt(float(paddle.position.y), float(starting_y))
 
 func test_human_paddle_accepts_multiple_assigned_actions() -> void:
-	paddle.set_control_mode(1)
+	paddle.set_control_mode(Paddle.ControlMode.HUMAN)
 	paddle.set_control_actions(["p1_up", "p2_up"], ["p1_down", "p2_down"])
 	var starting_y: float = paddle.position.y
 

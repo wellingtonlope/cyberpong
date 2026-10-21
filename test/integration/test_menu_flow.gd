@@ -23,16 +23,16 @@ func test_menu_opens_paused_and_starts_the_match_after_a_choice() -> void:
 	assert_true(menu is Control)
 	assert_true(menu.visible)
 	assert_true(get_tree().paused)
-	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_AI)
+	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_AI)
 
 	menu.get_node("BtnPvP").pressed.emit()
 	menu._process(menu.CLOSE_DURATION)
 
 	assert_false(get_tree().paused)
 	assert_false(menu.visible)
-	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_PLAYER)
-	assert_eq(game.left_paddle.control_mode, 1)
-	assert_eq(game.right_paddle.control_mode, 1)
+	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_PLAYER)
+	assert_eq(game.left_paddle.control_mode, Paddle.ControlMode.HUMAN)
+	assert_eq(game.right_paddle.control_mode, Paddle.ControlMode.HUMAN)
 	assert_eq(game.left_paddle.control_up_actions, ["p1_up"])
 	assert_eq(game.right_paddle.control_up_actions, ["p2_up"])
 	assert_eq(game.ball.current_speed, 1140.0)
@@ -45,9 +45,9 @@ func test_player_vs_ai_selection_keeps_one_human_and_one_automatic_paddle() -> v
 	menu._process(menu.CLOSE_DURATION)
 
 	assert_false(get_tree().paused)
-	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_AI)
-	assert_eq(game.left_paddle.control_mode, 1)
-	assert_eq(game.right_paddle.control_mode, 0)
+	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_AI)
+	assert_eq(game.left_paddle.control_mode, Paddle.ControlMode.HUMAN)
+	assert_eq(game.right_paddle.control_mode, Paddle.ControlMode.AI)
 	assert_eq(game.left_paddle.control_up_actions, ["p1_up", "p2_up"])
 	assert_true(game.arena.rally_intro_remaining > 0.0)
 
@@ -107,7 +107,7 @@ func test_settings_menu_opens_from_the_main_menu_and_keeps_the_match_idle() -> v
 	assert_not_null(settings)
 	assert_true(get_tree().paused)
 	assert_false(menu.visible == false)
-	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_AI)
+	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_AI)
 	assert_eq(game.ball.current_speed, 1140.0)
 
 	settings._finish_selection()
