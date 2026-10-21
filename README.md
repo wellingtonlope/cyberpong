@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/screenshots/menu-inicial.png" alt="Menu inicial do CyberPong, com os modos Jogador VS Jogador, Jogador VS AI e Sair" width="100%">
+  <img src="docs/screenshots/menu-inicial.png" alt="Menu inicial do CyberPong, com os modos Jogador VS Jogador, Jogador VS AI, Configurações e Sair" width="100%">
 </p>
 
 <h1 align="center">CyberPong</h1>
@@ -31,6 +31,14 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 |:---:|:---:|:---:|
 | <img src="docs/screenshots/partida.png" alt="Partida com o power-up Raquete dobrada disponível no campo" width="100%"> | <img src="docs/screenshots/power-up-rebote-potente.png" alt="Partida com Rebote potente ativo para Cyan Circuit" width="100%"> | <img src="docs/screenshots/power-up-raquete-reduzida.png" alt="Partida com Raquete reduzida ativa para Magenta Volt" width="100%"> |
 | Item no campo e HUD superior | Rebote potente em ação | Raquete reduzida em ação |
+
+As capturas são geradas em **2880 × 1620**, a resolução nativa do jogo, pela ferramenta `tools/capture_screenshots.gd`. Para regerá-las depois de uma mudança visual:
+
+```bash
+godot --path . res://tools/capture_screenshots.tscn
+```
+
+A ferramenta percorre o menu, joga alguns rallies com as IAs e salva as quatro imagens em `docs/screenshots/`.
 
 ## Como jogar
 
@@ -177,6 +185,7 @@ Os testes validam intervalos e invariantes quando há aleatoriedade e rodam em m
 ├── scripts/                # Arena, bola, raquetes, áudio, dificuldade, menus, HUD, power-ups e efeitos
 ├── test/unit/              # Testes unitários
 ├── test/integration/       # Testes de cenas, sinais e fluxos
+├── tools/                  # Ferramenta que regera as capturas de tela do README
 ├── .github/workflows/      # CI com GUT headless e relatório JUnit XML
 ├── docs/screenshots/       # Capturas usadas neste README
 └── addons/gut/             # GUT 9.7.1, somente desenvolvimento e testes
