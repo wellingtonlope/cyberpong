@@ -141,7 +141,11 @@ O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pu
 - `test_sound_manager.gd`: catálogo de efeitos sonoros, pool de AudioStreamPlayers, reprodução desativável, variação de tom por velocidade e efeitos de power-up.
 - `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seletor de dificuldade condicional, abertura das configurações, seleção, transição e início/saída.
 - `test_pause_menu.gd`: cartões, layout, foco, transição, retomada por ESC, reinício da partida e abertura das configurações.
-- `test_settings_menu.gd`: cartões de volume, som e tela cheia, limites de volume, retorno e fechamento por ESC.
+- `test_settings_menu.gd`: barra de volume de 0 a 100 ajustada com as setas, limites do volume, som, tela cheia, resolução da janela, retorno e fechamento por ESC.
+- `test_arena.gd`: placar, match point, vencedor, painel de vitória clicável e HUD de power-up.
+- `test_menu_screen.gd`: template compartilhado dos menus (layout, foco, transição de fechamento e sobreposição das configurações).
+- `test_game_config.gd`: medidas e velocidades escaladas e valores documentados.
+- `test_ui_draw.gd`: helpers de desenho compartilhados (fonte, transparência, geometria e emblemas).
 
 **Integração**
 
