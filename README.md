@@ -39,14 +39,16 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 | Pular os créditos | Qualquer tecla ou clique |
 | Navegar no menu | `↑` / `↓` e `Enter`, ou clique |
 | Selecionar dificuldade | `←` / `→` com o cartão Jogador VS AI focado, ou clique nas opções |
-| Movimentar no PvP (esquerda) | `W` / `S` ou `↑` / `↓` |
+| Movimentar no PvP (esquerda) | `W` / `S` |
 | Movimentar no PvP (direita) | `↑` / `↓` |
+| Movimentar no Jogador VS AI | `W` / `S` ou `↑` / `↓` |
 | Pausar / retomar | `ESC` ou `P` |
 | Iniciar outra partida | `Enter` após o fim |
 | Mostrar/ocultar HUD de debug | `F3` |
 
 - No modo **Jogador VS AI**, o lado esquerdo é humano e o direito é controlado pela IA.
-- No modo **Jogador VS Jogador**, os dois lados são controlados no mesmo teclado.
+- No modo **Jogador VS Jogador**, os dois lados são controlados no mesmo teclado: a esquerda usa `W`/`S` e a direita usa `↑`/`↓`.
+- As ações de movimento ficam no InputMap (`p1_up`, `p1_down`, `p2_up`, `p2_down`), permitindo remapeamento sem alterar os scripts.
 - O seletor de dificuldade aparece no menu somente quando o cartão **Jogador VS AI** está focado; no PvP ele fica oculto e a dificuldade não altera a partida.
 - No menu de pausa, **Continuar** retoma o rally no mesmo estado e **Menu principal** encerra a partida e restaura placar, rebatidas, power-ups, velocidade e tamanho das raquetes.
 - A tela de créditos da **Moron Souls Productions** aparece somente na abertura do jogo.

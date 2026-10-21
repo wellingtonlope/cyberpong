@@ -33,6 +33,8 @@ func test_menu_opens_paused_and_starts_the_match_after_a_choice() -> void:
 	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_PLAYER)
 	assert_eq(game.left_paddle.control_mode, 1)
 	assert_eq(game.right_paddle.control_mode, 1)
+	assert_eq(game.left_paddle.control_up_actions, ["p1_up"])
+	assert_eq(game.right_paddle.control_up_actions, ["p2_up"])
 	assert_eq(game.ball.current_speed, 1140.0)
 
 func test_player_vs_ai_selection_keeps_one_human_and_one_automatic_paddle() -> void:
@@ -46,6 +48,7 @@ func test_player_vs_ai_selection_keeps_one_human_and_one_automatic_paddle() -> v
 	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_AI)
 	assert_eq(game.left_paddle.control_mode, 1)
 	assert_eq(game.right_paddle.control_mode, 0)
+	assert_eq(game.left_paddle.control_up_actions, ["p1_up", "p2_up"])
 	assert_true(game.arena.rally_intro_remaining > 0.0)
 
 func test_player_vs_ai_uses_the_normal_difficulty_by_default() -> void:

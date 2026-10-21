@@ -11,6 +11,11 @@ func before_each() -> void:
 	paddle = add_child_autofree(PADDLE_SCENE.instantiate())
 	paddle.configure(FIELD_SIZE, 20.0, 100.0, 30.0, 200.0, 10.0, PLAY_TOP)
 
+func after_each() -> void:
+	for action in ["p1_up", "p1_down", "p2_up", "p2_down"]:
+		if InputMap.has_action(action):
+			Input.action_release(action)
+
 func test_initial_position_and_collision_rect_match_configuration() -> void:
 	assert_eq(paddle.position, Vector2(40.0, 325.0))
 	assert_eq(paddle.get_collision_rect(), Rect2(Vector2(30.0, 275.0), Vector2(20.0, 100.0)))
@@ -81,6 +86,42 @@ func test_apply_difficulty_updates_ai_parameters() -> void:
 	assert_eq(paddle.ai_reaction_delay, 0.04)
 	assert_eq(paddle.ai_dead_zone, 12.0)
 
+func test_project_defines_separate_actions_for_both_players() -> void:
+	for action in ["p1_up", "p1_down", "p2_up", "p2_down"]:
+		assert_true(InputMap.has_action(action), "Missing input action: %s" % action)
+
+func test_human_paddle_ignores_actions_not_assigned_to_it() -> void:
+	paddle.set_control_mode(1)
+	paddle.set_control_actions(["p1_up"], ["p1_down"])
+	var starting_y: float = paddle.position.y
+
+	Input.action_press("p2_up")
+	paddle.update_ai(Vector2.ZERO, Vector2.ZERO, 0.1)
+	Input.action_release("p2_up")
+
+	assert_eq(paddle.position.y, starting_y)
+
+func test_human_paddle_moves_with_its_assigned_action() -> void:
+	paddle.set_control_mode(1)
+	paddle.set_control_actions(["p1_up"], ["p1_down"])
+	var starting_y: float = paddle.position.y
+
+	Input.action_press("p1_up")
+	paddle.update_ai(Vector2.ZERO, Vector2.ZERO, 0.1)
+	Input.action_release("p1_up")
+
+	assert_lt(float(paddle.position.y), float(starting_y))
+
+func test_human_paddle_accepts_multiple_assigned_actions() -> void:
+	paddle.set_control_mode(1)
+	paddle.set_control_actions(["p1_up", "p2_up"], ["p1_down", "p2_down"])
+	var starting_y: float = paddle.position.y
+
+	Input.action_press("p2_up")
+	paddle.update_ai(Vector2.ZERO, Vector2.ZERO, 0.1)
+	Input.action_release("p2_up")
+
+	assert_lt(float(paddle.position.y), float(starting_y))
 
 func test_hard_ai_covers_more_distance_than_easy_ai() -> void:
 	var easy_paddle = add_child_autofree(PADDLE_SCENE.instantiate())

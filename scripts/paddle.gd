@@ -33,6 +33,8 @@ var power_up_active := false
 var ai_speed_factor := AI_SPEED_FACTOR
 var ai_reaction_delay := AI_REACTION_DELAY
 var ai_dead_zone := AI_DEAD_ZONE
+var control_up_actions: Array[String] = ["p1_up"]
+var control_down_actions: Array[String] = ["p1_down"]
 var _deformation_tween: Tween
 
 var control_mode := 0  # 0 = AI, 1 = Human
@@ -91,6 +93,10 @@ func clear_power_up() -> void:
 func set_control_mode(mode: int) -> void:
 	control_mode = mode
 
+func set_control_actions(up_actions: Array, down_actions: Array) -> void:
+	control_up_actions.assign(up_actions)
+	control_down_actions.assign(down_actions)
+
 func apply_difficulty(config: Dictionary) -> void:
 	ai_speed_factor = maxf(float(config.get("ai_speed_factor", AI_SPEED_FACTOR)), 0.0)
 	ai_reaction_delay = maxf(float(config.get("ai_reaction_delay", AI_REACTION_DELAY)), 0.0)
@@ -105,17 +111,7 @@ func update_ai(
 	power_up_is_beneficial: bool = false
 ) -> void:
 	if control_mode == 1:
-		var direction := 0.0
-		if is_left:
-			if Input.is_action_pressed("ui_up") or Input.is_key_pressed(KEY_W):
-				direction -= 1.0
-			if Input.is_action_pressed("ui_down") or Input.is_key_pressed(KEY_S):
-				direction += 1.0
-		else:
-			if Input.is_action_pressed("ui_up"):
-				direction -= 1.0
-			if Input.is_action_pressed("ui_down"):
-				direction += 1.0
+		var direction := _read_human_direction()
 		if absf(direction) > 0.0:
 			position.y += direction * paddle_speed * delta
 		position.y = clampf(
@@ -147,6 +143,18 @@ func update_ai(
 		play_top + paddle_height * 0.5,
 		field_size.y - paddle_height * 0.5
 	)
+
+func _read_human_direction() -> float:
+	var direction := 0.0
+	for action in control_up_actions:
+		if Input.is_action_pressed(action):
+			direction -= 1.0
+			break
+	for action in control_down_actions:
+		if Input.is_action_pressed(action):
+			direction += 1.0
+			break
+	return direction
 
 func get_collision_rect() -> Rect2:
 	return Rect2(

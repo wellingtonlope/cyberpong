@@ -104,11 +104,14 @@ func _on_mode_selected(mode: int, difficulty: int) -> void:
 	_restart_match()
 
 func _apply_game_mode() -> void:
+	left_paddle.set_control_actions(["p1_up"], ["p1_down"])
+	right_paddle.set_control_actions(["p2_up"], ["p2_down"])
 	match _game_mode:
 		GameMode.PLAYER_VS_PLAYER:
 			left_paddle.set_control_mode(1)
 			right_paddle.set_control_mode(1)
 		GameMode.PLAYER_VS_AI:
+			left_paddle.set_control_actions(["p1_up", "p2_up"], ["p1_down", "p2_down"])
 			left_paddle.set_control_mode(1)
 			right_paddle.set_control_mode(0)
 
