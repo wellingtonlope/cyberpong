@@ -166,6 +166,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
 		_restart_match()
+	elif event.keycode == KEY_M:
+		_return_to_main_menu()
 
 func _open_pause_menu() -> void:
 	if _pause_menu != null or _menu_shown or game_over:
@@ -183,6 +185,9 @@ func _on_pause_resume_requested() -> void:
 
 func _on_pause_main_menu_requested() -> void:
 	_dismiss_pause_menu()
+	_return_to_main_menu()
+
+func _return_to_main_menu() -> void:
 	_restart_match()
 	_show_menu()
 

@@ -65,6 +65,40 @@ func test_left_side_can_also_win_at_three_points() -> void:
 	assert_eq(game.left_score, 3)
 	assert_eq(game.arena.winner_name, "Cyan Circuit")
 
+func test_m_returns_to_main_menu_after_victory() -> void:
+	game._restart_match()
+	for _index in range(3):
+		game._on_ball_missed(true)
+	assert_true(game.game_over)
+
+	var event := InputEventKey.new()
+	event.pressed = true
+	event.keycode = KEY_M
+	game._unhandled_key_input(event)
+
+	assert_false(game.game_over)
+	assert_true(game._menu_shown)
+	assert_true(get_tree().paused)
+	assert_eq(game.left_score, 0)
+	assert_eq(game.right_score, 0)
+	var menu = game.get_node_or_null("GameMenu")
+	assert_not_null(menu)
+	assert_true(menu.visible)
+
+func test_m_does_not_open_menu_during_an_active_match() -> void:
+	game._restart_match()
+	assert_false(game.game_over)
+
+	var event := InputEventKey.new()
+	event.pressed = true
+	event.keycode = KEY_M
+	game._unhandled_key_input(event)
+
+	assert_false(game._menu_shown)
+	var menu = game.get_node_or_null("GameMenu")
+	assert_not_null(menu)
+	assert_false(menu.visible)
+
 func test_scoring_point_briefly_highlights_scoring_team() -> void:
 	game._on_ball_missed(true)
 

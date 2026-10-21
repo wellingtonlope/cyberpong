@@ -44,6 +44,7 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 | Movimentar no Jogador VS AI | `W` / `S` ou `↑` / `↓` |
 | Pausar / retomar | `ESC` ou `P` |
 | Iniciar outra partida | `Enter` após o fim |
+| Voltar ao menu principal após a vitória | `M` |
 | Mostrar/ocultar HUD de debug | `F3` |
 
 - No modo **Jogador VS AI**, o lado esquerdo é humano e o direito é controlado pela IA.
@@ -51,6 +52,7 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 - As ações de movimento ficam no InputMap (`p1_up`, `p1_down`, `p2_up`, `p2_down`), permitindo remapeamento sem alterar os scripts.
 - O seletor de dificuldade aparece no menu somente quando o cartão **Jogador VS AI** está focado; no PvP ele fica oculto e a dificuldade não altera a partida.
 - No menu de pausa, **Continuar** retoma o rally no mesmo estado e **Menu principal** encerra a partida e restaura placar, rebatidas, power-ups, velocidade e tamanho das raquetes.
+- Na tela de vitória, **Enter** inicia outra partida e **M** volta ao menu principal restaurando os valores padrão.
 - A tela de créditos da **Moron Souls Productions** aparece somente na abertura do jogo.
 
 ### Dificuldades
@@ -126,7 +128,7 @@ Se o executável não estiver no `PATH`, use o caminho completo do Godot. Para e
 - `test_credits_flow.gd`: abertura pelos créditos, entrega ao menu, bloqueio de teclas e ausência de repetição ao voltar da pausa.
 - `test_menu_flow.gd`: pausa da partida, seleção de modo e dificuldade, aplicação na IA, retomada, modos PvP/Jogador VS AI e encerramento.
 - `test_pause_flow.gd`: abertura por ESC/P, congelamento, retomada sem alterar o estado e restauração dos padrões.
-- `test_main_flow.gd`: nós e sinais, saques, placar, vitória, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.
+- `test_main_flow.gd`: nós e sinais, saques, placar, vitória, retorno ao menu pelo `M`, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.
 - `test_scene_resources.gd`: carregamento das cenas e disponibilidade da fonte de fallback.
 - `test_visual_verification.gd`: limites em várias resoluções, sobreposição do HUD, contraste e efeitos visuais.
 

@@ -359,7 +359,7 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 	var reveal := 1.0 - pow(1.0 - clampf(winner_reveal, 0.0, 1.0), 3.0)
 	var team_color := LEFT_COLOR if winner_is_left else RIGHT_COLOR
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.003, 0.008, 0.016, 0.78 * reveal))
-	var panel_size := Vector2(560.0, 260.0) * ui_scale * lerpf(0.94, 1.0, reveal)
+	var panel_size := Vector2(560.0, 280.0) * ui_scale * lerpf(0.94, 1.0, reveal)
 	var panel_center := size * 0.5 + Vector2(0.0, (1.0 - reveal) * 16.0 * ui_scale)
 	var panel := Rect2(panel_center - panel_size * 0.5, panel_size)
 	draw_rect(panel.grow(18.0 * ui_scale), Color(team_color, 0.05 * reveal))
@@ -440,25 +440,37 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		ui_scale,
 		true
 	)
-	var instruction_font_size := maxi(int(12.0 * ui_scale), 9)
-	var instruction_text := "NOVA PARTIDA"
-	var instruction_width := font.get_string_size(
-		instruction_text,
+	_draw_winner_key_hint(font, panel, "ENTER", "NOVA PARTIDA", 200.0, ui_scale, reveal, team_color)
+	_draw_winner_key_hint(font, panel, "M", "MENU PRINCIPAL", 230.0, ui_scale, reveal, team_color)
+
+func _draw_winner_key_hint(
+	font: Font,
+	panel: Rect2,
+	key_text: String,
+	label_text: String,
+	top_offset: float,
+	ui_scale: float,
+	reveal: float,
+	team_color: Color
+) -> void:
+	var label_font_size := maxi(int(12.0 * ui_scale), 9)
+	var label_width := font.get_string_size(
+		label_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
-		instruction_font_size
+		label_font_size
 	).x
 	var key_size := Vector2(62.0, 28.0) * ui_scale
-	var group_width := key_size.x + 12.0 * ui_scale + instruction_width
+	var group_width := key_size.x + 12.0 * ui_scale + label_width
 	var group_left := panel.get_center().x - group_width * 0.5
-	var instruction_y := panel.position.y + 215.0 * ui_scale
-	var key_rect := Rect2(Vector2(group_left, instruction_y), key_size)
+	var group_top := panel.position.y + top_offset * ui_scale
+	var key_rect := Rect2(Vector2(group_left, group_top), key_size)
 	draw_rect(key_rect, Color(0.04, 0.07, 0.11, reveal))
 	draw_rect(key_rect, Color(team_color, 0.75 * reveal), false, 1.5 * ui_scale)
 	draw_string(
 		font,
 		Vector2(key_rect.position.x, key_rect.position.y + key_size.y * 0.68),
-		"ENTER",
+		key_text,
 		HORIZONTAL_ALIGNMENT_CENTER,
 		key_size.x,
 		maxi(int(9.0 * ui_scale), 8),
@@ -466,11 +478,11 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 	)
 	draw_string(
 		font,
-		Vector2(key_rect.end.x + 12.0 * ui_scale, instruction_y + key_size.y * 0.68),
-		instruction_text,
+		Vector2(key_rect.end.x + 12.0 * ui_scale, group_top + key_size.y * 0.68),
+		label_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
-		instruction_width + 4.0,
-		instruction_font_size,
+		label_width + 4.0,
+		label_font_size,
 		Color(TEXT_COLOR, reveal)
 	)
 
