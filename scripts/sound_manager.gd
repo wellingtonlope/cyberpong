@@ -23,16 +23,34 @@ const SOUNDS := {
 }
 
 const POOL_SIZE := 12
+const MIN_VOLUME_DB := -24.0
+const MAX_VOLUME_DB := 0.0
 
 var sound_enabled := true
-var master_volume_db := 0.0
 var last_played_sound := ""
 var last_pitch_scale := 1.0
 var play_count := 0
 
+var _master_volume_percent: int = 100
 var _players: Array[AudioStreamPlayer] = []
 var _rng := RandomNumberGenerator.new()
 var _headless := false
+
+## Volume geral em decibéis, derivado da porcentagem de 0 a 100.
+var master_volume_db: float:
+	get:
+		return lerpf(MIN_VOLUME_DB, MAX_VOLUME_DB, float(_master_volume_percent) / 100.0)
+	set(value):
+		var clamped := clampf(value, MIN_VOLUME_DB, MAX_VOLUME_DB)
+		var ratio := (clamped - MIN_VOLUME_DB) / (MAX_VOLUME_DB - MIN_VOLUME_DB)
+		_master_volume_percent = clampi(roundi(ratio * 100.0), 0, 100)
+
+## Volume geral de 0 a 100.
+var master_volume_percent: int:
+	get:
+		return _master_volume_percent
+	set(value):
+		_master_volume_percent = clampi(value, 0, 100)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS

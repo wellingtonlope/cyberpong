@@ -45,14 +45,15 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 | Pausar / retomar | `ESC` ou `P` |
 | Iniciar outra partida | `Enter` após o fim |
 | Voltar ao menu principal após a vitória | `M` |
+| Ajustar o volume nas configurações | `←` / `→` |
 | Mostrar/ocultar HUD de debug | `F3` |
 
 - No modo **Jogador VS AI**, o lado esquerdo é humano e o direito é controlado pela IA.
 - No modo **Jogador VS Jogador**, os dois lados são controlados no mesmo teclado: a esquerda usa `W`/`S` e a direita usa `↑`/`↓`.
 - As ações de movimento ficam no InputMap (`p1_up`, `p1_down`, `p2_up`, `p2_down`), permitindo remapeamento sem alterar os scripts.
 - O seletor de dificuldade aparece no menu somente quando o cartão **Jogador VS AI** está focado; no PvP ele fica oculto e a dificuldade não altera a partida.
-- O cartão **Configurações** do menu inicial abre o mesmo painel de ajustes do menu de pausa (volume, som e tela cheia) sem iniciar a partida.
-- No menu de pausa, **Continuar** retoma o rally no mesmo estado, **Reiniciar partida** zera o placar e começa um novo rally, **Configurações** abre volume, som e tela cheia, e **Menu principal** encerra a partida e restaura placar, rebatidas, power-ups, velocidade e tamanho das raquetes.
+- O cartão **Configurações** do menu inicial abre o mesmo painel de ajustes do menu de pausa (volume, som, tela cheia e resolução) sem iniciar a partida.
+- No menu de pausa, **Continuar** retoma o rally no mesmo estado, **Reiniciar partida** zera o placar e começa um novo rally, **Configurações** abre volume, som, tela cheia e resolução, e **Menu principal** encerra a partida e restaura placar, rebatidas, power-ups, velocidade e tamanho das raquetes.
 - Na tela de vitória, **Enter** inicia outra partida e **M** volta ao menu principal restaurando os valores padrão. As linhas **NOVA PARTIDA** e **MENU PRINCIPAL** também são clicáveis com o mouse.
 - A tela de créditos da **Moron Souls Productions** aparece somente na abertura do jogo.
 
@@ -205,7 +206,7 @@ O avatar pode ser substituído mantendo o caminho referenciado por `scenes/credi
 - `power_up_effect.gd` centraliza os IDs (`PowerUpEffect.Id`) e o catálogo (`PowerUpEffect.CATALOG`) dos efeitos; `power_up.gd` agenda aparições a cada 5–15 rebatidas totais e controla coleta, proprietário e duração.
 - `palette.gd` centraliza a paleta compartilhada e a identidade das equipes (`Palette.team_color`, `Palette.team_name`); `game_mode.gd` define a enumeração única dos modos de jogo; `screen_state.gd` define os estados de tela (créditos, menu, jogando, pausado e fim de partida) usados por `main.gd`; `ui_draw.gd` concentra os helpers de desenho (ajuste de fonte, geometria dos cartões, pips e emblemas das equipes).
 - `arena.gd` desenha a arena em camadas, o placar, o aviso de saque, a transição de ponto, a tela de vitória e o HUD superior.
-- `sound_manager.gd` (autoload `SoundManager`) gerencia e reproduz os efeitos sonoros via pool de áudio com modulação de tom por velocidade, sons por equipe e por tipo de power-up.
+- `sound_manager.gd` (autoload `SoundManager`) gerencia e reproduz os efeitos sonoros via pool de áudio com modulação de tom por velocidade, sons por equipe e por tipo de power-up; o volume geral é controlado em porcentagem de 0 a 100 (`master_volume_percent`) e convertido para decibéis (`master_volume_db`).
 - `menu_screen.gd` concentra layout, desenho, foco, a transição de fechamento e a sobreposição das configurações; `game_menu.gd`, `pause_menu.gd`, `settings_menu.gd` e `credits_screen.gd` usam esse template.
 - `debug_hud.gd` exibe velocidade e rebatidas por IA com `F3`; `spark_effects.gd` simula as faíscas e o anel de impacto.
 - A resolução de viewport em `project.godot` é **2880 × 1620**, em tela cheia. A escala é definida por `GAME_SCALE` em `main.gd` e o HUD respeita `HUD_BAR_HEIGHT`.

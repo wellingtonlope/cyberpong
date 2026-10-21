@@ -858,11 +858,36 @@ func _draw_card(index: int, scale_factor: float, alpha: float) -> void:
 		detail_font_size,
 		UiDraw.with_alpha(Palette.MUTED_TEXT_COLOR, alpha)
 	)
+	_draw_card_progress(card, rect, padding_left, scale_factor, alpha)
 
 	if focused:
 		_draw_focus_brackets(rect, cut, scale_factor, alpha)
 	if _closing and index == _closing_index:
 		draw_colored_polygon(points, UiDraw.with_alpha(Palette.BALL_COLOR, 0.16 * (1.0 - _close_progress)))
+
+## Barra de progresso no rodapé do cartão, usada por exemplo pelo volume das
+## configurações. Só é desenhada quando o cartão informa "progress".
+func _draw_card_progress(
+	card: Dictionary,
+	rect: Rect2,
+	padding_left: float,
+	scale_factor: float,
+	alpha: float
+) -> void:
+	if not card.has("progress"):
+		return
+	var progress := clampf(float(card["progress"]), 0.0, 1.0)
+	var bar_height := maxf(3.0, 5.0 * scale_factor)
+	var bar := Rect2(
+		Vector2(rect.position.x + padding_left, rect.end.y - 11.0 * scale_factor),
+		Vector2(maxf(rect.size.x - padding_left - 16.0 * scale_factor, 1.0), bar_height)
+	)
+	draw_rect(bar, UiDraw.with_alpha(Palette.DIVIDER_COLOR, 0.6 * alpha))
+	var fill_color: Color = card.get("progress_color", Palette.BALL_COLOR)
+	draw_rect(
+		Rect2(bar.position, Vector2(bar.size.x * progress, bar.size.y)),
+		UiDraw.with_alpha(fill_color, 0.9 * alpha)
+	)
 
 func _draw_top_gradient(
 	rect: Rect2,

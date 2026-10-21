@@ -14,31 +14,31 @@ const WINDOW_SIZES := [
 ]
 
 var menu
-var _original_volume_db := 0.0
+var _original_volume_percent := 100
 var _original_sound_enabled := true
 
 func before_each() -> void:
 	get_viewport().size = DEFAULT_SIZE
-	_original_volume_db = SoundManager.master_volume_db
+	_original_volume_percent = SoundManager.master_volume_percent
 	_original_sound_enabled = SoundManager.sound_enabled
-	SoundManager.master_volume_db = 0.0
+	SoundManager.master_volume_percent = 100
 	SoundManager.sound_enabled = true
 	menu = add_child_autofree(SETTINGS_SCENE.instantiate())
 
 func after_each() -> void:
-	SoundManager.master_volume_db = _original_volume_db
+	SoundManager.master_volume_percent = _original_volume_percent
 	SoundManager.sound_enabled = _original_sound_enabled
 	get_tree().paused = false
 	get_viewport().size = DEFAULT_SIZE
 
-func test_settings_menu_lists_volume_sound_fullscreen_and_back_actions() -> void:
+func test_settings_menu_lists_volume_sound_fullscreen_resolution_and_back_actions() -> void:
 	assert_eq(menu._cards.size(), 5)
-	assert_eq(menu.SETTINGS_CARDS[0]["action"], menu.Action.VOLUME_DOWN)
-	assert_eq(menu.SETTINGS_CARDS[1]["action"], menu.Action.VOLUME_UP)
-	assert_eq(menu.SETTINGS_CARDS[2]["action"], menu.Action.TOGGLE_SOUND)
-	assert_eq(menu.SETTINGS_CARDS[3]["action"], menu.Action.TOGGLE_FULLSCREEN)
+	assert_eq(menu.SETTINGS_CARDS[0]["action"], menu.Action.VOLUME)
+	assert_eq(menu.SETTINGS_CARDS[1]["action"], menu.Action.TOGGLE_SOUND)
+	assert_eq(menu.SETTINGS_CARDS[2]["action"], menu.Action.TOGGLE_FULLSCREEN)
+	assert_eq(menu.SETTINGS_CARDS[3]["action"], menu.Action.CYCLE_RESOLUTION)
 	assert_eq(menu.SETTINGS_CARDS[4]["action"], menu.Action.BACK)
-	assert_eq(menu._cards[2]["tag"], "LIGADO")
+	assert_eq(menu._cards[1]["tag"], "LIGADO")
 
 func test_layout_keeps_cards_and_footer_inside_window() -> void:
 	for window_size in WINDOW_SIZES:
@@ -52,52 +52,133 @@ func test_layout_keeps_cards_and_footer_inside_window() -> void:
 		assert_gt(footer.end.y, cards[4].end.y)
 		assert_lte(footer.end.y, size.y, "Settings footer overflows at %s" % size)
 
-func test_volume_controls_adjust_the_master_volume_in_steps() -> void:
-	SoundManager.master_volume_db = -6.0
-	var initial_percentage: int = menu.volume_percentage()
+func test_volume_card_shows_a_bar_from_zero_to_one_hundred() -> void:
+	SoundManager.master_volume_percent = 100
+	menu._refresh_state()
+	assert_eq(menu._cards[0]["progress"], 1.0)
+	assert_eq(menu._cards[0]["tag"], "100%")
 
-	menu._activate_card(1)
-	assert_almost_eq(SoundManager.master_volume_db, -3.0, 0.001)
-	assert_gt(menu.volume_percentage(), initial_percentage)
+	SoundManager.master_volume_percent = 40
+	menu._refresh_state()
+	assert_almost_eq(float(menu._cards[0]["progress"]), 0.4, 0.001)
+	assert_eq(menu._cards[0]["tag"], "40%")
 
-	menu._activate_card(0)
-	assert_almost_eq(SoundManager.master_volume_db, -6.0, 0.001)
-	assert_eq(menu.volume_percentage(), initial_percentage)
+	SoundManager.master_volume_percent = 0
+	menu._refresh_state()
+	assert_almost_eq(float(menu._cards[0]["progress"]), 0.0, 0.001)
+	assert_eq(menu._cards[0]["tag"], "0%")
+
+func test_volume_bar_is_drawn_without_errors() -> void:
+	SoundManager.master_volume_percent = 35
+	menu._refresh_state()
+	menu.queue_redraw()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(menu._cards[menu.VOLUME_CARD_INDEX]["tag"], "35%")
+	assert_almost_eq(float(menu._cards[menu.VOLUME_CARD_INDEX]["progress"]), 0.35, 0.001)
+
+func test_arrow_keys_adjust_the_volume_in_steps_of_five_percent() -> void:
+	SoundManager.master_volume_percent = 50
+	menu._on_card_focused(menu.VOLUME_CARD_INDEX)
+
+	var left := InputEventKey.new()
+	left.pressed = true
+	left.keycode = KEY_LEFT
+	menu._input(left)
+
+	assert_eq(menu.volume_percentage(), 45)
+	assert_eq(SoundManager.master_volume_percent, 45)
+
+	var right := InputEventKey.new()
+	right.pressed = true
+	right.keycode = KEY_RIGHT
+	menu._input(right)
+
+	assert_eq(menu.volume_percentage(), 50)
+	assert_eq(SoundManager.master_volume_percent, 50)
+
+func test_arrow_keys_do_not_change_the_volume_when_another_card_is_focused() -> void:
+	SoundManager.master_volume_percent = 50
+	menu._on_card_focused(menu.SOUND_CARD_INDEX)
+
+	var right := InputEventKey.new()
+	right.pressed = true
+	right.keycode = KEY_RIGHT
+	menu._input(right)
+
+	assert_eq(menu.volume_percentage(), 50)
 
 func test_volume_is_clamped_to_the_supported_range() -> void:
-	for _index in range(20):
-		menu._activate_card(0)
-	assert_almost_eq(SoundManager.master_volume_db, menu.MIN_VOLUME_DB, 0.001)
+	SoundManager.master_volume_percent = 100
+	menu._on_card_focused(menu.VOLUME_CARD_INDEX)
+	for _index in range(30):
+		menu.adjust_volume(-menu.VOLUME_STEP_PERCENT)
 	assert_eq(menu.volume_percentage(), 0)
+	assert_almost_eq(
+		SoundManager.master_volume_db,
+		SoundManager.MIN_VOLUME_DB,
+		0.001
+	)
 
-	SoundManager.master_volume_db = menu.MAX_VOLUME_DB
-	menu._activate_card(1)
-	assert_almost_eq(SoundManager.master_volume_db, menu.MAX_VOLUME_DB, 0.001)
+	for _index in range(30):
+		menu.adjust_volume(menu.VOLUME_STEP_PERCENT)
+	assert_eq(menu.volume_percentage(), 100)
+	assert_almost_eq(
+		SoundManager.master_volume_db,
+		SoundManager.MAX_VOLUME_DB,
+		0.001
+	)
+
+func test_volume_percentage_and_decibels_stay_in_sync() -> void:
+	SoundManager.master_volume_percent = 25
+	assert_almost_eq(SoundManager.master_volume_db, -18.0, 0.001)
+
+	SoundManager.master_volume_db = -12.0
+	assert_eq(SoundManager.master_volume_percent, 50)
 
 func test_sound_action_toggles_the_audio_and_updates_the_tag() -> void:
-	menu._activate_card(2)
+	menu._activate_card(menu.SOUND_CARD_INDEX)
 	assert_false(SoundManager.sound_enabled)
-	assert_eq(menu._cards[2]["tag"], "DESLIGADO")
+	assert_eq(menu._cards[menu.SOUND_CARD_INDEX]["tag"], "DESLIGADO")
 
-	menu._activate_card(2)
+	menu._activate_card(menu.SOUND_CARD_INDEX)
 	assert_true(SoundManager.sound_enabled)
-	assert_eq(menu._cards[2]["tag"], "LIGADO")
+	assert_eq(menu._cards[menu.SOUND_CARD_INDEX]["tag"], "LIGADO")
 
 func test_fullscreen_action_toggles_the_window_mode_state() -> void:
 	assert_false(menu.is_fullscreen())
-	menu._activate_card(3)
+	menu._activate_card(menu.FULLSCREEN_CARD_INDEX)
 	assert_true(menu.is_fullscreen())
-	assert_eq(menu._cards[3]["tag"], "TELA CHEIA")
+	assert_eq(menu._cards[menu.FULLSCREEN_CARD_INDEX]["tag"], "TELA CHEIA")
 
-	menu._activate_card(3)
+	menu._activate_card(menu.FULLSCREEN_CARD_INDEX)
 	assert_false(menu.is_fullscreen())
-	assert_eq(menu._cards[3]["tag"], "JANELA")
+	assert_eq(menu._cards[menu.FULLSCREEN_CARD_INDEX]["tag"], "JANELA")
+
+func test_resolution_card_cycles_through_the_available_resolutions() -> void:
+	var first: Vector2i = menu.current_resolution()
+	menu._activate_card(menu.RESOLUTION_CARD_INDEX)
+
+	var second: Vector2i = menu.current_resolution()
+	assert_ne(second, first)
+	assert_eq(menu._cards[menu.RESOLUTION_CARD_INDEX]["tag"], "%d×%d" % [second.x, second.y])
+
+	for _index in range(menu.RESOLUTION_PRESETS.size()):
+		menu._activate_card(menu.RESOLUTION_CARD_INDEX)
+	assert_eq(menu.current_resolution(), second)
+
+func test_resolution_presets_are_all_valid_window_sizes() -> void:
+	assert_gt(menu.RESOLUTION_PRESETS.size(), 1)
+	for resolution in menu.RESOLUTION_PRESETS:
+		assert_gte(resolution.x, 640)
+		assert_gte(resolution.y, 480)
 
 func test_back_action_closes_the_menu_and_keeps_the_tree_paused() -> void:
 	var emitted: Array = []
 	menu.closed.connect(func() -> void: emitted.append("closed"))
 
-	menu._activate_card(4)
+	menu._activate_card(menu.BACK_CARD_INDEX)
 	assert_true(menu._closing)
 	menu._process(menu.CLOSE_DURATION)
 

@@ -4,31 +4,32 @@ extends MenuScreen
 signal closed
 
 enum Action {
-	VOLUME_DOWN,
-	VOLUME_UP,
+	VOLUME,
 	TOGGLE_SOUND,
 	TOGGLE_FULLSCREEN,
+	CYCLE_RESOLUTION,
 	BACK
 }
 
-const VOLUME_STEP_DB := 3.0
-const MIN_VOLUME_DB := -24.0
-const MAX_VOLUME_DB := 0.0
+const VOLUME_STEP_PERCENT := 5
 const SETTINGS_MIN_UI_SCALE := 0.42
 const LAYOUT_TOP_MARGIN_UNITS := 8.0
+const RESOLUTION_PRESETS: Array[Vector2i] = [
+	Vector2i(1280, 720),
+	Vector2i(1600, 900),
+	Vector2i(1920, 1080),
+	Vector2i(2560, 1440),
+	Vector2i(2880, 1620),
+]
 
 const SETTINGS_CARDS := [
 	{
-		"action": Action.VOLUME_DOWN,
-		"title": "VOLUME -",
-		"detail": "Diminui o volume geral em 3 dB",
-		"tag": "-3 dB"
-	},
-	{
-		"action": Action.VOLUME_UP,
-		"title": "VOLUME +",
-		"detail": "Aumenta o volume geral em 3 dB",
-		"tag": "+3 dB"
+		"action": Action.VOLUME,
+		"title": "VOLUME",
+		"detail": "← e → ajustam o volume geral",
+		"tag": "100%",
+		"progress": 1.0,
+		"progress_color": Palette.BALL_COLOR,
 	},
 	{
 		"action": Action.TOGGLE_SOUND,
@@ -43,6 +44,12 @@ const SETTINGS_CARDS := [
 		"tag": "TELA CHEIA"
 	},
 	{
+		"action": Action.CYCLE_RESOLUTION,
+		"title": "RESOLUÇÃO",
+		"detail": "Muda a resolução da janela",
+		"tag": "1920×1080"
+	},
+	{
 		"action": Action.BACK,
 		"title": "VOLTAR",
 		"detail": "Retorna ao menu anterior",
@@ -50,24 +57,27 @@ const SETTINGS_CARDS := [
 	}
 ]
 
-const SOUND_CARD_INDEX := 2
-const FULLSCREEN_CARD_INDEX := 3
+const VOLUME_CARD_INDEX := 0
+const SOUND_CARD_INDEX := 1
+const FULLSCREEN_CARD_INDEX := 2
+const RESOLUTION_CARD_INDEX := 3
 const BACK_CARD_INDEX := 4
 
-@onready var btn_volume_down: Button = $BtnVolumeDown
-@onready var btn_volume_up: Button = $BtnVolumeUp
+@onready var btn_volume: Button = $BtnVolume
 @onready var btn_sound: Button = $BtnSound
 @onready var btn_fullscreen: Button = $BtnFullscreen
+@onready var btn_resolution: Button = $BtnResolution
 @onready var btn_back: Button = $BtnBack
 
 var _fullscreen := false
+var _resolution_index := 0
 
 func _ready() -> void:
 	var buttons: Array[Button] = [
-		btn_volume_down,
-		btn_volume_up,
+		btn_volume,
 		btn_sound,
 		btn_fullscreen,
+		btn_resolution,
 		btn_back,
 	]
 	var cards: Array = []
@@ -75,25 +85,28 @@ func _ready() -> void:
 		cards.append(card.duplicate())
 	_setup_menu(buttons, cards)
 	_fullscreen = _is_fullscreen()
+	_resolution_index = _closest_resolution_index(_current_window_size())
 	_refresh_state()
 
 func _activate_card(index: int) -> void:
 	if _selected or _closing:
 		return
 	var action := int(_cards[index]["action"])
-	if action == Action.BACK:
-		begin_close(index)
-		return
-	_apply_action(action)
-	SoundManager.play_ui_move()
+	match action:
+		Action.VOLUME:
+			SoundManager.play_ui_move()
+		Action.CYCLE_RESOLUTION:
+			_cycle_resolution()
+		Action.BACK:
+			begin_close(index)
+			return
+		_:
+			_apply_action(action)
+			SoundManager.play_ui_move()
 	_refresh_state()
 
 func _apply_action(action: int) -> void:
 	match action:
-		Action.VOLUME_DOWN:
-			_set_volume(SoundManager.master_volume_db - VOLUME_STEP_DB)
-		Action.VOLUME_UP:
-			_set_volume(SoundManager.master_volume_db + VOLUME_STEP_DB)
 		Action.TOGGLE_SOUND:
 			SoundManager.sound_enabled = not SoundManager.sound_enabled
 			if SoundManager.sound_enabled:
@@ -103,8 +116,50 @@ func _apply_action(action: int) -> void:
 		_:
 			pass
 
-func _set_volume(value: float) -> void:
-	SoundManager.master_volume_db = clampf(value, MIN_VOLUME_DB, MAX_VOLUME_DB)
+## Ajusta o volume geral em passos de porcentagem, de 0 a 100.
+func adjust_volume(delta_percent: int) -> void:
+	SoundManager.master_volume_percent = (
+		SoundManager.master_volume_percent + delta_percent
+	)
+	SoundManager.play_ui_move()
+	_refresh_state()
+
+## Volume geral de 0 a 100.
+func volume_percentage() -> int:
+	return SoundManager.master_volume_percent
+
+## Alterna para a próxima resolução disponível e a aplica na janela.
+func _cycle_resolution() -> void:
+	_resolution_index = (_resolution_index + 1) % RESOLUTION_PRESETS.size()
+	_apply_resolution()
+	SoundManager.play_ui_move()
+
+## Resolução selecionada no momento.
+func current_resolution() -> Vector2i:
+	return RESOLUTION_PRESETS[_resolution_index]
+
+func _apply_resolution() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MAXIMIZED:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(current_resolution())
+
+func _closest_resolution_index(size: Vector2i) -> int:
+	var best_index := 0
+	var best_distance := INF
+	for index in range(RESOLUTION_PRESETS.size()):
+		var candidate := RESOLUTION_PRESETS[index]
+		var distance := absf(float(candidate.x - size.x)) + absf(float(candidate.y - size.y))
+		if distance < best_distance:
+			best_distance = distance
+			best_index = index
+	return best_index
+
+func _current_window_size() -> Vector2i:
+	if DisplayServer.get_name() == "headless":
+		return Vector2i(RESOLUTION_PRESETS[0].x, RESOLUTION_PRESETS[0].y)
+	return DisplayServer.window_get_size()
 
 func _toggle_fullscreen() -> void:
 	_fullscreen = not _fullscreen
@@ -122,20 +177,37 @@ func _is_fullscreen() -> bool:
 func _refresh_state() -> void:
 	if _cards.size() < SETTINGS_CARDS.size():
 		return
+	_cards[VOLUME_CARD_INDEX]["tag"] = "%d%%" % volume_percentage()
+	_cards[VOLUME_CARD_INDEX]["progress"] = float(volume_percentage()) / 100.0
 	_cards[SOUND_CARD_INDEX]["tag"] = "LIGADO" if SoundManager.sound_enabled else "DESLIGADO"
 	_cards[FULLSCREEN_CARD_INDEX]["tag"] = "TELA CHEIA" if _fullscreen else "JANELA"
+	_cards[RESOLUTION_CARD_INDEX]["tag"] = "%d×%d" % [
+		current_resolution().x,
+		current_resolution().y,
+	]
 	queue_redraw()
-
-func volume_percentage() -> int:
-	var range_db := MAX_VOLUME_DB - MIN_VOLUME_DB
-	var normalized := (SoundManager.master_volume_db - MIN_VOLUME_DB) / maxf(range_db, 0.001)
-	return clampi(int(round(normalized * 100.0)), 0, 100)
 
 func is_fullscreen() -> bool:
 	return _fullscreen
 
 func _on_close_finished(_index: int) -> void:
 	closed.emit()
+
+func _input(event: InputEvent) -> void:
+	if _selected or _closing:
+		return
+	if _focused_index != VOLUME_CARD_INDEX:
+		return
+	if not event is InputEventKey:
+		return
+	if not event.pressed or event.echo:
+		return
+	if event.keycode == KEY_LEFT:
+		adjust_volume(-VOLUME_STEP_PERCENT)
+		get_viewport().set_input_as_handled()
+	elif event.keycode == KEY_RIGHT:
+		adjust_volume(VOLUME_STEP_PERCENT)
+		get_viewport().set_input_as_handled()
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
@@ -178,4 +250,4 @@ func _header_live_label() -> String:
 	return "VOLUME %d%%" % volume_percentage()
 
 func _footer_hints() -> Array:
-	return [["↑↓", "NAVEGAR"], ["ENTER", "AJUSTAR"], ["ESC", "VOLTAR"]]
+	return [["↑↓", "NAVEGAR"], ["←→", "VOLUME"], ["ENTER", "AJUSTAR"]]
