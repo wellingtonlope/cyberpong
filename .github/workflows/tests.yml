@@ -30,6 +30,21 @@ jobs:
           install -m 0755 "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
           godot --version
 
+      - name: Cachear os recursos importados
+        uses: actions/cache@v4
+        with:
+          path: |
+            .godot/imported
+            .godot/global_script_class_cache.cfg
+          key: godot-import-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', 'addons/**', 'assets/**') }}
+          restore-keys: |
+            godot-import-${{ env.GODOT_VERSION }}-
+
+      - name: Importar os recursos do projeto
+        run: |
+          set -euo pipefail
+          godot --headless --path . --import
+
       - name: Executar a suíte GUT
         run: |
           set -euo pipefail

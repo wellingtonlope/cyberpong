@@ -111,10 +111,17 @@ godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_
 
 Se o executável não estiver no `PATH`, use o caminho completo do Godot. Para exportar o resultado em JUnit XML, crie `reports/` e acrescente `-gjunit_xml_file=reports/gut-results.xml`. O arquivo registra resultados dos testes, não cobertura de código.
 
+Em um clone novo, ou sempre que a pasta `.godot/` não existir, importe os recursos antes de rodar a suíte. Sem esse passo o Godot não encontra os `class_name` do GUT nem os arquivos de áudio importados e a execução falha:
+
+```bash
+godot --headless --path . --import
+```
+
 ## Integração contínua
 
-O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pull request. Ele instala o Godot 4.7 no runner, executa a suíte GUT em modo headless e publica o relatório JUnit:
+O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pull request. Ele instala o Godot 4.7 no runner, importa os recursos do projeto, executa a suíte GUT em modo headless e publica o relatório JUnit:
 
+- `godot --headless --path . --import` roda antes da suíte para gerar os arquivos importados e o cache de `class_name` do GUT, ausentes em um checkout limpo.
 - `reports/gut-results.xml` é gerado com `-gjunit_xml_file` e enviado como artefato `gut-junit-report`.
 - O resumo com o total de testes e falhas é escrito no relatório do job.
 - A execução falha quando há testes quebrados, porque o GUT encerra com código diferente de zero.
