@@ -178,7 +178,7 @@ func test_match_point_highlight_is_cleared_when_the_match_ends_or_restarts() -> 
 	game.arena.set_score(2, 0, 3)
 	assert_true(game.arena.left_match_point)
 
-	game.arena.set_winner("Cyan Circuit")
+	game.arena.set_winner(true)
 	assert_false(game.arena.left_match_point)
 	assert_false(game.arena.right_match_point)
 

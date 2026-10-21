@@ -307,8 +307,7 @@ func _on_ball_missed(left_side: bool) -> void:
 	var winning_score := left_score if scorer_is_left else right_score
 	if winning_score >= WINNING_SCORE:
 		game_over = true
-		var winner_name := Palette.team_name(scorer_is_left)
-		arena.set_winner(winner_name)
+		arena.set_winner(scorer_is_left)
 		SoundManager.play_win(scorer_is_left)
 		return
 

@@ -110,9 +110,9 @@ func set_match_hud(rebound_count: int, power_up_info: Dictionary) -> void:
 	power_up_hud_show_progress = bool(power_up_info.get("show_progress", false))
 	queue_redraw()
 
-func set_winner(name: String) -> void:
-	winner_name = name
-	winner_is_left = name.to_lower() == Palette.LEFT_TEAM_NAME.to_lower()
+func set_winner(is_left: bool) -> void:
+	winner_is_left = is_left
+	winner_name = Palette.team_name(is_left)
 	game_over = true
 	rally_intro_remaining = 0.0
 	point_flash_remaining = 0.0
