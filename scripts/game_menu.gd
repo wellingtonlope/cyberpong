@@ -4,7 +4,6 @@ extends MenuScreen
 signal mode_selected(mode: GameMode.Mode, difficulty: Difficulty.Level)
 signal quit_requested
 
-const SETTINGS_SCENE := preload("res://scenes/settings_menu.tscn")
 
 const EXIT_CARD := {
 	"title": "SAIR",
@@ -20,6 +19,8 @@ const SETTINGS_CARD := {
 
 const SETTINGS_CARD_INDEX := 2
 const EXIT_CARD_INDEX := 3
+
+const SETTINGS_SCENE := preload("res://scenes/settings_menu.tscn")
 
 const MODE_CARDS := [
 	{
@@ -45,16 +46,15 @@ const MODE_CARDS := [
 @onready var btn_hard: Button = $BtnHard
 
 var selected_difficulty: Difficulty.Level = Difficulty.DEFAULT_LEVEL
-var _pending_mode := -1
+var _pending_mode: GameMode.Mode = GameMode.Mode.PLAYER_VS_AI
 var _pending_quit := false
-var _settings: SettingsMenu = null
-var _settings_return_index := 0
 
 func _ready() -> void:
 	var buttons: Array[Button] = [btn_pvp, btn_pvai, btn_settings, btn_quit]
 	var cards := MODE_CARDS.duplicate()
 	cards.append(SETTINGS_CARD)
 	cards.append(EXIT_CARD)
+	settings_scene = SETTINGS_SCENE
 	_setup_menu(buttons, cards)
 	var difficulty_titles := []
 	for candidate in Difficulty.PRESETS:
@@ -104,99 +104,49 @@ func _cycle_difficulty(direction: int) -> void:
 
 func _activate_card(index: int) -> void:
 	if index == SETTINGS_CARD_INDEX:
-		_open_settings()
+		open_settings()
 		return
 	if index == EXIT_CARD_INDEX:
-		_request_quit(index)
+		_pending_quit = true
+		begin_close(index)
 		return
-	_activate(MODE_CARDS[index]["mode"], index)
-
-func _open_settings() -> void:
-	if _settings != null:
-		return
-	SoundManager.play_ui_select()
-	_settings_return_index = clampi(_focused_index, 0, _card_buttons.size() - 1)
-	var settings := SETTINGS_SCENE.instantiate() as SettingsMenu
-	settings.name = "SettingsMenu"
-	add_child(settings)
-	settings.closed.connect(_on_settings_closed)
-	_settings = settings
-	set_cards_interactive(false)
-	_set_selector_visible(false)
-
-func _on_settings_closed() -> void:
-	if is_instance_valid(_settings):
-		var settings := _settings
-		_settings = null
-		remove_child(settings)
-		settings.queue_free()
-	else:
-		_settings = null
-	set_cards_interactive(true)
-	var index := clampi(_settings_return_index, 0, _card_buttons.size() - 1)
-	_focused_index = index
-	_card_buttons[index].grab_focus()
-	_set_selector_visible(_is_player_vs_ai_card(index))
+	_activate(int(MODE_CARDS[index]["mode"]), index)
 
 func _menu_reference_height() -> float:
 	return super._menu_reference_height() + (CARD_HEIGHT + CARD_GAP)
 
-func _on_mode_pressed(index: int) -> void:
-	_activate_card(index)
-
-func _activate(mode: int, index: int) -> void:
+func _activate(mode: GameMode.Mode, index: int) -> void:
 	if _selected or _closing:
 		return
-	SoundManager.play_ui_select()
-	_closing = true
-	_close_progress = 0.0
-	_closing_index = index
 	_pending_mode = mode
+	begin_close(index)
 
-func _request_quit(index: int) -> void:
-	if _selected or _closing:
-		return
-	SoundManager.play_ui_select()
-	_closing = true
-	_close_progress = 0.0
-	_closing_index = index
-	_pending_quit = true
-
-func _finish_selection() -> void:
-	if _pending_quit:
-		_finish_quit()
-		return
-	var mode := _pending_mode
-	_closing = false
-	_closing_index = -1
-	_pending_mode = -1
-	_select(mode)
-
-func _finish_quit() -> void:
-	_closing = false
-	_close_progress = 0.0
-	_closing_index = -1
-	_pending_quit = false
-	if _selected:
-		return
-	_selected = true
-	hide()
-	set_process(false)
+func _on_close_finished(_index: int) -> void:
 	get_tree().paused = false
-	quit_requested.emit()
+	if _pending_quit:
+		_pending_quit = false
+		quit_requested.emit()
+		return
+	mode_selected.emit(_pending_mode, selected_difficulty)
 
-func _select(mode: int) -> void:
+## Seleciona o modo imediatamente, sem a transição de fechamento.
+func select_mode(mode: GameMode.Mode) -> void:
 	if _selected:
 		return
 	_selected = true
 	_closing = false
 	_close_progress = 0.0
 	_closing_index = -1
-	_pending_mode = -1
 	hide()
 	set_process(false)
 	get_tree().paused = false
 	mode_selected.emit(mode, selected_difficulty)
+
+func _restore_focus_after_settings() -> void:
+	var index := clampi(_settings_return_index, 0, _card_buttons.size() - 1)
+	_focused_index = index
+	_card_buttons[index].grab_focus()
+	_set_selector_visible(_is_player_vs_ai_card(index))
 
 func _footer_hints() -> Array:
 	if _selector_visible:

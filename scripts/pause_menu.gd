@@ -47,10 +47,10 @@ const PAUSE_CARDS := [
 @onready var btn_main_menu: Button = $BtnMainMenu
 
 var _pending_action := -1
-var _settings: SettingsMenu = null
 
 func _ready() -> void:
 	var buttons: Array[Button] = [btn_resume, btn_restart, btn_settings, btn_main_menu]
+	settings_scene = SETTINGS_SCENE
 	_setup_menu(buttons, PAUSE_CARDS)
 
 func _activate_card(index: int) -> void:
@@ -60,22 +60,18 @@ func _activate_action(action: int, index: int) -> void:
 	if _selected or _closing:
 		return
 	if action == Action.SETTINGS:
-		_open_settings()
+		open_settings()
 		return
-	SoundManager.play_ui_select()
-	_closing = true
-	_close_progress = 0.0
-	_closing_index = index
 	_pending_action = action
+	begin_close(index)
 
-func _finish_selection() -> void:
+func _on_close_finished(_index: int) -> void:
 	var action := _pending_action
-	_closing = false
-	_closing_index = -1
 	_pending_action = -1
-	_select_action(action)
+	_perform_action(action)
 
-func _select_action(action: int) -> void:
+## Executa a ação imediatamente, sem a transição de fechamento.
+func select_action(action: int) -> void:
 	if _selected:
 		return
 	_selected = true
@@ -85,6 +81,9 @@ func _select_action(action: int) -> void:
 	_pending_action = -1
 	hide()
 	set_process(false)
+	_perform_action(action)
+
+func _perform_action(action: int) -> void:
 	match action:
 		Action.MAIN_MENU:
 			main_menu_requested.emit()
@@ -94,28 +93,6 @@ func _select_action(action: int) -> void:
 		_:
 			get_tree().paused = false
 			resume_requested.emit()
-
-func _open_settings() -> void:
-	if _settings != null:
-		return
-	SoundManager.play_ui_select()
-	var settings := SETTINGS_SCENE.instantiate() as SettingsMenu
-	settings.name = "SettingsMenu"
-	add_child(settings)
-	settings.closed.connect(_on_settings_closed)
-	_settings = settings
-	set_cards_interactive(false)
-
-func _on_settings_closed() -> void:
-	if is_instance_valid(_settings):
-		var settings := _settings
-		_settings = null
-		remove_child(settings)
-		settings.queue_free()
-	else:
-		_settings = null
-	set_cards_interactive(true)
-	grab_first_focus()
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey:

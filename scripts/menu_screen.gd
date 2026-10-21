@@ -35,7 +35,6 @@ var _fade_in := 0.0
 var _closing := false
 var _close_progress := 0.0
 var _closing_index := -1
-var _pending_index := -1
 var _selected := false
 var _selector_label := ""
 var _selector_titles: Array = []
@@ -43,6 +42,11 @@ var _selector_buttons: Array[Button] = []
 var _selector_rects: Array = []
 var _selector_selected_index := 0
 var _selector_visible := true
+## Cena de configurações usada como sobreposição. As subclasses definem a
+## referência porque a cena de configurações é derivada deste template.
+var settings_scene: PackedScene = null
+var _settings: SettingsMenu = null
+var _settings_return_index := 0
 
 func _setup_menu(buttons: Array[Button], cards: Array) -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -111,7 +115,7 @@ func _process(delta: float) -> void:
 	if _closing:
 		_close_progress = minf(_close_progress + delta / CLOSE_DURATION, 1.0)
 		if _close_progress >= 1.0:
-			_finish_selection()
+			finish_close()
 			return
 	if not is_zero_approx(_cursor_target_y):
 		_cursor_y = lerpf(_cursor_y, _cursor_target_y, minf(delta * 14.0, 1.0))
@@ -150,7 +154,32 @@ func _on_card_pressed(index: int) -> void:
 func _activate_card(_index: int) -> void:
 	pass
 
-func _finish_selection() -> void:
+## Inicia a transição de fechamento do cartão `index`. Quando a animação
+## termina, `_on_close_finished` é chamado com o índice do cartão.
+func begin_close(index: int) -> void:
+	if _selected or _closing:
+		return
+	SoundManager.play_ui_select()
+	_closing = true
+	_close_progress = 0.0
+	_closing_index = index
+	queue_redraw()
+
+## Conclui a transição de fechamento: marca o menu como selecionado, oculta
+## e avisa a subclasse pelo `_on_close_finished`.
+func finish_close() -> void:
+	var index := _closing_index
+	_closing = false
+	_close_progress = 0.0
+	_closing_index = -1
+	_selected = true
+	hide()
+	set_process(false)
+	_on_close_finished(index)
+
+## Ponto de extensão para a subclasse: chamado quando a transição de
+## fechamento termina.
+func _on_close_finished(_index: int) -> void:
 	pass
 
 func _on_card_focused(index: int) -> void:
@@ -184,6 +213,37 @@ func set_cards_interactive(interactive: bool) -> void:
 		button.mouse_filter = (
 			Control.MOUSE_FILTER_STOP if interactive else Control.MOUSE_FILTER_IGNORE
 		)
+
+## Abre o painel de configurações como sobreposição do menu atual, desativando
+## os cartões enquanto ele estiver aberto.
+func open_settings() -> void:
+	if _settings != null or settings_scene == null:
+		return
+	SoundManager.play_ui_select()
+	_settings_return_index = clampi(_focused_index, 0, _card_buttons.size() - 1)
+	var settings := settings_scene.instantiate() as SettingsMenu
+	settings.name = "SettingsMenu"
+	add_child(settings)
+	settings.closed.connect(_on_settings_closed)
+	_settings = settings
+	set_cards_interactive(false)
+	_set_selector_visible(false)
+
+func _on_settings_closed() -> void:
+	if is_instance_valid(_settings):
+		var settings := _settings
+		_settings = null
+		remove_child(settings)
+		settings.queue_free()
+	else:
+		_settings = null
+	set_cards_interactive(true)
+	_restore_focus_after_settings()
+
+## Ponto de extensão para a subclasse: repõe o foco que o menu tinha antes de
+## as configurações serem abertas.
+func _restore_focus_after_settings() -> void:
+	grab_first_focus()
 
 func _show() -> void:
 	show()

@@ -125,7 +125,7 @@ func test_closing_the_settings_menu_restores_the_pause_cards() -> void:
 	var settings = menu.get_node_or_null("SettingsMenu")
 	assert_not_null(settings)
 
-	settings._finish_selection()
+	settings.finish_close()
 
 	assert_null(menu.get_node_or_null("SettingsMenu"))
 	assert_false(menu.btn_resume.disabled)

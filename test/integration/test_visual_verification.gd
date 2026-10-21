@@ -29,7 +29,7 @@ func before_each() -> void:
 	credits._process(credits.SKIP_FADE_OUT_DURATION)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
-	menu._select(GameMode.Mode.PLAYER_VS_AI)
+	menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
 
 
 func after_each() -> void:

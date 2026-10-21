@@ -206,7 +206,7 @@ O avatar pode ser substituído mantendo o caminho referenciado por `scenes/credi
 - `palette.gd` centraliza a paleta compartilhada e a identidade das equipes (`Palette.team_color`, `Palette.team_name`); `game_mode.gd` define a enumeração única dos modos de jogo; `ui_draw.gd` concentra os helpers de desenho (ajuste de fonte, geometria dos cartões, pips e emblemas das equipes).
 - `arena.gd` desenha a arena em camadas, o placar, o aviso de saque, a transição de ponto, a tela de vitória e o HUD superior.
 - `sound_manager.gd` (autoload `SoundManager`) gerencia e reproduz os efeitos sonoros via pool de áudio com modulação de tom por velocidade, sons por equipe e por tipo de power-up.
-- `menu_screen.gd` concentra layout, desenho e foco compartilhados, incluindo o seletor de dificuldade; `game_menu.gd`, `pause_menu.gd`, `settings_menu.gd` e `credits_screen.gd` usam esse template.
+- `menu_screen.gd` concentra layout, desenho, foco, a transição de fechamento e a sobreposição das configurações; `game_menu.gd`, `pause_menu.gd`, `settings_menu.gd` e `credits_screen.gd` usam esse template.
 - `debug_hud.gd` exibe velocidade e rebatidas por IA com `F3`; `spark_effects.gd` simula as faíscas e o anel de impacto.
 - A resolução de viewport em `project.godot` é **2880 × 1620**, em tela cheia. A escala é definida por `GAME_SCALE` em `main.gd` e o HUD respeita `HUD_BAR_HEIGHT`.
 

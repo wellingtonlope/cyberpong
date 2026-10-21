@@ -120,7 +120,7 @@ func test_mode_selection_emits_the_chosen_difficulty() -> void:
 		func(mode: int, difficulty: int) -> void: emitted.append([mode, difficulty])
 	)
 
-	menu._select(GameMode.Mode.PLAYER_VS_AI)
+	menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
 
 	assert_eq(emitted, [[GameMode.Mode.PLAYER_VS_AI, Difficulty.Level.EASY]])
 
@@ -200,7 +200,7 @@ func test_select_emits_mode_and_resumes_the_paused_tree() -> void:
 	var emitted_modes: Array = []
 	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
-	menu._select(GameMode.Mode.PLAYER_VS_AI)
+	menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
 
 	assert_eq(emitted_modes, [GameMode.Mode.PLAYER_VS_AI])
 	assert_false(menu.visible)
@@ -212,8 +212,8 @@ func test_select_ignores_a_second_choice() -> void:
 	var emitted_modes: Array = []
 	menu.mode_selected.connect(func(mode: int, _difficulty: int) -> void: emitted_modes.append(mode))
 
-	menu._select(GameMode.Mode.PLAYER_VS_PLAYER)
-	menu._select(GameMode.Mode.PLAYER_VS_AI)
+	menu.select_mode(GameMode.Mode.PLAYER_VS_PLAYER)
+	menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
 
 	assert_eq(emitted_modes, [GameMode.Mode.PLAYER_VS_PLAYER])
 
@@ -288,7 +288,7 @@ func test_closing_the_settings_menu_restores_the_main_menu_cards() -> void:
 	var settings = menu.get_node_or_null("SettingsMenu")
 	assert_not_null(settings)
 
-	settings._finish_selection()
+	settings.finish_close()
 
 	assert_null(menu.get_node_or_null("SettingsMenu"))
 	assert_false(menu.btn_pvp.disabled)

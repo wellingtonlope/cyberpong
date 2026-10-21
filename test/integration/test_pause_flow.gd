@@ -16,7 +16,7 @@ func before_each() -> void:
 	credits._process(credits.SKIP_FADE_OUT_DURATION)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
-	menu._select(GameMode.Mode.PLAYER_VS_AI)
+	menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
 
 func after_each() -> void:
 	Input.action_release("ui_up")
@@ -60,7 +60,7 @@ func test_pause_freezes_ball_and_paddles_and_resume_keeps_the_same_state() -> vo
 	assert_eq(game.left_paddle.position, left_position)
 	assert_eq(game.right_paddle.position, right_position)
 
-	pause_menu._select_action(pause_menu.Action.RESUME)
+	pause_menu.select_action(pause_menu.Action.RESUME)
 
 	assert_null(game._pause_menu)
 	assert_null(game.get_node_or_null("PauseMenu"))
@@ -121,7 +121,7 @@ func test_restart_action_resets_the_match_and_resumes_the_game() -> void:
 	_press_key(KEY_ESCAPE)
 	var pause_menu = game.get_node_or_null("PauseMenu")
 	assert_not_null(pause_menu)
-	pause_menu._select_action(pause_menu.Action.RESTART)
+	pause_menu.select_action(pause_menu.Action.RESTART)
 
 	assert_null(game._pause_menu)
 	assert_null(game.get_node_or_null("PauseMenu"))
@@ -155,7 +155,7 @@ func test_settings_menu_opens_from_the_pause_menu_and_keeps_the_match_frozen() -
 	assert_eq(game.ball.position, ball_position)
 	assert_eq(game.ball.velocity, Vector2(-2100.0, 480.0))
 
-	settings._finish_selection()
+	settings.finish_close()
 	await get_tree().process_frame
 
 	assert_null(pause_menu.get_node_or_null("SettingsMenu"))
@@ -178,7 +178,7 @@ func test_returning_to_main_menu_restores_all_default_match_values() -> void:
 	_press_key(KEY_ESCAPE)
 	var pause_menu = game.get_node_or_null("PauseMenu")
 	assert_not_null(pause_menu)
-	pause_menu._select_action(pause_menu.Action.MAIN_MENU)
+	pause_menu.select_action(pause_menu.Action.MAIN_MENU)
 
 	assert_null(game._pause_menu)
 	assert_null(game.get_node_or_null("PauseMenu"))
@@ -204,7 +204,7 @@ func test_returning_to_main_menu_restores_all_default_match_values() -> void:
 	assert_eq(game.arena.right_score, 0)
 	assert_false(game.game_over)
 
-	game_menu._select(GameMode.Mode.PLAYER_VS_AI)
+	game_menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
 
 	assert_false(get_tree().paused)
 	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_AI)

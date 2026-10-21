@@ -52,6 +52,7 @@ const SETTINGS_CARDS := [
 
 const SOUND_CARD_INDEX := 2
 const FULLSCREEN_CARD_INDEX := 3
+const BACK_CARD_INDEX := 4
 
 @onready var btn_volume_down: Button = $BtnVolumeDown
 @onready var btn_volume_up: Button = $BtnVolumeUp
@@ -59,7 +60,6 @@ const FULLSCREEN_CARD_INDEX := 3
 @onready var btn_fullscreen: Button = $BtnFullscreen
 @onready var btn_back: Button = $BtnBack
 
-var _pending_action := -1
 var _fullscreen := false
 
 func _ready() -> void:
@@ -82,7 +82,7 @@ func _activate_card(index: int) -> void:
 		return
 	var action := int(_cards[index]["action"])
 	if action == Action.BACK:
-		_request_back(index)
+		begin_close(index)
 		return
 	_apply_action(action)
 	SoundManager.play_ui_move()
@@ -134,22 +134,7 @@ func volume_percentage() -> int:
 func is_fullscreen() -> bool:
 	return _fullscreen
 
-func _request_back(index: int) -> void:
-	if _selected or _closing:
-		return
-	SoundManager.play_ui_select()
-	_closing = true
-	_close_progress = 0.0
-	_closing_index = index
-	_pending_action = Action.BACK
-
-func _finish_selection() -> void:
-	_pending_action = -1
-	_closing = false
-	_closing_index = -1
-	_selected = true
-	hide()
-	set_process(false)
+func _on_close_finished(_index: int) -> void:
 	closed.emit()
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -158,7 +143,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not event.pressed or event.echo:
 		return
 	if event.keycode == KEY_ESCAPE:
-		_request_back(_cards.size() - 1)
+		begin_close(BACK_CARD_INDEX)
 		get_viewport().set_input_as_handled()
 
 func _ui_scale_for(surface_size: Vector2) -> float:

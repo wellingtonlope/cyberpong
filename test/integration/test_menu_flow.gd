@@ -110,7 +110,7 @@ func test_settings_menu_opens_from_the_main_menu_and_keeps_the_match_idle() -> v
 	assert_eq(game._game_mode, GameMode.Mode.PLAYER_VS_AI)
 	assert_eq(game.ball.current_speed, 1140.0)
 
-	settings._finish_selection()
+	settings.finish_close()
 	await get_tree().process_frame
 
 	assert_null(menu.get_node_or_null("SettingsMenu"))
