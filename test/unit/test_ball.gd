@@ -1,5 +1,7 @@
 extends GutTest
 
+const POWER_UP_EFFECT := preload("res://scripts/power_up_effect.gd")
+
 const BALL_SCENE := preload("res://scenes/ball.tscn")
 const FIELD_SIZE := Vector2(1000.0, 600.0)
 const PLAY_TOP := 60.0
@@ -50,7 +52,7 @@ func test_powerful_bounce_can_exceed_normal_speed_cap() -> void:
 	ball.base_speed = 1140.0
 	ball.current_speed = 3000.0
 	ball._paddle_hits = 1
-	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.POWERFUL_BOUNCE)
 
 	assert_almost_eq(float(ball.current_speed), float(3540.0), float(0.01))
 	assert_eq(ball._powerful_bounce_visual_scale, 1.2)
@@ -62,18 +64,18 @@ func test_powerful_bounce_never_exceeds_speed_cap_plus_boost() -> void:
 	var speed_cap_with_boost: float = 3000.0 * float(ball.POWERFUL_BOUNCE_SPEED_MULTIPLIER)
 
 	for _index in range(3):
-		ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+		ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.POWERFUL_BOUNCE)
 		assert_almost_eq(float(ball.current_speed), float(speed_cap_with_boost), float(0.01))
 		assert_lte(float(ball.current_speed), float(speed_cap_with_boost))
 
 	ball.current_speed = 2800.0
-	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.POWERFUL_BOUNCE)
 	assert_almost_eq(float(ball.current_speed), float(2800.0 * 1.18), float(0.01))
-	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.POWERFUL_BOUNCE)
 	assert_lte(float(ball.current_speed), float(speed_cap_with_boost))
 
 	ball.current_speed = 3600.0
-	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "powerful_bounce")
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.POWERFUL_BOUNCE)
 	assert_almost_eq(float(ball.current_speed), float(speed_cap_with_boost), float(0.01))
 
 func test_opponent_rebound_resets_powerful_bounce_speed_and_visual_scale() -> void:
@@ -82,14 +84,14 @@ func test_opponent_rebound_resets_powerful_bounce_speed_and_visual_scale() -> vo
 	ball._paddle_hits = 1
 	ball.position = Vector2(81.0, 280.0)
 	ball.velocity = Vector2(-100.0, 0.0)
-	ball.advance(0.02, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0, "powerful_bounce", true)
+	ball.advance(0.02, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0, POWER_UP_EFFECT.Id.POWERFUL_BOUNCE, true)
 	assert_eq(ball.current_speed, 3540.0)
 	assert_eq(ball._powerful_bounce_visual_scale, 1.2)
 
 	ball.position = Vector2(919.0, 280.0)
 	ball.velocity = Vector2(100.0, 0.0)
 	watch_signals(ball)
-	ball.advance(0.02, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0, "powerful_bounce", true)
+	ball.advance(0.02, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0, POWER_UP_EFFECT.Id.POWERFUL_BOUNCE, true)
 
 	assert_eq(ball.current_speed, 3000.0)
 	assert_eq(ball._powerful_bounce_visual_scale, 1.0)
@@ -101,7 +103,7 @@ func test_brake_does_not_reduce_speed_below_rally_floor() -> void:
 	ball._ball_brake_reference_speed = 660.0
 	ball._ball_brake_active = true
 	watch_signals(ball)
-	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, "ball_brake")
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.BALL_BRAKE)
 
 	assert_eq(ball.current_speed, 650.0)
 	assert_signal_emitted_with_parameters(ball, "speed_changed", [650.0])
@@ -142,7 +144,7 @@ func test_extra_defense_returns_a_missed_ball_as_a_rebound() -> void:
 	watch_signals(ball)
 	ball.position = Vector2(0.0, 300.0)
 	ball.velocity = Vector2(-100.0, 0.0)
-	ball.advance(0.0, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0, "extra_defense", true)
+	ball.advance(0.0, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0, POWER_UP_EFFECT.Id.EXTRA_DEFENSE, true)
 
 	assert_signal_emitted_with_parameters(ball, "paddle_hit", [true, Vector2(70.0, 300.0), 1.0, 1.0, true])
 	assert_gt(float(ball.velocity.x), float(0.0))

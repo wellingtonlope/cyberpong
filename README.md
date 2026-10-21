@@ -117,7 +117,7 @@ Se o executável não estiver no `PATH`, use o caminho completo do Godot. Para e
 - `test_ball.gd`: saques, sinal de velocidade, aceleração e limites, Rebote potente, Freio, colisões, falhas, Defesa extra, coleta varrida e última raquete.
 - `test_difficulty.gd`: ordem dos presets, padrão, títulos e conversão entre nível e índice.
 - `test_paddle.gd`: posição, colisão, previsão com reflexão, movimento, zona morta, dificuldade aplicada, tamanho dos efeitos, camadas visuais e mira.
-- `test_power_up.gd`: aparição, janela de cinco rebatidas, coleta, proprietário, durações, cargas, sinais, HUD, cores e redimensionamento.
+- `test_power_up.gd`: catálogo centralizado, aparição, janela de cinco rebatidas, coleta, proprietário, durações, cargas, sinais, HUD, cores e redimensionamento.
 - `test_debug_hud.gd` e `test_spark_effects.gd`: visibilidade e contagens do HUD; quantidade, expiração, quique e anel de impacto.
 - `test_credits_screen.gd`: layout, fade, emissão única de `finished`, pulo por tecla/clique e janelas diferentes.
 - `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seletor de dificuldade condicional, seleção, transição e início/saída.
@@ -179,7 +179,7 @@ O avatar pode ser substituído mantendo o caminho referenciado por `scenes/credi
 - `ball.gd` implementa movimento e colisões por código, sem nós de física, e emite `speed_changed` no saque e a cada mudança de velocidade.
 - `paddle.gd` controla movimento humano e IA, aplica os parâmetros da dificuldade, calcula a previsão com reflexões nas bordas e atualiza colisão e visual quando recebe um efeito.
 - `difficulty.gd` define os presets Fácil, Médio e Difícil, com velocidade, atraso de reação e zona morta das IAs.
-- `power_up.gd` mantém o catálogo em `EFFECTS`, agenda aparições a cada 5–15 rebatidas totais e controla coleta, proprietário e duração.
+- `power_up_effect.gd` centraliza os IDs (`Effect.Id`) e o catálogo (`Effect.CATALOG`) dos efeitos; `power_up.gd` agenda aparições a cada 5–15 rebatidas totais e controla coleta, proprietário e duração.
 - `arena.gd` desenha a arena em camadas, o placar, o aviso de saque, a transição de ponto, a tela de vitória e o HUD superior.
 - `menu_screen.gd` concentra layout, desenho e foco compartilhados, incluindo o seletor de dificuldade; `game_menu.gd`, `pause_menu.gd` e `credits_screen.gd` usam esse template.
 - `debug_hud.gd` exibe velocidade e rebatidas por IA com `F3`; `spark_effects.gd` simula as faíscas e o anel de impacto.

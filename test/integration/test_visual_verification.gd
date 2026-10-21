@@ -1,5 +1,7 @@
 extends GutTest
 
+const POWER_UP_EFFECT := preload("res://scripts/power_up_effect.gd")
+
 const MAIN_SCENE := preload("res://main.tscn")
 const ARENA_SCRIPT := preload("res://scripts/arena.gd")
 const BALL_SCRIPT := preload("res://scripts/ball.gd")
@@ -175,12 +177,12 @@ func test_match_updates_collision_effects_and_power_up_highlight() -> void:
 	assert_eq(game.spark_effects._rings[0]["color"], game.left_paddle.tint)
 
 	assert_true(game.power_up.appear(game.field_size))
-	game.power_up.effect_id = "double_size"
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	game.power_up.collect(true)
 	assert_true(game.left_paddle.power_up_active)
 	assert_eq(
 		game.left_paddle.power_up_accent_color,
-		POWER_UP_SCRIPT.EFFECTS["double_size"]["color"]
+		POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.DOUBLE_SIZE]["color"]
 	)
 
 
@@ -194,8 +196,8 @@ func test_key_colors_keep_readable_contrast() -> void:
 	assert_gte(_contrast_ratio(BALL_SCRIPT.BALL_COLOR, ARENA_SCRIPT.FIELD_CENTER_COLOR), 4.5)
 
 	var item_body_color := Color(0.02, 0.035, 0.06)
-	for effect_id in POWER_UP_SCRIPT.EFFECT_IDS:
-		var effect_color: Color = POWER_UP_SCRIPT.EFFECTS[effect_id]["color"]
+	for effect_id in POWER_UP_EFFECT.ALL:
+		var effect_color: Color = POWER_UP_EFFECT.CATALOG[effect_id]["color"]
 		assert_gte(
 			_contrast_ratio(effect_color, item_body_color),
 			4.5,

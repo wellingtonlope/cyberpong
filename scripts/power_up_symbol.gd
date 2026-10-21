@@ -1,8 +1,9 @@
 extends Node2D
 
+const Effect = preload("res://scripts/power_up_effect.gd")
 const DEFAULT_ICON_COLOR := Color(1.0, 0.96, 0.72)
 
-var effect_id := ""
+var effect_id: int = Effect.Id.NONE
 var icon_color := DEFAULT_ICON_COLOR
 var icon_radius := 16.0
 
@@ -10,25 +11,25 @@ func configure(radius: float) -> void:
 	icon_radius = radius
 	queue_redraw()
 
-func set_effect(id: String, color: Color) -> void:
+func set_effect(id: int, color: Color) -> void:
 	effect_id = id
 	icon_color = color
 	queue_redraw()
 
 func _draw() -> void:
-	if effect_id.is_empty():
+	if effect_id == Effect.Id.NONE:
 		return
 	var stroke := maxf(2.0, icon_radius * 0.13)
 	match effect_id:
-		"double_size":
+		Effect.Id.DOUBLE_SIZE:
 			_draw_size_arrows(true, stroke)
-		"half_size":
+		Effect.Id.HALF_SIZE:
 			_draw_size_arrows(false, stroke)
-		"ball_brake":
+		Effect.Id.BALL_BRAKE:
 			_draw_ball_brake(stroke)
-		"powerful_bounce":
+		Effect.Id.POWERFUL_BOUNCE:
 			_draw_powerful_bounce()
-		"extra_defense":
+		Effect.Id.EXTRA_DEFENSE:
 			_draw_extra_defense(stroke)
 
 func _draw_size_arrows(outward: bool, stroke: float) -> void:

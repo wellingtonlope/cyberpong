@@ -3,52 +3,9 @@ extends Node2D
 signal effect_changed(is_left: bool, is_active: bool, size_multiplier: float, accent_color: Color)
 signal status_changed
 
+const Effect = preload("res://scripts/power_up_effect.gd")
 const AVAILABLE_HITS := 5
 const POWER_UP_COLOR := Color(1.0, 0.78, 0.16)
-
-const EFFECTS := {
-	"double_size": {
-		"name": "Raquete dobrada",
-		"size_multiplier": 2.0,
-		"color": Color(0.25, 1.0, 0.42),
-		"beneficial_to_collector": true,
-		"owner_hit_uses": 0,
-		"duration_hits": 6,
-	},
-	"half_size": {
-		"name": "Raquete reduzida",
-		"size_multiplier": 0.5,
-		"color": Color(1.0, 0.3, 0.2),
-		"beneficial_to_collector": false,
-		"owner_hit_uses": 0,
-		"duration_hits": 5,
-	},
-	"ball_brake": {
-		"name": "Freio na bola",
-		"size_multiplier": 1.0,
-		"color": Color(0.24, 0.62, 1.0),
-		"beneficial_to_collector": true,
-		"owner_hit_uses": 4,
-		"duration_hits": 8,
-	},
-	"powerful_bounce": {
-		"name": "Rebote potente",
-		"size_multiplier": 1.0,
-		"color": Color(1.0, 0.56, 0.18),
-		"beneficial_to_collector": true,
-		"owner_hit_uses": 4,
-		"duration_hits": 8,
-	},
-	"extra_defense": {
-		"name": "Defesa extra",
-		"size_multiplier": 1.0,
-		"color": Color(0.62, 0.42, 1.0),
-		"beneficial_to_collector": true,
-		"owner_hit_uses": 0,
-		"duration_hits": 14,
-	},
-}
-const EFFECT_IDS := ["double_size", "half_size", "ball_brake", "powerful_bounce", "extra_defense"]
 
 enum Status { INACTIVE, AVAILABLE, HELD }
 
@@ -65,7 +22,7 @@ var owner_is_left := false
 var hits_remaining := 0
 var effect_duration_hits := 0
 var effect_uses_remaining := 0
-var effect_id := ""
+var effect_id: int = Effect.Id.NONE
 var collision_radius := 36.0
 var field_size := Vector2.ZERO
 var play_top := 0.0
@@ -101,7 +58,7 @@ func reset_for_match(size: Vector2) -> void:
 	hits_remaining = 0
 	effect_duration_hits = 0
 	effect_uses_remaining = 0
-	effect_id = ""
+	effect_id = Effect.Id.NONE
 	rotation = 0.0
 	scale = Vector2.ONE
 	_pulse_time = 0.0
@@ -122,7 +79,7 @@ func clear_available_item() -> void:
 	status = Status.INACTIVE
 	owner_is_left = false
 	hits_remaining = 0
-	effect_id = ""
+	effect_id = Effect.Id.NONE
 	rotation = 0.0
 	scale = Vector2.ONE
 	_pulse_time = 0.0
@@ -141,12 +98,11 @@ func is_available() -> bool:
 func is_beneficial() -> bool:
 	if not is_available():
 		return false
-	var effect: Dictionary = EFFECTS[effect_id]
-	return bool(effect["beneficial_to_collector"])
+	return Effect.is_beneficial(effect_id)
 
-func get_active_effect_id() -> String:
+func get_active_effect_id() -> int:
 	if status != Status.HELD:
-		return ""
+		return Effect.Id.NONE
 	return effect_id
 
 func get_active_owner_is_left() -> bool:
@@ -161,7 +117,7 @@ func collect(is_left: bool) -> void:
 	status = Status.HELD
 	owner_is_left = is_left
 	hide()
-	var effect: Dictionary = EFFECTS[effect_id]
+	var effect: Dictionary = Effect.data(effect_id)
 	effect_duration_hits = int(effect.get("duration_hits", active_duration_hits))
 	hits_remaining = effect_duration_hits
 	effect_uses_remaining = int(effect["owner_hit_uses"])
@@ -175,24 +131,27 @@ func record_paddle_hit(is_left: bool, used_extra_defense: bool = false) -> void:
 	var previous_status := status
 	hits_remaining -= 1
 	if previous_status == Status.HELD:
-		if used_extra_defense and effect_id == "extra_defense":
+		if used_extra_defense and effect_id == Effect.Id.EXTRA_DEFENSE:
 			_deactivate_effect()
 			return
 		if is_left == owner_is_left and effect_uses_remaining > 0:
 			effect_uses_remaining -= 1
-		if hits_remaining <= 0 or effect_uses_remaining == 0 and int(EFFECTS[effect_id]["owner_hit_uses"]) > 0:
+		if hits_remaining <= 0 or effect_uses_remaining == 0 and int(Effect.data(effect_id)["owner_hit_uses"]) > 0:
 			_deactivate_effect()
 			return
 	elif hits_remaining <= 0:
 		status = Status.INACTIVE
+		owner_is_left = false
 		hits_remaining = 0
+		effect_id = Effect.Id.NONE
+		_apply_default_visuals()
 		hide()
 	_emit_status()
 
 func get_hud_info(hits_until_next_appearance: int) -> Dictionary:
 	match status:
 		Status.AVAILABLE:
-			var available_effect: Dictionary = EFFECTS[effect_id]
+			var available_effect: Dictionary = Effect.data(effect_id)
 			return {
 				"title": "Item no campo",
 				"detail": "%s · %d rebatidas para coletar" % [available_effect["name"], hits_remaining],
@@ -201,10 +160,10 @@ func get_hud_info(hits_until_next_appearance: int) -> Dictionary:
 				"show_progress": true,
 			}
 		Status.HELD:
-			var effect: Dictionary = EFFECTS[effect_id]
+			var effect: Dictionary = Effect.data(effect_id)
 			var owner_name := "Cyan Circuit" if owner_is_left else "Magenta Volt"
 			var detail := "%s · %d rebatidas restantes" % [owner_name, hits_remaining]
-			if effect_id == "extra_defense":
+			if effect_id == Effect.Id.EXTRA_DEFENSE:
 				detail = "%s · 1 defesa · %d rebatidas restantes" % [owner_name, hits_remaining]
 			elif effect_uses_remaining > 0:
 				detail = "%s · %d usos · %d rebatidas restantes" % [owner_name, effect_uses_remaining, hits_remaining]
@@ -236,7 +195,7 @@ func _spawn() -> void:
 	status = Status.AVAILABLE
 	owner_is_left = false
 	hits_remaining = AVAILABLE_HITS
-	effect_id = EFFECT_IDS[_random.randi_range(0, EFFECT_IDS.size() - 1)]
+	effect_id = Effect.ALL[_random.randi_range(0, Effect.ALL.size() - 1)]
 	_apply_effect_visuals()
 	position = Vector2(
 		_random.randf_range(field_size.x * 0.28, field_size.x * 0.72),
@@ -253,10 +212,10 @@ func _apply_default_visuals() -> void:
 	core.color = Color(POWER_UP_COLOR, 0.18)
 	glow.color = Color(POWER_UP_COLOR, 0.16)
 	frame.default_color = POWER_UP_COLOR
-	icon.set_effect("", Color(1.0, 0.96, 0.72))
+	icon.set_effect(Effect.Id.NONE, Color(1.0, 0.96, 0.72))
 
 func _apply_effect_visuals() -> void:
-	var effect: Dictionary = EFFECTS[effect_id]
+	var effect: Dictionary = Effect.data(effect_id)
 	var accent_color: Color = effect["color"]
 	body.color = Color(0.02, 0.035, 0.06, 0.94)
 	core.color = Color(accent_color, 0.22)
@@ -270,7 +229,7 @@ func _deactivate_effect() -> void:
 	hits_remaining = 0
 	effect_duration_hits = 0
 	effect_uses_remaining = 0
-	effect_id = ""
+	effect_id = Effect.Id.NONE
 	hide()
 	effect_changed.emit(ended_owner_is_left, false, 1.0, Color.TRANSPARENT)
 	_emit_status()

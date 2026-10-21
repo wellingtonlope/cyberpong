@@ -1,5 +1,7 @@
 extends GutTest
 
+const POWER_UP_EFFECT := preload("res://scripts/power_up_effect.gd")
+
 const POWER_UP_SCRIPT := preload("res://scripts/power_up.gd")
 const SYMBOL_SCRIPT := preload("res://scripts/power_up_symbol.gd")
 const FIELD_SIZE := Vector2(1000.0, 600.0)
@@ -34,7 +36,7 @@ func test_appearance_enters_available_state_inside_field() -> void:
 
 func test_available_item_visuals_use_effect_color_and_symbol() -> void:
 	power_up.appear(FIELD_SIZE)
-	var effect: Dictionary = POWER_UP_SCRIPT.EFFECTS[power_up.effect_id]
+	var effect: Dictionary = POWER_UP_EFFECT.CATALOG[power_up.effect_id]
 	var accent_color: Color = effect["color"]
 
 	assert_eq(power_up.frame.default_color, Color(accent_color, 0.95))
@@ -55,7 +57,7 @@ func test_available_item_pulses_and_rotates() -> void:
 	power_up.reset_for_match(FIELD_SIZE)
 	assert_eq(power_up.rotation, 0.0)
 	assert_eq(power_up.scale, Vector2.ONE)
-	assert_eq(power_up.icon.effect_id, "")
+	assert_eq(power_up.icon.effect_id, POWER_UP_EFFECT.Id.NONE)
 
 func test_available_item_expires_after_five_rebounds() -> void:
 	power_up.appear(FIELD_SIZE)
@@ -64,6 +66,7 @@ func test_available_item_expires_after_five_rebounds() -> void:
 
 	assert_false(power_up.is_available())
 	assert_eq(power_up.hits_remaining, 0)
+	assert_eq(power_up.effect_id, POWER_UP_EFFECT.Id.NONE)
 	assert_false(power_up.visible)
 
 func test_clear_available_item_resets_state_and_emits_status() -> void:
@@ -74,7 +77,7 @@ func test_clear_available_item_resets_state_and_emits_status() -> void:
 
 	assert_false(power_up.is_available())
 	assert_eq(power_up.hits_remaining, 0)
-	assert_eq(power_up.effect_id, "")
+	assert_eq(power_up.effect_id, POWER_UP_EFFECT.Id.NONE)
 	assert_false(power_up.visible)
 	assert_eq(power_up.rotation, 0.0)
 	assert_eq(power_up.scale, Vector2.ONE)
@@ -83,45 +86,61 @@ func test_clear_available_item_resets_state_and_emits_status() -> void:
 
 func test_clear_available_item_ignores_held_effect() -> void:
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "double_size"
+	power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	power_up.collect(true)
 	watch_signals(power_up)
 	power_up.clear_available_item()
 
-	assert_eq(power_up.get_active_effect_id(), "double_size")
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.DOUBLE_SIZE)
 	assert_eq(power_up.hits_remaining, 6)
 	assert_signal_not_emitted(power_up, "status_changed")
 
 func test_collect_assigns_owner_and_emits_effect_data() -> void:
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "double_size"
+	power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	watch_signals(power_up)
 	power_up.collect(false)
 
 	assert_false(power_up.owner_is_left)
-	assert_eq(power_up.get_active_effect_id(), "double_size")
-	assert_signal_emitted_with_parameters(power_up, "effect_changed", [false, true, 2.0, POWER_UP_SCRIPT.EFFECTS["double_size"]["color"]])
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.DOUBLE_SIZE)
+	assert_signal_emitted_with_parameters(power_up, "effect_changed", [false, true, 2.0, POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.DOUBLE_SIZE]["color"]])
 
 func test_collection_ignores_item_that_is_not_available() -> void:
 	watch_signals(power_up)
 	power_up.collect(true)
 
 	assert_false(power_up.is_available())
-	assert_eq(power_up.get_active_effect_id(), "")
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.NONE)
 	assert_signal_not_emitted(power_up, "effect_changed")
 
+func test_effect_catalog_centralizes_ids_and_supports_lookup() -> void:
+	assert_eq(POWER_UP_EFFECT.ALL.size(), 5)
+	assert_true(POWER_UP_EFFECT.data(POWER_UP_EFFECT.Id.NONE).is_empty())
+	assert_false(POWER_UP_EFFECT.is_beneficial(POWER_UP_EFFECT.Id.NONE))
+	assert_true(POWER_UP_EFFECT.is_beneficial(POWER_UP_EFFECT.Id.DOUBLE_SIZE))
+	assert_false(POWER_UP_EFFECT.is_beneficial(POWER_UP_EFFECT.Id.HALF_SIZE))
+
+	var seen := {}
+	for effect_id in POWER_UP_EFFECT.ALL:
+		assert_false(seen.has(effect_id), "Duplicate effect id: %s" % effect_id)
+		seen[effect_id] = true
+		var effect: Dictionary = POWER_UP_EFFECT.data(effect_id)
+		assert_false(effect.is_empty(), "Missing catalog entry for effect %s" % effect_id)
+		assert_false(str(effect["name"]).is_empty())
+		assert_true(effect.has("color"))
+
 func test_effect_catalog_defines_balanced_durations_and_uses() -> void:
-	assert_eq(POWER_UP_SCRIPT.EFFECTS["double_size"]["duration_hits"], 6)
-	assert_eq(POWER_UP_SCRIPT.EFFECTS["half_size"]["duration_hits"], 5)
-	assert_eq(POWER_UP_SCRIPT.EFFECTS["ball_brake"]["duration_hits"], 8)
-	assert_eq(POWER_UP_SCRIPT.EFFECTS["ball_brake"]["owner_hit_uses"], 4)
-	assert_eq(POWER_UP_SCRIPT.EFFECTS["powerful_bounce"]["duration_hits"], 8)
-	assert_eq(POWER_UP_SCRIPT.EFFECTS["powerful_bounce"]["owner_hit_uses"], 4)
-	assert_eq(POWER_UP_SCRIPT.EFFECTS["extra_defense"]["duration_hits"], 14)
+	assert_eq(POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.DOUBLE_SIZE]["duration_hits"], 6)
+	assert_eq(POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.HALF_SIZE]["duration_hits"], 5)
+	assert_eq(POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.BALL_BRAKE]["duration_hits"], 8)
+	assert_eq(POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.BALL_BRAKE]["owner_hit_uses"], 4)
+	assert_eq(POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.POWERFUL_BOUNCE]["duration_hits"], 8)
+	assert_eq(POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.POWERFUL_BOUNCE]["owner_hit_uses"], 4)
+	assert_eq(POWER_UP_EFFECT.CATALOG[POWER_UP_EFFECT.Id.EXTRA_DEFENSE]["duration_hits"], 14)
 
 func test_collect_uses_effect_specific_duration() -> void:
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "double_size"
+	power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	power_up.collect(true)
 
 	assert_eq(power_up.effect_duration_hits, 6)
@@ -129,7 +148,7 @@ func test_collect_uses_effect_specific_duration() -> void:
 
 func test_effect_duration_counts_rebounds_from_both_teams() -> void:
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "double_size"
+	power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	power_up.collect(true)
 
 	power_up.record_paddle_hit(false)
@@ -141,37 +160,37 @@ func test_effect_duration_counts_rebounds_from_both_teams() -> void:
 	power_up.record_paddle_hit(false)
 	power_up.record_paddle_hit(true)
 
-	assert_eq(power_up.get_active_effect_id(), "")
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.NONE)
 	assert_eq(power_up.hits_remaining, 0)
 
 func test_hit_limited_effect_counts_uses_only_for_owner() -> void:
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "ball_brake"
+	power_up.effect_id = POWER_UP_EFFECT.Id.BALL_BRAKE
 	power_up.collect(true)
 	power_up.record_paddle_hit(false)
 
 	assert_eq(power_up.effect_uses_remaining, 4)
-	assert_eq(power_up.get_active_effect_id(), "ball_brake")
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.BALL_BRAKE)
 	for _index in range(3):
 		power_up.record_paddle_hit(true)
 	assert_eq(power_up.effect_uses_remaining, 1)
-	assert_eq(power_up.get_active_effect_id(), "ball_brake")
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.BALL_BRAKE)
 	power_up.record_paddle_hit(true)
 
-	assert_eq(power_up.get_active_effect_id(), "")
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.NONE)
 	assert_eq(power_up.effect_uses_remaining, 0)
 
 func test_extra_defense_overrides_default_duration_and_consumes_on_save() -> void:
 	power_up.active_duration_hits = 4
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "extra_defense"
+	power_up.effect_id = POWER_UP_EFFECT.Id.EXTRA_DEFENSE
 	power_up.collect(true)
 
 	assert_eq(power_up.effect_duration_hits, 14)
 	assert_eq(power_up.hits_remaining, 14)
 	power_up.record_paddle_hit(true, true)
 
-	assert_eq(power_up.get_active_effect_id(), "")
+	assert_eq(power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.NONE)
 
 func test_hud_information_tracks_available_and_held_states() -> void:
 	var inactive_info: Dictionary = power_up.get_hud_info(7)
@@ -179,7 +198,7 @@ func test_hud_information_tracks_available_and_held_states() -> void:
 	assert_false(inactive_info["show_progress"])
 
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "half_size"
+	power_up.effect_id = POWER_UP_EFFECT.Id.HALF_SIZE
 	var available_info: Dictionary = power_up.get_hud_info(7)
 	assert_eq(available_info["title"], "Item no campo")
 	assert_true(str(available_info["detail"]).contains("Raquete reduzida"))
@@ -193,7 +212,7 @@ func test_hud_information_tracks_available_and_held_states() -> void:
 
 	power_up.reset_for_match(FIELD_SIZE)
 	power_up.appear(FIELD_SIZE)
-	power_up.effect_id = "half_size"
+	power_up.effect_id = POWER_UP_EFFECT.Id.HALF_SIZE
 	power_up.collect(true)
 	var left_held_info: Dictionary = power_up.get_hud_info(7)
 	assert_true(str(left_held_info["detail"]).contains("Cyan Circuit"))

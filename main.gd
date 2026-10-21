@@ -132,7 +132,7 @@ func _physics_process(delta: float) -> void:
 	var power_up_position: Vector2 = power_up.position if power_up_available else Vector2.ZERO
 	var power_up_radius: float = power_up.get_collision_radius() if power_up_available else 0.0
 	var power_up_is_beneficial: bool = power_up.is_beneficial() if power_up_available else false
-	var active_effect_id: String = power_up.get_active_effect_id()
+	var active_effect_id: int = power_up.get_active_effect_id()
 	var active_effect_owner_is_left: bool = power_up.get_active_owner_is_left()
 	left_paddle.update_ai(ball.position, ball.velocity, delta, power_up_available, power_up_position, power_up_is_beneficial)
 	right_paddle.update_ai(ball.position, ball.velocity, delta, power_up_available, power_up_position, power_up_is_beneficial)

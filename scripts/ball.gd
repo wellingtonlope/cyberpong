@@ -1,5 +1,7 @@
 extends Node2D
 
+const Effect = preload("res://scripts/power_up_effect.gd")
+
 signal paddle_hit(
 	is_left: bool,
 	impact_position: Vector2,
@@ -108,12 +110,12 @@ func advance(
 	right_paddle: Rect2,
 	power_up_position: Vector2,
 	power_up_radius: float,
-	active_power_up_effect: String = "",
+	active_power_up_effect: int = Effect.Id.NONE,
 	power_up_owner_is_left: bool = false
 ) -> void:
 	if _stopped:
 		return
-	if active_power_up_effect == "ball_brake":
+	if active_power_up_effect == Effect.Id.BALL_BRAKE:
 		if not _ball_brake_active:
 			_ball_brake_reference_speed = minf(current_speed, MAX_SPEED)
 			_ball_brake_active = true
@@ -140,9 +142,9 @@ func advance(
 		power_up_collected.emit(_last_hit_is_left)
 
 	var ball_rect := Rect2(position - Vector2.ONE * radius, Vector2.ONE * radius * 2.0)
-	var left_effect := ""
-	var right_effect := ""
-	if active_power_up_effect == "ball_brake":
+	var left_effect: int = Effect.Id.NONE
+	var right_effect: int = Effect.Id.NONE
+	if active_power_up_effect == Effect.Id.BALL_BRAKE:
 		left_effect = active_power_up_effect
 		right_effect = active_power_up_effect
 	elif power_up_owner_is_left:
@@ -158,15 +160,15 @@ func advance(
 		_bounce_from_paddle(right_paddle, -1.0, false, right_effect, false, power_up_owner_is_left)
 
 	if position.x + radius < left_paddle.position.x:
-		if active_power_up_effect == "extra_defense" and power_up_owner_is_left:
+		if active_power_up_effect == Effect.Id.EXTRA_DEFENSE and power_up_owner_is_left:
 			position.x = left_paddle.end.x + radius
-			_bounce_from_paddle(left_paddle, 1.0, true, "", true)
+			_bounce_from_paddle(left_paddle, 1.0, true, Effect.Id.NONE, true)
 		else:
 			_stop_after_miss(true)
 	elif position.x - radius > right_paddle.end.x:
-		if active_power_up_effect == "extra_defense" and not power_up_owner_is_left:
+		if active_power_up_effect == Effect.Id.EXTRA_DEFENSE and not power_up_owner_is_left:
 			position.x = right_paddle.position.x - radius
-			_bounce_from_paddle(right_paddle, -1.0, false, "", true)
+			_bounce_from_paddle(right_paddle, -1.0, false, Effect.Id.NONE, true)
 		else:
 			_stop_after_miss(false)
 
@@ -174,7 +176,7 @@ func _bounce_from_paddle(
 	paddle: Rect2,
 	horizontal_direction: float,
 	is_left: bool,
-	active_power_up_effect: String = "",
+	active_power_up_effect: int = Effect.Id.NONE,
 	used_extra_defense: bool = false,
 	power_up_owner_is_left: bool = false
 ) -> void:
@@ -183,7 +185,7 @@ func _bounce_from_paddle(
 	hit_position = clampf(hit_position + _random.randf_range(-0.08, 0.08), -1.0, 1.0)
 	_paddle_hits += 1
 	var previous_speed := current_speed
-	if active_power_up_effect == "ball_brake":
+	if active_power_up_effect == Effect.Id.BALL_BRAKE:
 		if _paddle_hits % 2 == 0 and _ball_brake_reference_speed < MAX_SPEED:
 			_ball_brake_reference_speed = minf(_ball_brake_reference_speed * 1.1, MAX_SPEED)
 		current_speed = _ball_brake_reference_speed
@@ -193,7 +195,7 @@ func _bounce_from_paddle(
 				base_speed * BRAKE_MINIMUM_SPEED_RATIO
 			)
 		_powerful_bounce_visual_scale = 1.0
-	elif active_power_up_effect == "powerful_bounce":
+	elif active_power_up_effect == Effect.Id.POWERFUL_BOUNCE:
 		if _paddle_hits % 2 == 0 and current_speed < MAX_SPEED:
 			current_speed = minf(current_speed * 1.1, MAX_SPEED)
 		current_speed = minf(

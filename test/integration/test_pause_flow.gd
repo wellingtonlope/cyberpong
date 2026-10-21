@@ -1,5 +1,7 @@
 extends GutTest
 
+const POWER_UP_EFFECT := preload("res://scripts/power_up_effect.gd")
+
 const MAIN_SCENE := preload("res://main.tscn")
 const FIELD_SIZE := Vector2(2880.0, 1620.0)
 
@@ -114,7 +116,7 @@ func test_returning_to_main_menu_restores_all_default_match_values() -> void:
 	game.ball.current_speed = 3000.0
 	game.ball.velocity = Vector2(-3000.0, 0.0)
 	game.power_up.appear(game.field_size)
-	game.power_up.effect_id = "double_size"
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	game.power_up.collect(true)
 	assert_true(game.left_paddle.power_up_active)
 

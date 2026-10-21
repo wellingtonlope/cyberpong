@@ -1,5 +1,7 @@
 extends GutTest
 
+const POWER_UP_EFFECT := preload("res://scripts/power_up_effect.gd")
+
 const MAIN_SCENE := preload("res://main.tscn")
 const FIELD_SIZE := Vector2(2880.0, 1620.0)
 
@@ -160,7 +162,7 @@ func test_new_match_resets_rebound_counts_and_debug_hud() -> void:
 
 func test_power_up_signal_updates_owner_paddle_and_match_hud() -> void:
 	game.power_up.appear(game.field_size)
-	game.power_up.effect_id = "double_size"
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	game.power_up.collect(true)
 
 	assert_eq(game.left_paddle.paddle_height, game.left_paddle.base_paddle_height * 2.0)
@@ -170,7 +172,7 @@ func test_power_up_signal_updates_owner_paddle_and_match_hud() -> void:
 
 func test_ball_collection_signal_assigns_power_up_to_last_hitter() -> void:
 	game.power_up.appear(game.field_size)
-	game.power_up.effect_id = "double_size"
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	game.ball.power_up_collected.emit(false)
 
 	assert_false(game.power_up.owner_is_left)
@@ -179,7 +181,7 @@ func test_ball_collection_signal_assigns_power_up_to_last_hitter() -> void:
 
 func test_extra_defense_save_counts_as_a_rebound_and_consumes_effect() -> void:
 	game.power_up.appear(game.field_size)
-	game.power_up.effect_id = "extra_defense"
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.EXTRA_DEFENSE
 	game.power_up.collect(true)
 	game.ball.position = Vector2(0.0, game.left_paddle.position.y)
 	game.ball.velocity = Vector2(-100.0, 0.0)
@@ -195,7 +197,7 @@ func test_extra_defense_save_counts_as_a_rebound_and_consumes_effect() -> void:
 	)
 
 	assert_eq(game.total_rebounds, 1)
-	assert_eq(game.power_up.get_active_effect_id(), "")
+	assert_eq(game.power_up.get_active_effect_id(), POWER_UP_EFFECT.Id.NONE)
 	assert_false(game.left_paddle.power_up_active)
 	assert_gt(float(game.ball.velocity.x), float(0.0))
 
@@ -213,7 +215,7 @@ func test_scoring_point_clears_available_power_up_from_field() -> void:
 func test_due_power_up_appears_when_previous_effect_expires() -> void:
 	game._next_power_up_rebound = 0
 	game.power_up.appear(game.field_size)
-	game.power_up.effect_id = "double_size"
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	game.power_up.collect(true)
 	game.power_up.hits_remaining = 1
 
