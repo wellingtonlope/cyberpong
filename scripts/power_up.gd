@@ -43,10 +43,10 @@ func _ready() -> void:
 func configure(scale: float, play_top_boundary: float = 0.0) -> void:
 	collision_radius = 12.0 * scale
 	play_top = play_top_boundary
-	glow.polygon = _make_diamond(collision_radius * 1.36)
-	body.polygon = _make_diamond(collision_radius * 0.88)
-	core.polygon = _make_diamond(collision_radius * 0.54)
-	frame.points = _make_diamond(collision_radius)
+	glow.polygon = UiDraw.diamond_points(Vector2.ZERO, collision_radius * 1.36)
+	body.polygon = UiDraw.diamond_points(Vector2.ZERO, collision_radius * 0.88)
+	core.polygon = UiDraw.diamond_points(Vector2.ZERO, collision_radius * 0.54)
+	frame.points = UiDraw.diamond_points(Vector2.ZERO, collision_radius)
 	frame.width = maxf(1.5, collision_radius * 0.07)
 	icon.configure(collision_radius * 0.54)
 	_apply_default_visuals()
@@ -237,14 +237,6 @@ func _deactivate_effect() -> void:
 func _keep_inside_field() -> void:
 	position.x = clampf(position.x, collision_radius, field_size.x - collision_radius)
 	position.y = clampf(position.y, play_top + collision_radius, field_size.y - collision_radius)
-
-func _make_diamond(radius: float) -> PackedVector2Array:
-	return PackedVector2Array([
-		Vector2(0.0, -radius),
-		Vector2(radius, 0.0),
-		Vector2(0.0, radius),
-		Vector2(-radius, 0.0),
-	])
 
 func _emit_status() -> void:
 	status_changed.emit()

@@ -110,7 +110,7 @@ func test_hud_panels_and_text_fit_without_overlap_across_window_sizes() -> void:
 
 		var font := ThemeDB.fallback_font
 		var detail_width: float = window_size.x * 0.3 - 34.0 * ui_scale
-		var title_font_size: int = game.arena._fit_font_size(
+		var title_font_size: int = UiDraw.fit_font_size(
 			font,
 			"RAQUETE REDUZIDA",
 			maxi(int(12.0 * ui_scale), 10),
@@ -128,7 +128,7 @@ func test_hud_panels_and_text_fit_without_overlap_across_window_sizes() -> void:
 			"Magenta Volt · 4 usos · 8 rebatidas restantes",
 			"Magenta Volt · 1 defesa · 14 rebatidas restantes",
 		]:
-			var detail_font_size: int = game.arena._fit_font_size(
+			var detail_font_size: int = UiDraw.fit_font_size(
 				font,
 				detail,
 				maxi(int(9.0 * ui_scale), 8),
@@ -198,7 +198,7 @@ func test_score_pips_use_diamond_orientation() -> void:
 	var arena = add_child_autofree(ARENA_SCRIPT.new())
 	var center := Vector2(48.0, 36.0)
 	var radius := 7.0
-	var points: PackedVector2Array = arena._score_pip_points(center, radius)
+	var points: PackedVector2Array = UiDraw.diamond_points(center, radius)
 
 	assert_eq(points.size(), 4)
 	assert_eq(points[0], center + Vector2(0.0, -radius))

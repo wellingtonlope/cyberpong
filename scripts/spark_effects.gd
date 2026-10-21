@@ -138,10 +138,10 @@ func _draw() -> void:
 		var fade := 1.0 - float(particle["age"]) / float(particle["lifetime"])
 		var alpha := fade * fade
 		var tint: Color = particle["color"]
-		var color := Color(tint.r, tint.g, tint.b, tint.a * alpha)
+		var color := UiDraw.with_alpha(tint, alpha)
 		var particle_position: Vector2 = particle["position"]
 		var previous_position: Vector2 = particle["previous_position"]
 		var radius: float = particle["radius"]
-		draw_line(previous_position, particle_position, Color(tint.r, tint.g, tint.b, color.a * 0.78), maxf(1.0, radius), true)
-		draw_circle(particle_position, radius * 1.6, Color(tint.r, tint.g, tint.b, color.a * 0.16))
+		draw_line(previous_position, particle_position, UiDraw.with_alpha(color, 0.78), maxf(1.0, radius), true)
+		draw_circle(particle_position, radius * 1.6, UiDraw.with_alpha(color, 0.16))
 		draw_circle(particle_position, radius * 0.55, color)

@@ -145,7 +145,7 @@ func _layout_for(surface_size: Vector2) -> Dictionary:
 	var icon_size := ICON_BASE_SIZE * scale_factor
 	var gap := ICON_TEXT_GAP * scale_factor
 	var available_width := maxf(surface_size.x - SIDE_MARGIN * 2.0 * scale_factor, 80.0)
-	var font_size := _fit_font_size(
+	var font_size := UiDraw.fit_font_size(
 		font,
 		DISPLAY_NAME,
 		maxi(int(TEXT_BASE_SIZE * scale_factor), 14),
@@ -185,26 +185,6 @@ func _ui_scale_for(surface_size: Vector2) -> float:
 		MIN_UI_SCALE,
 		MAX_UI_SCALE
 	)
-
-func _fit_font_size(
-	font: Font,
-	text: String,
-	preferred_size: int,
-	minimum_size: int,
-	max_width: float
-) -> int:
-	var font_size := maxi(preferred_size, minimum_size)
-	while font_size > minimum_size:
-		var measured_width := font.get_string_size(
-			text,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			font_size
-		).x
-		if measured_width <= max_width:
-			return font_size
-		font_size -= 1
-	return minimum_size
 
 func _current_font() -> Font:
 	if _font == null:

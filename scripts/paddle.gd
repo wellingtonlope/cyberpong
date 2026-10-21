@@ -126,7 +126,7 @@ func update_ai(
 			field_size.y - paddle_height * 0.5
 		)
 		return
-	
+
 	var target_y := play_top + (field_size.y - play_top) * 0.5
 	var ball_is_approaching := (is_left and ball_velocity.x < 0.0) or (not is_left and ball_velocity.x > 0.0)
 	if ball_is_approaching:

@@ -228,17 +228,7 @@ func _draw_arena_frame(field_rect: Rect2) -> void:
 	var bottom := field_rect.end.y
 	var corner_cut := 14.0 * game_scale
 	var corner_span := 24.0 * game_scale
-	var outline := PackedVector2Array([
-		Vector2(left + corner_cut, top),
-		Vector2(right - corner_cut, top),
-		Vector2(right, top + corner_cut),
-		Vector2(right, bottom - corner_cut),
-		Vector2(right - corner_cut, bottom),
-		Vector2(left + corner_cut, bottom),
-		Vector2(left, bottom - corner_cut),
-		Vector2(left, top + corner_cut),
-		Vector2(left + corner_cut, top),
-	])
+	var outline := UiDraw.angular_points(field_rect, corner_cut)
 	draw_polyline(outline, Color(Palette.DIVIDER_COLOR, 0.78), 1.5 * game_scale, true)
 	draw_rect(field_rect.grow(-8.0 * game_scale), Color(Palette.DIVIDER_COLOR, 0.13), false, 1.0 * game_scale)
 	draw_line(Vector2(left, top + corner_cut), Vector2(left, bottom - corner_cut), Color(Palette.LEFT_COLOR, 0.74), 2.0 * game_scale, true)
@@ -280,13 +270,10 @@ func _draw_game_logo(font: Font, ui_scale: float) -> void:
 		Rect2(center + Vector2(5.5, -5.0) * ui_scale, Vector2(2.5, 10.0) * ui_scale),
 		Palette.RIGHT_COLOR
 	)
-	var ball_mark := PackedVector2Array([
-		center + Vector2(0.0, -4.0) * ui_scale,
-		center + Vector2(4.0, 0.0) * ui_scale,
-		center + Vector2(0.0, 4.0) * ui_scale,
-		center + Vector2(-4.0, 0.0) * ui_scale,
-	])
-	draw_colored_polygon(ball_mark, Color(1.0, 0.92, 0.12))
+	draw_colored_polygon(
+		UiDraw.diamond_points(center, 4.0 * ui_scale),
+		Palette.BALL_COLOR
+	)
 
 	var title_position := Vector2(125.0 * ui_scale, center.y + 6.0 * ui_scale)
 	draw_string(font, title_position, Palette.GAME_TITLE, HORIZONTAL_ALIGNMENT_LEFT, 150.0 * ui_scale, maxi(int(13.0 * ui_scale), 10), Palette.TEXT_COLOR)
@@ -359,7 +346,7 @@ func _draw_rally_intro(font: Font, size: Vector2, ui_scale: float) -> void:
 		Color(team_color, alpha)
 	)
 	var emblem_center := banner.position + Vector2(22.0 * ui_scale, banner.size.y * 0.5)
-	_draw_team_emblem(emblem_center, team_color, rally_intro_is_left, ui_scale, alpha)
+	UiDraw.draw_team_emblem(self, emblem_center, team_color, rally_intro_is_left, ui_scale, alpha)
 	var text_x := banner.position.x + 42.0 * ui_scale
 	var text_width := banner.size.x - 54.0 * ui_scale
 	draw_string(
@@ -403,7 +390,7 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		maxi(int(8.0 * ui_scale), 8),
 		Color(Palette.MUTED_TEXT_COLOR, reveal)
 	)
-	_draw_team_emblem(
+	UiDraw.draw_team_emblem(self,
 		Vector2(panel.get_center().x, panel.position.y + 62.0 * ui_scale),
 		team_color,
 		winner_is_left,
@@ -728,7 +715,7 @@ func _draw_team_score(
 	ui_scale: float
 ) -> void:
 	var emblem_center := card.position + Vector2(20.0, 22.0) * ui_scale
-	_draw_team_emblem(emblem_center, team_color, is_left, ui_scale)
+	UiDraw.draw_team_emblem(self, emblem_center, team_color, is_left, ui_scale)
 	draw_string(
 		font,
 		card.position + Vector2(34.0, 13.0) * ui_scale,
@@ -764,7 +751,7 @@ func _draw_match_point_badge(font: Font, card: Rect2, team_color: Color, ui_scal
 		false,
 		maxf(1.0, 1.5 * ui_scale)
 	)
-	var label_font_size := _fit_font_size(
+	var label_font_size := UiDraw.fit_font_size(
 		font,
 		MATCH_POINT_LABEL,
 		maxi(int(6.5 * ui_scale), 7),
@@ -810,7 +797,7 @@ func _draw_score_pips(card: Rect2, score: int, team_color: Color, ui_scale: floa
 			start_x + float(pip_index) * (pip_size + pip_gap) + pip_size * 0.5,
 			start_y + pip_size * 0.5
 		)
-		var pip_points := _score_pip_points(pip_center, pip_size * 0.5)
+		var pip_points := UiDraw.diamond_points(pip_center, pip_size * 0.5)
 		if pip_index < score:
 			draw_colored_polygon(pip_points, team_color)
 		else:
@@ -822,72 +809,6 @@ func _draw_score_pips(card: Rect2, score: int, team_color: Color, ui_scale: floa
 				maxf(1.0, 1.5 * ui_scale),
 				true
 			)
-
-func _score_pip_points(center: Vector2, radius: float) -> PackedVector2Array:
-	return PackedVector2Array([
-		center + Vector2(0.0, -radius),
-		center + Vector2(radius, 0.0),
-		center + Vector2(0.0, radius),
-		center + Vector2(-radius, 0.0),
-	])
-
-func _draw_team_emblem(
-	center: Vector2,
-	team_color: Color,
-	is_left: bool,
-	emblem_scale: float = -1.0,
-	alpha: float = 1.0
-) -> void:
-	if emblem_scale < 0.0:
-		emblem_scale = game_scale
-	var draw_color := Color(team_color, alpha)
-	if is_left:
-		var hexagon := PackedVector2Array()
-		for point_index in range(7):
-			var angle := -PI * 0.5 + TAU * float(point_index % 6) / 6.0
-			hexagon.append(center + Vector2(cos(angle), sin(angle)) * 10.0 * emblem_scale)
-		draw_polyline(hexagon, draw_color, 1.8 * emblem_scale, true)
-		draw_line(center, center + Vector2(5.0, -5.0) * emblem_scale, draw_color, 1.4 * emblem_scale, true)
-		draw_line(center, center + Vector2(-5.0, 5.0) * emblem_scale, draw_color, 1.4 * emblem_scale, true)
-		draw_circle(center, 2.0 * emblem_scale, Color(Palette.TEXT_COLOR, alpha))
-	else:
-		var diamond := PackedVector2Array([
-			center + Vector2(0.0, -11.0) * emblem_scale,
-			center + Vector2(11.0, 0.0) * emblem_scale,
-			center + Vector2(0.0, 11.0) * emblem_scale,
-			center + Vector2(-11.0, 0.0) * emblem_scale,
-			center + Vector2(0.0, -11.0) * emblem_scale,
-		])
-		draw_polyline(diamond, draw_color, 1.8 * emblem_scale, true)
-		var bolt := PackedVector2Array([
-			center + Vector2(1.0, -7.0) * emblem_scale,
-			center + Vector2(-4.0, 1.0) * emblem_scale,
-			center + Vector2(-1.0, 1.0) * emblem_scale,
-			center + Vector2(-2.0, 7.0) * emblem_scale,
-			center + Vector2(4.0, -1.0) * emblem_scale,
-			center + Vector2(1.0, -1.0) * emblem_scale,
-		])
-		draw_colored_polygon(bolt, draw_color)
-
-func _fit_font_size(
-	font: Font,
-	text: String,
-	preferred_size: int,
-	minimum_size: int,
-	max_width: float
-) -> int:
-	var font_size := maxi(preferred_size, minimum_size)
-	while font_size > minimum_size:
-		var measured_width := font.get_string_size(
-			text,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			font_size
-		).x
-		if measured_width <= max_width:
-			return font_size
-		font_size -= 1
-	return minimum_size
 
 func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 	if power_up_hud_title.is_empty():
@@ -905,23 +826,18 @@ func _draw_power_up_status(font: Font, size: Vector2, ui_scale: float) -> void:
 	)
 	var icon_center := panel.position + Vector2(14.0 * ui_scale, panel.size.y * 0.36)
 	var icon_radius := 5.0 * ui_scale
-	var accent_diamond := PackedVector2Array([
-		icon_center + Vector2(0.0, -icon_radius),
-		icon_center + Vector2(icon_radius, 0.0),
-		icon_center + Vector2(0.0, icon_radius),
-		icon_center + Vector2(-icon_radius, 0.0),
-	])
+	var accent_diamond := UiDraw.diamond_points(icon_center, icon_radius)
 	draw_colored_polygon(accent_diamond, power_up_hud_accent)
 	var text_x := panel.position.x + 26.0 * ui_scale
 	var text_width := panel.size.x - 34.0 * ui_scale
-	var title_font_size := _fit_font_size(
+	var title_font_size := UiDraw.fit_font_size(
 		font,
 		power_up_hud_title.to_upper(),
 		maxi(int(12.0 * ui_scale), 10),
 		8,
 		text_width
 	)
-	var detail_font_size := _fit_font_size(
+	var detail_font_size := UiDraw.fit_font_size(
 		font,
 		power_up_hud_detail,
 		maxi(int(9.0 * ui_scale), 8),

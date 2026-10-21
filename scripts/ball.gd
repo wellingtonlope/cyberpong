@@ -69,7 +69,7 @@ func restart(
 	field_size = size
 	radius = ball_radius
 	play_top = play_top_boundary
-	body.polygon = _make_circle_polygon(radius, 48)
+	body.polygon = UiDraw.circle_points(Vector2.ZERO, radius, 48)
 	body.scale = Vector2.ONE
 	_trail.clear()
 	if _deformation_tween != null and _deformation_tween.is_running():
@@ -278,10 +278,3 @@ func _draw_glow() -> void:
 	var glow_radius := radius * _powerful_bounce_visual_scale
 	draw_circle(Vector2.ZERO, glow_radius * 1.55, Color(Palette.BALL_COLOR, 0.055))
 	draw_circle(Vector2.ZERO, glow_radius * 1.2, Color(Palette.BALL_COLOR, 0.11))
-
-func _make_circle_polygon(circle_radius: float, point_count: int) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for index in range(point_count):
-		var angle := TAU * float(index) / float(point_count)
-		points.append(Vector2(cos(angle), sin(angle)) * circle_radius)
-	return points
