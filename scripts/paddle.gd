@@ -1,3 +1,4 @@
+class_name Paddle
 extends Node2D
 
 const AI_SPEED_FACTOR := 0.82

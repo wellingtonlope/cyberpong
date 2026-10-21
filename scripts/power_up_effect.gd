@@ -1,3 +1,4 @@
+class_name PowerUpEffect
 extends RefCounted
 
 enum Id {

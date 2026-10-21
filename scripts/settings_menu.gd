@@ -1,4 +1,5 @@
-extends "res://scripts/menu_screen.gd"
+class_name SettingsMenu
+extends MenuScreen
 
 signal closed
 

@@ -1,3 +1,4 @@
+class_name CyberPong
 extends Node2D
 
 const GAME_SCALE := 3.0
@@ -15,21 +16,19 @@ const HUD_BAR_HEIGHT := 60.0 * GAME_SCALE
 const CREDITS_SCENE := preload("res://scenes/credits_screen.tscn")
 const GAME_MENU_SCENE := preload("res://scenes/game_menu.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
-const Difficulty = preload("res://scripts/difficulty.gd")
-const Effect = preload("res://scripts/power_up_effect.gd")
 
 enum GameMode {
 	PLAYER_VS_PLAYER,
 	PLAYER_VS_AI
 }
 
-@onready var arena = $Arena
-@onready var left_paddle = $Paddles/Left
-@onready var right_paddle = $Paddles/Right
-@onready var ball = $Ball
-@onready var spark_effects = $SparkEffects
-@onready var debug_hud = $DebugHud
-@onready var power_up = $PowerUp
+@onready var arena: Arena = $Arena
+@onready var left_paddle: Paddle = $Paddles/Left
+@onready var right_paddle: Paddle = $Paddles/Right
+@onready var ball: Ball = $Ball
+@onready var spark_effects: SparkEffects = $SparkEffects
+@onready var debug_hud: DebugHud = $DebugHud
+@onready var power_up: PowerUp = $PowerUp
 
 var field_size := Vector2.ZERO
 var game_over := false
@@ -41,8 +40,8 @@ var _random := RandomNumberGenerator.new()
 var _game_mode: int = GameMode.PLAYER_VS_AI
 var _difficulty: int = Difficulty.DEFAULT_LEVEL
 var _menu_shown := false
-var _pause_menu: Control = null
-var _credits: Control = null
+var _pause_menu: PauseMenu = null
+var _credits: CreditsScreen = null
 
 func _ready() -> void:
 	_random.randomize()
@@ -64,10 +63,10 @@ func _ready() -> void:
 
 func _show_credits() -> void:
 	_menu_shown = true
-	var credits = CREDITS_SCENE.instantiate()
+	var credits := CREDITS_SCENE.instantiate() as CreditsScreen
 	credits.name = "CreditsScreen"
 	add_child(credits)
-	credits.connect("finished", _on_credits_finished)
+	credits.finished.connect(_on_credits_finished)
 	_credits = credits
 	get_tree().paused = true
 
@@ -89,12 +88,12 @@ func _show_menu() -> void:
 	if previous_menu != null:
 		remove_child(previous_menu)
 		previous_menu.queue_free()
-	var menu = GAME_MENU_SCENE.instantiate()
+	var menu := GAME_MENU_SCENE.instantiate() as GameMenu
 	menu.name = "GameMenu"
 	menu.selected_difficulty = _difficulty
 	add_child(menu)
-	menu.connect("mode_selected", _on_mode_selected)
-	menu.connect("quit_requested", _on_quit_requested)
+	menu.mode_selected.connect(_on_mode_selected)
+	menu.quit_requested.connect(_on_quit_requested)
 	_menu_shown = true
 
 func _on_quit_requested() -> void:
@@ -190,11 +189,11 @@ func _open_pause_menu() -> void:
 	if _pause_menu != null or _menu_shown or game_over:
 		return
 	SoundManager.play_pause_open()
-	var menu = PAUSE_MENU_SCENE.instantiate()
+	var menu := PAUSE_MENU_SCENE.instantiate() as PauseMenu
 	add_child(menu)
-	menu.connect("resume_requested", _on_pause_resume_requested)
-	menu.connect("restart_requested", _on_pause_restart_requested)
-	menu.connect("main_menu_requested", _on_pause_main_menu_requested)
+	menu.resume_requested.connect(_on_pause_resume_requested)
+	menu.restart_requested.connect(_on_pause_restart_requested)
+	menu.main_menu_requested.connect(_on_pause_main_menu_requested)
 	_pause_menu = menu
 	get_tree().paused = true
 
@@ -261,7 +260,7 @@ func _on_ball_paddle_hit(
 	speed_ratio: float,
 	used_extra_defense: bool
 ) -> void:
-	var paddle = left_paddle if is_left else right_paddle
+	var paddle: Paddle = left_paddle if is_left else right_paddle
 	var effect_id: int = power_up.get_active_effect_id()
 	var owner_is_left: bool = power_up.get_active_owner_is_left()
 	total_rebounds += 1
@@ -275,9 +274,9 @@ func _on_ball_paddle_hit(
 	spark_effects.play_paddle_hit(impact_position, paddle.tint, horizontal_direction, speed_ratio)
 	if used_extra_defense:
 		SoundManager.play_extra_defense()
-	elif effect_id == Effect.Id.POWERFUL_BOUNCE and is_left == owner_is_left:
+	elif effect_id == PowerUpEffect.Id.POWERFUL_BOUNCE and is_left == owner_is_left:
 		SoundManager.play_powerful_bounce()
-	elif effect_id == Effect.Id.BALL_BRAKE and is_left != owner_is_left:
+	elif effect_id == PowerUpEffect.Id.BALL_BRAKE and is_left != owner_is_left:
 		SoundManager.play_ball_brake()
 	else:
 		SoundManager.play_paddle_hit(is_left, speed_ratio)
@@ -291,7 +290,7 @@ func _schedule_next_power_up_spawn() -> void:
 	_next_power_up_rebound = total_rebounds + interval
 
 func _on_power_up_effect_changed(is_left: bool, is_active: bool, size_multiplier: float, accent_color: Color) -> void:
-	var paddle = left_paddle if is_left else right_paddle
+	var paddle: Paddle = left_paddle if is_left else right_paddle
 	if is_active:
 		paddle.apply_power_up(size_multiplier, accent_color)
 		SoundManager.play_power_up_collect(power_up.get_active_effect_id())

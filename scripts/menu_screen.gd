@@ -1,3 +1,4 @@
+class_name MenuScreen
 extends Control
 
 const LEFT_COLOR := Color(0.08, 0.98, 1.0)

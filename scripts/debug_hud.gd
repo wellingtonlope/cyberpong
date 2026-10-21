@@ -1,3 +1,4 @@
+class_name DebugHud
 extends CanvasLayer
 
 const PANEL_BACKGROUND := Color(0.015, 0.025, 0.045, 0.92)

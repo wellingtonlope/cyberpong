@@ -59,7 +59,7 @@ func test_player_vs_ai_uses_the_normal_difficulty_by_default() -> void:
 	menu.get_node("BtnPvAI").pressed.emit()
 	menu._process(menu.CLOSE_DURATION)
 
-	assert_eq(game._difficulty, game.Difficulty.Level.NORMAL)
+	assert_eq(game._difficulty, Difficulty.Level.NORMAL)
 	assert_eq(game.right_paddle.ai_speed_factor, 0.82)
 	assert_eq(game.right_paddle.ai_reaction_delay, 0.14)
 	assert_eq(game.right_paddle.ai_dead_zone, 24.0)
@@ -73,7 +73,7 @@ func test_selected_difficulty_is_applied_to_the_ai_paddle() -> void:
 	menu.get_node("BtnPvAI").pressed.emit()
 	menu._process(menu.CLOSE_DURATION)
 
-	assert_eq(game._difficulty, game.Difficulty.Level.HARD)
+	assert_eq(game._difficulty, Difficulty.Level.HARD)
 	assert_eq(game.right_paddle.ai_speed_factor, 1.0)
 	assert_eq(game.right_paddle.ai_reaction_delay, 0.04)
 	assert_eq(game.right_paddle.ai_dead_zone, 12.0)
@@ -90,10 +90,10 @@ func test_difficulty_persists_when_returning_to_the_main_menu() -> void:
 
 	var reopened_menu = game.get_node_or_null("GameMenu")
 	assert_not_null(reopened_menu)
-	assert_eq(reopened_menu.selected_difficulty, game.Difficulty.Level.HARD)
+	assert_eq(reopened_menu.selected_difficulty, Difficulty.Level.HARD)
 	assert_eq(
 		reopened_menu._selector_selected_index,
-		game.Difficulty.index_of(game.Difficulty.Level.HARD)
+		Difficulty.index_of(Difficulty.Level.HARD)
 	)
 	assert_false(reopened_menu._selector_visible)
 

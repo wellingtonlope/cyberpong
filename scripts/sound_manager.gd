@@ -1,7 +1,5 @@
 extends Node
 
-const Effect = preload("res://scripts/power_up_effect.gd")
-
 const SOUNDS := {
 	"hit_cyan": preload("res://assets/audio/hit_cyan.wav"),
 	"hit_magenta": preload("res://assets/audio/hit_magenta.wav"),
@@ -91,18 +89,18 @@ func play_win(_winner_is_left: bool = true) -> AudioStreamPlayer:
 func play_power_up_spawn() -> AudioStreamPlayer:
 	return play("power_up_spawn", 1.0, 0.0)
 
-func play_power_up_collect(effect_id: int = Effect.Id.NONE) -> AudioStreamPlayer:
+func play_power_up_collect(effect_id: int = PowerUpEffect.Id.NONE) -> AudioStreamPlayer:
 	play("power_up_collect", 1.0, 1.0)
 	match effect_id:
-		Effect.Id.DOUBLE_SIZE:
+		PowerUpEffect.Id.DOUBLE_SIZE:
 			return play("pu_double", 1.0, 0.5)
-		Effect.Id.HALF_SIZE:
+		PowerUpEffect.Id.HALF_SIZE:
 			return play("pu_half", 1.0, 0.5)
-		Effect.Id.BALL_BRAKE:
+		PowerUpEffect.Id.BALL_BRAKE:
 			return play("pu_brake", 1.0, 0.5)
-		Effect.Id.POWERFUL_BOUNCE:
+		PowerUpEffect.Id.POWERFUL_BOUNCE:
 			return play("pu_bounce", 1.0, 0.5)
-		Effect.Id.EXTRA_DEFENSE:
+		PowerUpEffect.Id.EXTRA_DEFENSE:
 			return play("pu_defense", 1.0, 0.5)
 		_:
 			return null

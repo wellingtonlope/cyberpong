@@ -1,4 +1,5 @@
-extends "res://scripts/menu_screen.gd"
+class_name PauseMenu
+extends MenuScreen
 
 signal resume_requested
 signal restart_requested
@@ -46,7 +47,7 @@ const PAUSE_CARDS := [
 @onready var btn_main_menu: Button = $BtnMainMenu
 
 var _pending_action := -1
-var _settings: Control = null
+var _settings: SettingsMenu = null
 
 func _ready() -> void:
 	var buttons: Array[Button] = [btn_resume, btn_restart, btn_settings, btn_main_menu]
@@ -98,10 +99,10 @@ func _open_settings() -> void:
 	if _settings != null:
 		return
 	SoundManager.play_ui_select()
-	var settings := SETTINGS_SCENE.instantiate()
+	var settings := SETTINGS_SCENE.instantiate() as SettingsMenu
 	settings.name = "SettingsMenu"
 	add_child(settings)
-	settings.connect("closed", _on_settings_closed)
+	settings.closed.connect(_on_settings_closed)
 	_settings = settings
 	set_cards_interactive(false)
 

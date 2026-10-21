@@ -1,6 +1,5 @@
 extends GutTest
 
-const Difficulty = preload("res://scripts/difficulty.gd")
 
 
 func test_presets_are_ordered_from_easiest_to_hardest() -> void:

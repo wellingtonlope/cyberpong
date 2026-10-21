@@ -1,9 +1,9 @@
-extends "res://scripts/menu_screen.gd"
+class_name GameMenu
+extends MenuScreen
 
 signal mode_selected(mode: int, difficulty: int)
 signal quit_requested
 
-const Difficulty = preload("res://scripts/difficulty.gd")
 const SETTINGS_SCENE := preload("res://scenes/settings_menu.tscn")
 
 enum GameMode {
@@ -52,7 +52,7 @@ const MODE_CARDS := [
 var selected_difficulty: int = Difficulty.DEFAULT_LEVEL
 var _pending_mode := -1
 var _pending_quit := false
-var _settings: Control = null
+var _settings: SettingsMenu = null
 var _settings_return_index := 0
 
 func _ready() -> void:
@@ -121,10 +121,10 @@ func _open_settings() -> void:
 		return
 	SoundManager.play_ui_select()
 	_settings_return_index = clampi(_focused_index, 0, _card_buttons.size() - 1)
-	var settings := SETTINGS_SCENE.instantiate()
+	var settings := SETTINGS_SCENE.instantiate() as SettingsMenu
 	settings.name = "SettingsMenu"
 	add_child(settings)
-	settings.connect("closed", _on_settings_closed)
+	settings.closed.connect(_on_settings_closed)
 	_settings = settings
 	set_cards_interactive(false)
 	_set_selector_visible(false)

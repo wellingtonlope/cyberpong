@@ -1,3 +1,4 @@
+class_name Difficulty
 extends RefCounted
 
 enum Level {

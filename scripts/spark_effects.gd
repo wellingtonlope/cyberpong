@@ -1,3 +1,4 @@
+class_name SparkEffects
 extends Node2D
 
 const BOUNCE_RESTITUTION := 0.72

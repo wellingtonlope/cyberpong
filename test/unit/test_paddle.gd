@@ -1,7 +1,6 @@
 extends GutTest
 
 const PADDLE_SCENE := preload("res://scenes/paddle.tscn")
-const Difficulty = preload("res://scripts/difficulty.gd")
 const FIELD_SIZE := Vector2(1000.0, 600.0)
 const PLAY_TOP := 50.0
 

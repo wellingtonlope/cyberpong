@@ -82,10 +82,10 @@ func test_mode_cards_map_to_expected_game_modes() -> void:
 		assert_eq(menu.MODE_CARDS[index]["mode"], expected_modes[index])
 
 func test_difficulty_selector_starts_on_normal_and_hidden() -> void:
-	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.NORMAL)
+	assert_eq(menu.selected_difficulty, Difficulty.Level.NORMAL)
 	assert_eq(
 		menu._selector_selected_index,
-		menu.Difficulty.index_of(menu.Difficulty.Level.NORMAL)
+		Difficulty.index_of(Difficulty.Level.NORMAL)
 	)
 	assert_eq(menu._selector_rects.size(), 3)
 	assert_false(menu._selector_visible)
@@ -95,7 +95,7 @@ func test_difficulty_pills_map_to_the_expected_levels() -> void:
 	var buttons := [menu.get_node("BtnEasy"), menu.get_node("BtnNormal"), menu.get_node("BtnHard")]
 	for index in range(buttons.size()):
 		buttons[index].pressed.emit()
-		assert_eq(menu.selected_difficulty, menu.Difficulty.level_at(index))
+		assert_eq(menu.selected_difficulty, Difficulty.level_at(index))
 		assert_false(menu._closing)
 		assert_false(menu._selected)
 
@@ -108,7 +108,7 @@ func test_choosing_a_difficulty_does_not_start_the_match() -> void:
 
 	menu.get_node("BtnHard").pressed.emit()
 
-	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.HARD)
+	assert_eq(menu.selected_difficulty, Difficulty.Level.HARD)
 	assert_true(emitted.is_empty())
 	assert_true(menu.visible)
 
@@ -122,7 +122,7 @@ func test_mode_selection_emits_the_chosen_difficulty() -> void:
 
 	menu._select(menu.GameMode.PLAYER_VS_AI)
 
-	assert_eq(emitted, [[menu.GameMode.PLAYER_VS_AI, menu.Difficulty.Level.EASY]])
+	assert_eq(emitted, [[menu.GameMode.PLAYER_VS_AI, Difficulty.Level.EASY]])
 
 func test_difficulty_selector_only_appears_for_player_vs_ai() -> void:
 	var pvp: Button = menu.get_node("BtnPvP")
@@ -157,15 +157,15 @@ func test_arrow_keys_cycle_difficulty_only_when_player_vs_ai_is_focused() -> voi
 
 	pvp.grab_focus()
 	menu._input(_arrow_event(KEY_RIGHT))
-	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.NORMAL)
+	assert_eq(menu.selected_difficulty, Difficulty.Level.NORMAL)
 
 	pvai.grab_focus()
 	menu._input(_arrow_event(KEY_RIGHT))
-	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.HARD)
+	assert_eq(menu.selected_difficulty, Difficulty.Level.HARD)
 	menu._input(_arrow_event(KEY_RIGHT))
-	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.EASY)
+	assert_eq(menu.selected_difficulty, Difficulty.Level.EASY)
 	menu._input(_arrow_event(KEY_LEFT))
-	assert_eq(menu.selected_difficulty, menu.Difficulty.Level.HARD)
+	assert_eq(menu.selected_difficulty, Difficulty.Level.HARD)
 
 func test_focus_neighbors_cycle_through_all_cards() -> void:
 	var pvp: Button = menu.get_node("BtnPvP")

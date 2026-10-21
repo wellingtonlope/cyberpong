@@ -1,3 +1,4 @@
+class_name CreditsScreen
 extends Control
 
 signal finished
