@@ -21,6 +21,8 @@ const RALLY_INTRO_DURATION := 1.0
 const WINNER_REVEAL_DURATION := 0.55
 const FIELD_GRADIENT_STRIPS := 48
 const VIGNETTE_BANDS := 8
+const MATCH_POINT_LABEL := "MATCH POINT"
+const MATCH_POINT_PULSE_SPEED := 4.0
 
 var game_scale := 3.0
 var hud_bar_height := 180.0
@@ -28,6 +30,9 @@ var paddle_margin := 120.0
 var game_over := false
 var left_score := 0
 var right_score := 0
+var winning_score := 3
+var left_match_point := false
+var right_match_point := false
 var winner_name := ""
 var winner_is_left := true
 var total_rebounds := 0
@@ -41,9 +46,13 @@ var point_flash_is_left := true
 var rally_intro_remaining := 0.0
 var rally_intro_is_left := true
 var winner_reveal := 0.0
+var _pulse_time := 0.0
 
 func _process(delta: float) -> void:
 	var should_redraw := false
+	_pulse_time += delta
+	if left_match_point or right_match_point:
+		should_redraw = true
 	if point_flash_remaining > 0.0:
 		point_flash_remaining = maxf(point_flash_remaining - delta, 0.0)
 		should_redraw = true
@@ -69,12 +78,28 @@ func set_game_over(value: bool) -> void:
 		point_flash_remaining = 0.0
 		rally_intro_remaining = 0.0
 		winner_reveal = 0.0
+	_refresh_match_point()
 	queue_redraw()
 
-func set_score(left_value: int, right_value: int) -> void:
+func set_score(left_value: int, right_value: int, winning_score_value: int = 3) -> void:
 	left_score = left_value
 	right_score = right_value
+	winning_score = maxi(winning_score_value, 1)
+	_refresh_match_point()
 	queue_redraw()
+
+func _refresh_match_point() -> void:
+	var match_point_threshold := winning_score - 1
+	left_match_point = (
+		not game_over
+		and left_score == match_point_threshold
+		and right_score < winning_score
+	)
+	right_match_point = (
+		not game_over
+		and right_score == match_point_threshold
+		and left_score < winning_score
+	)
 
 func set_match_hud(rebound_count: int, power_up_info: Dictionary) -> void:
 	total_rebounds = rebound_count
@@ -92,6 +117,7 @@ func set_winner(name: String) -> void:
 	rally_intro_remaining = 0.0
 	point_flash_remaining = 0.0
 	winner_reveal = 0.0
+	_refresh_match_point()
 	queue_redraw()
 
 func show_point_awarded(is_left: bool) -> void:
@@ -635,6 +661,54 @@ func _draw_team_score(
 			false,
 			3.0 * ui_scale
 		)
+	if (is_left and left_match_point) or (not is_left and right_match_point):
+		_draw_match_point_badge(font, card, team_color, ui_scale)
+
+func _draw_match_point_badge(font: Font, card: Rect2, team_color: Color, ui_scale: float) -> void:
+	var pulse := 0.5 + 0.5 * sin(_pulse_time * MATCH_POINT_PULSE_SPEED)
+	draw_rect(
+		card.grow((4.0 + 2.0 * pulse) * ui_scale),
+		Color(team_color, 0.18 + 0.22 * pulse),
+		false,
+		maxf(1.0, 3.0 * ui_scale)
+	)
+	draw_rect(
+		card.grow(2.0 * ui_scale),
+		Color(team_color, 0.75 + 0.2 * pulse),
+		false,
+		maxf(1.0, 1.5 * ui_scale)
+	)
+	var label_font_size := _fit_font_size(
+		font,
+		MATCH_POINT_LABEL,
+		maxi(int(6.5 * ui_scale), 7),
+		7,
+		card.size.x + 24.0 * ui_scale
+	)
+	var label_rect := _match_point_badge_rect(card, ui_scale)
+	draw_rect(label_rect, Color(team_color, 0.1 + 0.08 * pulse))
+	draw_rect(
+		label_rect,
+		Color(team_color, 0.55 + 0.3 * pulse),
+		false,
+		maxf(1.0, 1.0 * ui_scale)
+	)
+	draw_string(
+		font,
+		Vector2(label_rect.position.x, label_rect.position.y + label_font_size),
+		MATCH_POINT_LABEL,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		label_rect.size.x,
+		label_font_size,
+		Color(TEXT_COLOR, 0.85 + 0.15 * pulse)
+	)
+
+func _match_point_badge_rect(card: Rect2, ui_scale: float) -> Rect2:
+	var badge_height := maxi(int(6.5 * ui_scale), 7) + 2.0 * ui_scale
+	return Rect2(
+		Vector2(card.position.x - 14.0 * ui_scale, card.end.y + 0.5 * ui_scale),
+		Vector2(card.size.x + 28.0 * ui_scale, badge_height)
+	)
 
 func _draw_score_pips(card: Rect2, score: int, team_color: Color, ui_scale: float) -> void:
 	var pip_count := 3

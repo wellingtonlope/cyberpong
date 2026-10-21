@@ -221,7 +221,7 @@ func _restart_match() -> void:
 	game_over = false
 	power_up.reset_for_match(field_size)
 	debug_hud.reset_match_counts()
-	arena.set_score(left_score, right_score)
+	arena.set_score(left_score, right_score, WINNING_SCORE)
 	_refresh_match_hud()
 	arena.set_game_over(false)
 	arena.show_rally_intro(true)
@@ -287,7 +287,7 @@ func _on_ball_missed(left_side: bool) -> void:
 		left_score += 1
 	else:
 		right_score += 1
-	arena.set_score(left_score, right_score)
+	arena.set_score(left_score, right_score, WINNING_SCORE)
 	arena.show_point_awarded(scorer_is_left)
 	SoundManager.play_score(scorer_is_left)
 

@@ -150,6 +150,43 @@ func test_winning_point_clears_serve_intro_and_reveals_victory_panel() -> void:
 	assert_eq(game.arena.winner_reveal, 0.0)
 	assert_eq(game.arena.rally_intro_remaining, game.arena.RALLY_INTRO_DURATION)
 
+func test_match_point_is_highlighted_for_the_team_one_point_from_victory() -> void:
+	game._restart_match()
+	game._on_ball_missed(false)
+	game._on_ball_missed(false)
+
+	assert_eq(game.left_score, 2)
+	assert_eq(game.right_score, 0)
+	assert_true(game.arena.left_match_point)
+	assert_false(game.arena.right_match_point)
+
+	game._on_ball_missed(true)
+
+	assert_eq(game.right_score, 1)
+	assert_true(game.arena.left_match_point)
+	assert_false(game.arena.right_match_point)
+
+func test_both_teams_are_on_match_point_when_the_score_is_tied() -> void:
+	game._restart_match()
+	game.arena.set_score(2, 2, 3)
+
+	assert_true(game.arena.left_match_point)
+	assert_true(game.arena.right_match_point)
+
+func test_match_point_highlight_is_cleared_when_the_match_ends_or_restarts() -> void:
+	game._restart_match()
+	game.arena.set_score(2, 0, 3)
+	assert_true(game.arena.left_match_point)
+
+	game.arena.set_winner("Cyan Circuit")
+	assert_false(game.arena.left_match_point)
+	assert_false(game.arena.right_match_point)
+
+	game._restart_match()
+	assert_false(game.arena.left_match_point)
+	assert_false(game.arena.right_match_point)
+	assert_eq(game.arena.winning_score, 3)
+
 func test_new_match_resets_rebound_counts_and_debug_hud() -> void:
 	game.ball.paddle_hit.emit(true, Vector2(100.0, 300.0), 1.0, 1.0, false)
 	game.ball.paddle_hit.emit(false, Vector2(900.0, 300.0), -1.0, 1.0, false)

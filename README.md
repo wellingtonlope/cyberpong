@@ -72,6 +72,7 @@ A dificuldade altera apenas o comportamento das IAs; regras, velocidade da bola 
 - Vence quem marcar **três pontos**.
 - O primeiro saque sai a **1.140 px/s**; os saques seguintes saem a **1.500 px/s**.
 - A aceleração normal aumenta **10% a cada dois rebatimentos**, até **3.000 px/s**.
+- Quando uma equipe chega a **dois pontos**, ela entra em **match point**: o placar recebe um selo pulsante "MATCH POINT" na cor da equipe.
 - O HUD superior mostra o total de rebatidas, o placar e o estado do power-up.
 - O HUD de debug começa oculto e exibe velocidade e rebatidas por IA no canto inferior esquerdo.
 

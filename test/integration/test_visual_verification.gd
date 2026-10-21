@@ -156,6 +156,44 @@ func test_hud_panels_and_text_fit_without_overlap_across_window_sizes() -> void:
 			assert_lte(name_size, name_width, "Team name overflows at %s: %s" % [window_size, team_name])
 
 
+func test_match_point_badge_fits_inside_the_hud_bar() -> void:
+	var arena = add_child_autofree(ARENA_SCRIPT.new())
+	for size in WINDOW_SIZES:
+		var window_size: Vector2 = size
+		var ui_scale: float = arena._hud_scale_for(window_size)
+		var card_size := Vector2(120.0, 44.0) * ui_scale
+		var card_gap := 56.0 * ui_scale
+		var center_x: float = window_size.x * 0.5
+		var left_card := Rect2(
+			Vector2(center_x - card_size.x - card_gap * 0.5, 5.0 * ui_scale),
+			card_size
+		)
+		var right_card := Rect2(
+			Vector2(center_x + card_gap * 0.5, 5.0 * ui_scale),
+			card_size
+		)
+		var left_badge: Rect2 = arena._match_point_badge_rect(left_card, ui_scale)
+		var right_badge: Rect2 = arena._match_point_badge_rect(right_card, ui_scale)
+
+		assert_lte(
+			left_badge.end.y,
+			game.arena.hud_bar_height,
+			"Match point badge exceeds the HUD bar at %s" % window_size
+		)
+		assert_lte(
+			right_badge.end.y,
+			game.arena.hud_bar_height,
+			"Match point badge exceeds the HUD bar at %s" % window_size
+		)
+		assert_lt(
+			left_badge.end.x,
+			right_badge.position.x,
+			"Match point badges overlap at %s" % window_size
+		)
+		assert_gte(left_badge.position.x, 0.0)
+		assert_lte(right_badge.end.x, window_size.x)
+
+
 func test_score_pips_use_diamond_orientation() -> void:
 	var arena = add_child_autofree(ARENA_SCRIPT.new())
 	var center := Vector2(48.0, 36.0)
