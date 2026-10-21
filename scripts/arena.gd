@@ -525,41 +525,6 @@ func _draw_winner_key_hint_item(
 		Color(TEXT_COLOR, reveal)
 	)
 
-func _draw_winner_key_hint(
-	font: Font,
-	panel: Rect2,
-	key_text: String,
-	label_text: String,
-	top_offset: float,
-	ui_scale: float,
-	reveal: float,
-	team_color: Color,
-	group_left: float = -1.0
-) -> void:
-	var label_font_size := maxi(int(12.0 * ui_scale), 9)
-	var label_width := font.get_string_size(
-		label_text,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		label_font_size
-	).x
-	var key_size := Vector2(62.0, 28.0) * ui_scale
-	if group_left < 0.0:
-		var group_width := key_size.x + 12.0 * ui_scale + label_width
-		group_left = panel.get_center().x - group_width * 0.5
-	var group_top := panel.position.y + top_offset * ui_scale
-	var key_rect := Rect2(Vector2(group_left, group_top), key_size)
-	var item := {
-		"key_text": key_text,
-		"label_text": label_text,
-		"top_offset": top_offset,
-		"key_rect": key_rect,
-		"label_pos": Vector2(key_rect.end.x + 12.0 * ui_scale, group_top + key_size.y * 0.68),
-		"label_width": label_width,
-		"label_font_size": label_font_size,
-	}
-	_draw_winner_key_hint_item(font, item, ui_scale, reveal, team_color)
-
 func _draw_goal_lines(size: Vector2) -> void:
 	var field_margin := 12.0 * game_scale
 	var left_line_x := field_margin
