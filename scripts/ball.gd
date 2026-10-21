@@ -13,9 +13,11 @@ signal speed_changed(current_speed: float)
 signal power_up_collected(is_left: bool)
 signal wall_hit(hit_position: Vector2)
 
-const DEFAULT_RADIUS := 30.0
-const DEFAULT_SPEED := 1140.0
-const MAX_SPEED := 3000.0
+const DEFAULT_RADIUS := GameConfig.BALL_RADIUS
+const DEFAULT_SPEED := GameConfig.FIRST_SERVE_SPEED
+const MAX_SPEED := GameConfig.MAX_BALL_SPEED
+const ACCELERATION_FACTOR := GameConfig.BALL_SPEED_ACCELERATION
+const ACCELERATION_INTERVAL := GameConfig.BALL_SPEED_ACCELERATION_INTERVAL
 const BRAKE_SPEED_MULTIPLIER := 0.92
 const BRAKE_MINIMUM_SPEED_RATIO := 0.65
 const POWERFUL_BOUNCE_SPEED_MULTIPLIER := 1.18
@@ -187,8 +189,8 @@ func _bounce_from_paddle(
 	_paddle_hits += 1
 	var previous_speed := current_speed
 	if active_power_up_effect == PowerUpEffect.Id.BALL_BRAKE:
-		if _paddle_hits % 2 == 0 and _ball_brake_reference_speed < MAX_SPEED:
-			_ball_brake_reference_speed = minf(_ball_brake_reference_speed * 1.1, MAX_SPEED)
+		if _paddle_hits % ACCELERATION_INTERVAL == 0 and _ball_brake_reference_speed < MAX_SPEED:
+			_ball_brake_reference_speed = minf(_ball_brake_reference_speed * ACCELERATION_FACTOR, MAX_SPEED)
 		current_speed = _ball_brake_reference_speed
 		if is_left != power_up_owner_is_left:
 			current_speed = maxf(
@@ -197,16 +199,16 @@ func _bounce_from_paddle(
 			)
 		_powerful_bounce_visual_scale = 1.0
 	elif active_power_up_effect == PowerUpEffect.Id.POWERFUL_BOUNCE:
-		if _paddle_hits % 2 == 0 and current_speed < MAX_SPEED:
-			current_speed = minf(current_speed * 1.1, MAX_SPEED)
+		if _paddle_hits % ACCELERATION_INTERVAL == 0 and current_speed < MAX_SPEED:
+			current_speed = minf(current_speed * ACCELERATION_FACTOR, MAX_SPEED)
 		current_speed = minf(
 			current_speed * POWERFUL_BOUNCE_SPEED_MULTIPLIER,
 			MAX_SPEED * POWERFUL_BOUNCE_SPEED_MULTIPLIER
 		)
 		_powerful_bounce_visual_scale = POWERFUL_BOUNCE_VISUAL_SCALE
 	else:
-		if _paddle_hits % 2 == 0 and current_speed < MAX_SPEED:
-			current_speed = minf(current_speed * 1.1, MAX_SPEED)
+		if _paddle_hits % ACCELERATION_INTERVAL == 0 and current_speed < MAX_SPEED:
+			current_speed = minf(current_speed * ACCELERATION_FACTOR, MAX_SPEED)
 		current_speed = minf(current_speed, MAX_SPEED)
 		_powerful_bounce_visual_scale = 1.0
 	if not is_equal_approx(current_speed, previous_speed):

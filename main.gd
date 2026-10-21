@@ -1,18 +1,6 @@
 class_name CyberPong
 extends Node2D
 
-const GAME_SCALE := 3.0
-const PADDLE_WIDTH := 16.0 * GAME_SCALE
-const PADDLE_HEIGHT := 96.0 * GAME_SCALE
-const PADDLE_MARGIN := 40.0 * GAME_SCALE
-const PADDLE_SPEED := 440.0 * GAME_SCALE
-const BALL_RADIUS := 10.0 * GAME_SCALE
-const BALL_SPEED := 380.0 * GAME_SCALE
-const NEXT_RALLY_BALL_SPEED := 1500.0
-const WINNING_SCORE := 3
-const POWER_UP_MIN_SPAWN_INTERVAL := 5
-const POWER_UP_MAX_SPAWN_INTERVAL := 15
-const HUD_BAR_HEIGHT := 60.0 * GAME_SCALE
 const CREDITS_SCENE := preload("res://scenes/credits_screen.tscn")
 const GAME_MENU_SCENE := preload("res://scenes/game_menu.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
@@ -45,10 +33,18 @@ var game_over: bool:
 func _ready() -> void:
 	_random.randomize()
 	field_size = get_viewport_rect().size
-	arena.configure(GAME_SCALE, HUD_BAR_HEIGHT, PADDLE_MARGIN)
-	spark_effects.configure(GAME_SCALE, HUD_BAR_HEIGHT, 12.0 * GAME_SCALE)
-	debug_hud.configure(GAME_SCALE)
-	power_up.configure(GAME_SCALE, HUD_BAR_HEIGHT)
+	arena.configure(
+		GameConfig.GAME_SCALE,
+		GameConfig.HUD_BAR_HEIGHT,
+		GameConfig.PADDLE_MARGIN
+	)
+	spark_effects.configure(
+		GameConfig.GAME_SCALE,
+		GameConfig.HUD_BAR_HEIGHT,
+		12.0 * GameConfig.GAME_SCALE
+	)
+	debug_hud.configure(GameConfig.GAME_SCALE)
+	power_up.configure(GameConfig.GAME_SCALE, GameConfig.HUD_BAR_HEIGHT)
 	ball.paddle_hit.connect(_on_ball_paddle_hit)
 	ball.missed.connect(_on_ball_missed)
 	ball.wall_hit.connect(_on_ball_wall_hit)
@@ -228,8 +224,24 @@ func _dismiss_pause_menu() -> void:
 
 func _restart_match() -> void:
 	field_size = get_viewport_rect().size
-	left_paddle.configure(field_size, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_MARGIN, PADDLE_SPEED, BALL_RADIUS, HUD_BAR_HEIGHT)
-	right_paddle.configure(field_size, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_MARGIN, PADDLE_SPEED, BALL_RADIUS, HUD_BAR_HEIGHT)
+	left_paddle.configure(
+		field_size,
+		GameConfig.PADDLE_WIDTH,
+		GameConfig.PADDLE_HEIGHT,
+		GameConfig.PADDLE_MARGIN,
+		GameConfig.PADDLE_SPEED,
+		GameConfig.BALL_RADIUS,
+		GameConfig.HUD_BAR_HEIGHT
+	)
+	right_paddle.configure(
+		field_size,
+		GameConfig.PADDLE_WIDTH,
+		GameConfig.PADDLE_HEIGHT,
+		GameConfig.PADDLE_MARGIN,
+		GameConfig.PADDLE_SPEED,
+		GameConfig.BALL_RADIUS,
+		GameConfig.HUD_BAR_HEIGHT
+	)
 	var difficulty_config := Difficulty.preset(_difficulty)
 	left_paddle.apply_difficulty(difficulty_config)
 	right_paddle.apply_difficulty(difficulty_config)
@@ -240,17 +252,17 @@ func _restart_match() -> void:
 	screen_state = ScreenState.State.PLAYING
 	power_up.reset_for_match(field_size)
 	debug_hud.reset_match_counts()
-	arena.set_score(left_score, right_score, WINNING_SCORE)
+	arena.set_score(left_score, right_score, GameConfig.WINNING_SCORE)
 	_refresh_match_hud()
 	arena.set_game_over(false)
 	arena.show_rally_intro(true)
 	ball.restart(
 		field_size,
-		BALL_RADIUS,
-		BALL_SPEED,
+		GameConfig.BALL_RADIUS,
+		GameConfig.FIRST_SERVE_SPEED,
 		left_paddle.get_collision_rect(),
 		right_paddle.get_collision_rect(),
-		HUD_BAR_HEIGHT
+		GameConfig.HUD_BAR_HEIGHT
 	)
 	SoundManager.play_serve(true)
 
@@ -287,7 +299,10 @@ func _refresh_match_hud() -> void:
 	arena.set_match_hud(total_rebounds, power_up.get_hud_info(hits_until_next_power_up))
 
 func _schedule_next_power_up_spawn() -> void:
-	var interval := _random.randi_range(POWER_UP_MIN_SPAWN_INTERVAL, POWER_UP_MAX_SPAWN_INTERVAL)
+	var interval := _random.randi_range(
+		GameConfig.POWER_UP_MIN_SPAWN_INTERVAL,
+		GameConfig.POWER_UP_MAX_SPAWN_INTERVAL
+	)
 	_next_power_up_rebound = total_rebounds + interval
 
 func _on_power_up_effect_changed(is_left: bool, is_active: bool, size_multiplier: float, accent_color: Color) -> void:
@@ -306,12 +321,12 @@ func _on_ball_missed(left_side: bool) -> void:
 		left_score += 1
 	else:
 		right_score += 1
-	arena.set_score(left_score, right_score, WINNING_SCORE)
+	arena.set_score(left_score, right_score, GameConfig.WINNING_SCORE)
 	arena.show_point_awarded(scorer_is_left)
 	SoundManager.play_score(scorer_is_left)
 
 	var winning_score := left_score if scorer_is_left else right_score
-	if winning_score >= WINNING_SCORE:
+	if winning_score >= GameConfig.WINNING_SCORE:
 		screen_state = ScreenState.State.GAME_OVER
 		arena.set_winner(scorer_is_left)
 		SoundManager.play_win(scorer_is_left)
@@ -321,7 +336,7 @@ func _on_ball_missed(left_side: bool) -> void:
 		left_paddle.get_collision_rect(),
 		right_paddle.get_collision_rect(),
 		scorer_is_left,
-		NEXT_RALLY_BALL_SPEED
+		GameConfig.NEXT_SERVE_SPEED
 	)
 	SoundManager.play_serve(scorer_is_left)
 	arena.show_rally_intro(scorer_is_left)
