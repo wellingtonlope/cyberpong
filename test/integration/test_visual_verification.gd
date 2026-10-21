@@ -205,6 +205,61 @@ func test_key_colors_keep_readable_contrast() -> void:
 		)
 
 
+func test_winner_key_hints_are_aligned_and_evenly_spaced() -> void:
+	var font := ThemeDB.fallback_font
+	var arena = add_child_autofree(ARENA_SCRIPT.new())
+	for size in WINDOW_SIZES:
+		var window_size: Vector2 = size
+		var ui_scale: float = arena._hud_scale_for(window_size)
+		var panel_size := Vector2(560.0, 280.0) * ui_scale
+		var panel_center := window_size * 0.5
+		var panel := Rect2(panel_center - panel_size * 0.5, panel_size)
+
+		var layout: Dictionary = arena._winner_key_hint_layout(font, panel, ui_scale)
+		var items: Array = layout["items"]
+		assert_eq(items.size(), 2, "Expected 2 winner key hints at %s" % window_size)
+
+		var first: Dictionary = items[0]
+		var second: Dictionary = items[1]
+
+		# Verify horizontal alignment: keycaps share the same left and right X coordinates
+		assert_almost_eq(
+			float(first["key_rect"].position.x),
+			float(second["key_rect"].position.x),
+			0.001,
+			"Keycap left X must match at %s" % window_size
+		)
+		assert_almost_eq(
+			float(first["key_rect"].end.x),
+			float(second["key_rect"].end.x),
+			0.001,
+			"Keycap right X must match at %s" % window_size
+		)
+
+		# Verify horizontal alignment: labels start at the exact same X coordinate
+		assert_almost_eq(
+			float(first["label_pos"].x),
+			float(second["label_pos"].x),
+			0.001,
+			"Label start X must match at %s" % window_size
+		)
+
+		# Verify vertical spacing: uniform gaps of 10.0 * ui_scale
+		var divider_y := panel.position.y + 194.0 * ui_scale
+		var top_gap := float(first["key_rect"].position.y - divider_y)
+		var row_gap := float(second["key_rect"].position.y - first["key_rect"].end.y)
+		var bottom_gap := float((panel.position.y + panel.size.y) - second["key_rect"].end.y)
+
+		assert_almost_eq(top_gap, 10.0 * ui_scale, 0.001, "Top gap must be 10 * ui_scale at %s" % window_size)
+		assert_almost_eq(row_gap, 10.0 * ui_scale, 0.001, "Row gap must be 10 * ui_scale at %s" % window_size)
+		assert_almost_eq(bottom_gap, 10.0 * ui_scale, 0.001, "Bottom gap must be 10 * ui_scale at %s" % window_size)
+
+		# Verify hints stay inside the winner panel bounds
+		assert_gte(float(first["key_rect"].position.x), float(panel.position.x))
+		assert_lte(float(first["label_pos"].x + first["label_width"]), float(panel.end.x))
+		assert_lte(float(second["label_pos"].x + second["label_width"]), float(panel.end.x))
+
+
 func _contrast_ratio(first: Color, second: Color) -> float:
 	var first_luminance := _relative_luminance(first)
 	var second_luminance := _relative_luminance(second)

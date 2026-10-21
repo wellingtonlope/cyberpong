@@ -440,8 +440,90 @@ func _draw_winner_panel(font: Font, size: Vector2, ui_scale: float) -> void:
 		ui_scale,
 		true
 	)
-	_draw_winner_key_hint(font, panel, "ENTER", "NOVA PARTIDA", 200.0, ui_scale, reveal, team_color)
-	_draw_winner_key_hint(font, panel, "M", "MENU PRINCIPAL", 230.0, ui_scale, reveal, team_color)
+	var hint_layout := _winner_key_hint_layout(font, panel, ui_scale)
+	for item in hint_layout["items"]:
+		_draw_winner_key_hint_item(font, item, ui_scale, reveal, team_color)
+
+func _winner_key_hint_layout(font: Font, panel: Rect2, ui_scale: float) -> Dictionary:
+	var hints: Array = [
+		["ENTER", "NOVA PARTIDA", 204.0],
+		["M", "MENU PRINCIPAL", 242.0],
+	]
+	var label_font_size := maxi(int(12.0 * ui_scale), 9)
+	var max_label_width := 0.0
+	var label_widths: Array[float] = []
+	for hint in hints:
+		var w: float = font.get_string_size(
+			hint[1],
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			label_font_size
+		).x
+		label_widths.append(w)
+		if w > max_label_width:
+			max_label_width = w
+	var key_size := Vector2(62.0, 28.0) * ui_scale
+	var key_gap := 12.0 * ui_scale
+	var block_width := key_size.x + key_gap + max_label_width
+	var group_left := panel.get_center().x - block_width * 0.5
+	var items: Array = []
+	for i in range(hints.size()):
+		var hint: Array = hints[i]
+		var group_top := panel.position.y + float(hint[2]) * ui_scale
+		var key_rect := Rect2(Vector2(group_left, group_top), key_size)
+		var label_pos := Vector2(key_rect.end.x + key_gap, group_top + key_size.y * 0.68)
+		items.append({
+			"key_text": hint[0],
+			"label_text": hint[1],
+			"top_offset": float(hint[2]),
+			"key_rect": key_rect,
+			"label_pos": label_pos,
+			"label_width": label_widths[i],
+			"label_font_size": label_font_size,
+		})
+	return {
+		"group_left": group_left,
+		"block_width": block_width,
+		"key_size": key_size,
+		"key_gap": key_gap,
+		"label_font_size": label_font_size,
+		"items": items,
+	}
+
+func _draw_winner_key_hint_item(
+	font: Font,
+	item: Dictionary,
+	ui_scale: float,
+	reveal: float,
+	team_color: Color
+) -> void:
+	var key_rect: Rect2 = item["key_rect"]
+	var key_text: String = item["key_text"]
+	var label_text: String = item["label_text"]
+	var label_pos: Vector2 = item["label_pos"]
+	var label_width: float = item["label_width"]
+	var label_font_size: int = item["label_font_size"]
+
+	draw_rect(key_rect, Color(0.04, 0.07, 0.11, reveal))
+	draw_rect(key_rect, Color(team_color, 0.75 * reveal), false, 1.5 * ui_scale)
+	draw_string(
+		font,
+		Vector2(key_rect.position.x, key_rect.position.y + key_rect.size.y * 0.68),
+		key_text,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		key_rect.size.x,
+		maxi(int(9.0 * ui_scale), 8),
+		Color(TEXT_COLOR, reveal)
+	)
+	draw_string(
+		font,
+		label_pos,
+		label_text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		label_width + 4.0,
+		label_font_size,
+		Color(TEXT_COLOR, reveal)
+	)
 
 func _draw_winner_key_hint(
 	font: Font,
@@ -451,7 +533,8 @@ func _draw_winner_key_hint(
 	top_offset: float,
 	ui_scale: float,
 	reveal: float,
-	team_color: Color
+	team_color: Color,
+	group_left: float = -1.0
 ) -> void:
 	var label_font_size := maxi(int(12.0 * ui_scale), 9)
 	var label_width := font.get_string_size(
@@ -461,30 +544,21 @@ func _draw_winner_key_hint(
 		label_font_size
 	).x
 	var key_size := Vector2(62.0, 28.0) * ui_scale
-	var group_width := key_size.x + 12.0 * ui_scale + label_width
-	var group_left := panel.get_center().x - group_width * 0.5
+	if group_left < 0.0:
+		var group_width := key_size.x + 12.0 * ui_scale + label_width
+		group_left = panel.get_center().x - group_width * 0.5
 	var group_top := panel.position.y + top_offset * ui_scale
 	var key_rect := Rect2(Vector2(group_left, group_top), key_size)
-	draw_rect(key_rect, Color(0.04, 0.07, 0.11, reveal))
-	draw_rect(key_rect, Color(team_color, 0.75 * reveal), false, 1.5 * ui_scale)
-	draw_string(
-		font,
-		Vector2(key_rect.position.x, key_rect.position.y + key_size.y * 0.68),
-		key_text,
-		HORIZONTAL_ALIGNMENT_CENTER,
-		key_size.x,
-		maxi(int(9.0 * ui_scale), 8),
-		Color(TEXT_COLOR, reveal)
-	)
-	draw_string(
-		font,
-		Vector2(key_rect.end.x + 12.0 * ui_scale, group_top + key_size.y * 0.68),
-		label_text,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		label_width + 4.0,
-		label_font_size,
-		Color(TEXT_COLOR, reveal)
-	)
+	var item := {
+		"key_text": key_text,
+		"label_text": label_text,
+		"top_offset": top_offset,
+		"key_rect": key_rect,
+		"label_pos": Vector2(key_rect.end.x + 12.0 * ui_scale, group_top + key_size.y * 0.68),
+		"label_width": label_width,
+		"label_font_size": label_font_size,
+	}
+	_draw_winner_key_hint_item(font, item, ui_scale, reveal, team_color)
 
 func _draw_goal_lines(size: Vector2) -> void:
 	var field_margin := 12.0 * game_scale
