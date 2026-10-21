@@ -51,6 +51,7 @@ CyberPong é um Pong 2D feito em **Godot 4 e GDScript**. As equipes **Cyan Circu
 - No modo **Jogador VS Jogador**, os dois lados são controlados no mesmo teclado: a esquerda usa `W`/`S` e a direita usa `↑`/`↓`.
 - As ações de movimento ficam no InputMap (`p1_up`, `p1_down`, `p2_up`, `p2_down`), permitindo remapeamento sem alterar os scripts.
 - O seletor de dificuldade aparece no menu somente quando o cartão **Jogador VS AI** está focado; no PvP ele fica oculto e a dificuldade não altera a partida.
+- O cartão **Configurações** do menu inicial abre o mesmo painel de ajustes do menu de pausa (volume, som e tela cheia) sem iniciar a partida.
 - No menu de pausa, **Continuar** retoma o rally no mesmo estado, **Reiniciar partida** zera o placar e começa um novo rally, **Configurações** abre volume, som e tela cheia, e **Menu principal** encerra a partida e restaura placar, rebatidas, power-ups, velocidade e tamanho das raquetes.
 - Na tela de vitória, **Enter** inicia outra partida e **M** volta ao menu principal restaurando os valores padrão. As linhas **NOVA PARTIDA** e **MENU PRINCIPAL** também são clicáveis com o mouse.
 - A tela de créditos da **Moron Souls Productions** aparece somente na abertura do jogo.
@@ -130,14 +131,14 @@ O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pu
 - `test_debug_hud.gd` e `test_spark_effects.gd`: visibilidade e contagens do HUD; quantidade, expiração, quique e anel de impacto.
 - `test_credits_screen.gd`: layout, fade, emissão única de `finished`, pulo por tecla/clique e janelas diferentes.
 - `test_sound_manager.gd`: catálogo de efeitos sonoros, pool de AudioStreamPlayers, reprodução desativável, variação de tom por velocidade e efeitos de power-up.
-- `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seletor de dificuldade condicional, seleção, transição e início/saída.
+- `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seletor de dificuldade condicional, abertura das configurações, seleção, transição e início/saída.
 - `test_pause_menu.gd`: cartões, layout, foco, transição, retomada por ESC, reinício da partida e abertura das configurações.
 - `test_settings_menu.gd`: cartões de volume, som e tela cheia, limites de volume, retorno e fechamento por ESC.
 
 **Integração**
 
 - `test_credits_flow.gd`: abertura pelos créditos, entrega ao menu, bloqueio de teclas e ausência de repetição ao voltar da pausa.
-- `test_menu_flow.gd`: pausa da partida, seleção de modo e dificuldade, aplicação na IA, retomada, modos PvP/Jogador VS AI e encerramento.
+- `test_menu_flow.gd`: pausa da partida, seleção de modo e dificuldade, aplicação na IA, retomada, abertura das configurações pelo menu inicial, modos PvP/Jogador VS AI e encerramento.
 - `test_pause_flow.gd`: abertura por ESC/P, congelamento, retomada sem alterar o estado, reinício da partida, abertura das configurações e restauração dos padrões.
 - `test_sound_flow.gd`: integração de áudio com rebatidas, paredes, power-ups, saques, pontos, vitória e transições de pausa.
 - `test_main_flow.gd`: nós e sinais, saques, placar, match point, vitória, retorno ao menu pelo `M`, clique nos botões da tela de vitória, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.

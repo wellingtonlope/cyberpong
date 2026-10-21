@@ -34,7 +34,7 @@ func test_layout_keeps_all_cards_and_footer_inside_window() -> void:
 		var selector_pills: Array = layout["selector_pills"]
 		var footer: Rect2 = layout["footer"]
 
-		assert_eq(cards.size(), 3, "Every game mode and the exit action need a card at %s" % size)
+		assert_eq(cards.size(), 4, "Every game mode, settings and the exit action need a card at %s" % size)
 		assert_eq(selector_pills.size(), 3, "Every difficulty needs a pill at %s" % size)
 		assert_gt(content.size.x, 0.0)
 		assert_gte(header.position.y, 0.0)
@@ -49,7 +49,7 @@ func test_layout_keeps_all_cards_and_footer_inside_window() -> void:
 			assert_gte(pill_rect.position.x, content.position.x)
 			assert_lte(pill_rect.end.x, content.end.x)
 		assert_gte(cards[0].position.y, strip.end.y)
-		assert_gt(footer.end.y, cards[2].end.y)
+		assert_gt(footer.end.y, cards[3].end.y)
 		assert_lte(footer.end.y, size.y, "Menu footer overflows at %s" % size)
 		assert_gte(content.position.x, 0.0)
 		assert_lte(content.end.x, size.x)
@@ -127,6 +127,7 @@ func test_mode_selection_emits_the_chosen_difficulty() -> void:
 func test_difficulty_selector_only_appears_for_player_vs_ai() -> void:
 	var pvp: Button = menu.get_node("BtnPvP")
 	var pvai: Button = menu.get_node("BtnPvAI")
+	var settings: Button = menu.get_node("BtnSettings")
 	var quit: Button = menu.get_node("BtnQuit")
 	var pills := [menu.get_node("BtnEasy"), menu.get_node("BtnNormal"), menu.get_node("BtnHard")]
 
@@ -139,6 +140,11 @@ func test_difficulty_selector_only_appears_for_player_vs_ai() -> void:
 	assert_true(menu._selector_visible)
 	for pill in pills:
 		assert_true(pill.visible)
+
+	settings.grab_focus()
+	assert_false(menu._selector_visible)
+	for pill in pills:
+		assert_false(pill.visible)
 
 	quit.grab_focus()
 	assert_false(menu._selector_visible)
@@ -164,13 +170,16 @@ func test_arrow_keys_cycle_difficulty_only_when_player_vs_ai_is_focused() -> voi
 func test_focus_neighbors_cycle_through_all_cards() -> void:
 	var pvp: Button = menu.get_node("BtnPvP")
 	var pvai: Button = menu.get_node("BtnPvAI")
+	var settings: Button = menu.get_node("BtnSettings")
 	var quit: Button = menu.get_node("BtnQuit")
 
 	assert_eq(pvp.focus_neighbor_top, quit.get_path())
 	assert_eq(pvp.focus_neighbor_bottom, pvai.get_path())
 	assert_eq(pvai.focus_neighbor_top, pvp.get_path())
-	assert_eq(pvai.focus_neighbor_bottom, quit.get_path())
-	assert_eq(quit.focus_neighbor_top, pvai.get_path())
+	assert_eq(pvai.focus_neighbor_bottom, settings.get_path())
+	assert_eq(settings.focus_neighbor_top, pvai.get_path())
+	assert_eq(settings.focus_neighbor_bottom, quit.get_path())
+	assert_eq(quit.focus_neighbor_top, settings.get_path())
 	assert_eq(quit.focus_neighbor_bottom, pvp.get_path())
 
 func test_card_focus_moves_the_ball_cursor_target() -> void:
@@ -249,9 +258,46 @@ func test_button_press_starts_the_same_selection_flow() -> void:
 	assert_eq(emitted_modes, [menu.GameMode.PLAYER_VS_PLAYER])
 
 func test_exit_card_is_the_last_item_and_requests_to_quit() -> void:
-	assert_eq(menu._cards.size(), 3)
+	assert_eq(menu._cards.size(), 4)
 	assert_eq(menu._cards[menu.EXIT_CARD_INDEX], menu.EXIT_CARD)
 	assert_eq(menu.EXIT_CARD["title"], "SAIR")
+
+func test_settings_card_opens_the_settings_menu_without_starting_the_match() -> void:
+	var emitted: Array = []
+	menu.mode_selected.connect(
+		func(mode: int, difficulty: int) -> void: emitted.append([mode, difficulty])
+	)
+
+	menu._activate_card(menu.SETTINGS_CARD_INDEX)
+
+	var settings = menu.get_node_or_null("SettingsMenu")
+	assert_not_null(settings)
+	assert_false(menu._closing)
+	assert_false(menu._selected)
+	assert_true(get_tree().paused)
+	assert_true(emitted.is_empty())
+	assert_true(menu.btn_pvp.disabled)
+	assert_true(menu.btn_pvai.disabled)
+	assert_true(menu.btn_settings.disabled)
+	assert_true(menu.btn_quit.disabled)
+	assert_false(menu._selector_visible)
+
+func test_closing_the_settings_menu_restores_the_main_menu_cards() -> void:
+	menu.get_node("BtnPvAI").grab_focus()
+	menu._activate_card(menu.SETTINGS_CARD_INDEX)
+	var settings = menu.get_node_or_null("SettingsMenu")
+	assert_not_null(settings)
+
+	settings._finish_selection()
+
+	assert_null(menu.get_node_or_null("SettingsMenu"))
+	assert_false(menu.btn_pvp.disabled)
+	assert_false(menu.btn_pvai.disabled)
+	assert_false(menu.btn_settings.disabled)
+	assert_false(menu.btn_quit.disabled)
+	assert_true(get_tree().paused)
+	assert_true(menu.btn_pvai.has_focus())
+	assert_true(menu._selector_visible)
 
 func test_exit_card_waits_for_the_close_transition_before_requesting_quit() -> void:
 	var emitted: Array = []

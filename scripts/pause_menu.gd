@@ -130,6 +130,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _header_subtitle() -> String:
 	return "JOGO PAUSADO"
 
+func _menu_reference_height() -> float:
+	return super._menu_reference_height() + (CARD_HEIGHT + CARD_GAP)
+
 func _header_status() -> String:
 	return "PAUSA"
 

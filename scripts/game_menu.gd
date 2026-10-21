@@ -4,6 +4,7 @@ signal mode_selected(mode: int, difficulty: int)
 signal quit_requested
 
 const Difficulty = preload("res://scripts/difficulty.gd")
+const SETTINGS_SCENE := preload("res://scenes/settings_menu.tscn")
 
 enum GameMode {
 	PLAYER_VS_PLAYER,
@@ -16,7 +17,14 @@ const EXIT_CARD := {
 	"tag": "FECHAR"
 }
 
-const EXIT_CARD_INDEX := 2
+const SETTINGS_CARD := {
+	"title": "CONFIGURAÇÕES",
+	"detail": "Ajusta volume, som e tela cheia",
+	"tag": "AJUSTE"
+}
+
+const SETTINGS_CARD_INDEX := 2
+const EXIT_CARD_INDEX := 3
 
 const MODE_CARDS := [
 	{
@@ -35,6 +43,7 @@ const MODE_CARDS := [
 
 @onready var btn_pvp: Button = $BtnPvP
 @onready var btn_pvai: Button = $BtnPvAI
+@onready var btn_settings: Button = $BtnSettings
 @onready var btn_quit: Button = $BtnQuit
 @onready var btn_easy: Button = $BtnEasy
 @onready var btn_normal: Button = $BtnNormal
@@ -43,10 +52,13 @@ const MODE_CARDS := [
 var selected_difficulty: int = Difficulty.DEFAULT_LEVEL
 var _pending_mode := -1
 var _pending_quit := false
+var _settings: Control = null
+var _settings_return_index := 0
 
 func _ready() -> void:
-	var buttons: Array[Button] = [btn_pvp, btn_pvai, btn_quit]
+	var buttons: Array[Button] = [btn_pvp, btn_pvai, btn_settings, btn_quit]
 	var cards := MODE_CARDS.duplicate()
+	cards.append(SETTINGS_CARD)
 	cards.append(EXIT_CARD)
 	_setup_menu(buttons, cards)
 	var difficulty_titles := []
@@ -69,7 +81,9 @@ func _is_player_vs_ai_card(index: int) -> bool:
 	return int(MODE_CARDS[index]["mode"]) == GameMode.PLAYER_VS_AI
 
 func _input(event: InputEvent) -> void:
-	if _selected or _closing or not _selector_visible:
+	if _selected or _closing or _settings != null:
+		return
+	if not _selector_visible:
 		return
 	if not btn_pvai.has_focus():
 		return
@@ -94,10 +108,43 @@ func _cycle_difficulty(direction: int) -> void:
 	_set_selector_selection(next_index)
 
 func _activate_card(index: int) -> void:
+	if index == SETTINGS_CARD_INDEX:
+		_open_settings()
+		return
 	if index == EXIT_CARD_INDEX:
 		_request_quit(index)
 		return
 	_activate(MODE_CARDS[index]["mode"], index)
+
+func _open_settings() -> void:
+	if _settings != null:
+		return
+	SoundManager.play_ui_select()
+	_settings_return_index = clampi(_focused_index, 0, _card_buttons.size() - 1)
+	var settings := SETTINGS_SCENE.instantiate()
+	settings.name = "SettingsMenu"
+	add_child(settings)
+	settings.connect("closed", _on_settings_closed)
+	_settings = settings
+	set_cards_interactive(false)
+	_set_selector_visible(false)
+
+func _on_settings_closed() -> void:
+	if is_instance_valid(_settings):
+		var settings := _settings
+		_settings = null
+		remove_child(settings)
+		settings.queue_free()
+	else:
+		_settings = null
+	set_cards_interactive(true)
+	var index := clampi(_settings_return_index, 0, _card_buttons.size() - 1)
+	_focused_index = index
+	_card_buttons[index].grab_focus()
+	_set_selector_visible(_is_player_vs_ai_card(index))
+
+func _menu_reference_height() -> float:
+	return super._menu_reference_height() + (CARD_HEIGHT + CARD_GAP)
 
 func _on_mode_pressed(index: int) -> void:
 	_activate_card(index)

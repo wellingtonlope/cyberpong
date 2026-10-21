@@ -328,14 +328,17 @@ func _layout_for(surface_size: Vector2) -> Dictionary:
 	}
 
 func _ui_scale_for(surface_size: Vector2) -> float:
-	var reference_height := MENU_REFERENCE_HEIGHT
-	if not _selector_buttons.is_empty():
-		reference_height += SELECTOR_REFERENCE_EXTRA
 	return clampf(
-		minf(surface_size.x / 960.0, surface_size.y / reference_height),
+		minf(surface_size.x / 960.0, surface_size.y / _menu_reference_height()),
 		MIN_UI_SCALE,
 		MAX_UI_SCALE
 	)
+
+func _menu_reference_height() -> float:
+	var reference_height := MENU_REFERENCE_HEIGHT
+	if not _selector_buttons.is_empty():
+		reference_height += SELECTOR_REFERENCE_EXTRA
+	return reference_height
 
 func _draw() -> void:
 	var surface_size := _current_surface_size()

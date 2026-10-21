@@ -97,6 +97,26 @@ func test_difficulty_persists_when_returning_to_the_main_menu() -> void:
 	)
 	assert_false(reopened_menu._selector_visible)
 
+func test_settings_menu_opens_from_the_main_menu_and_keeps_the_match_idle() -> void:
+	var menu = game.get_node_or_null("GameMenu")
+	assert_not_null(menu)
+
+	menu.get_node("BtnSettings").pressed.emit()
+
+	var settings = menu.get_node_or_null("SettingsMenu")
+	assert_not_null(settings)
+	assert_true(get_tree().paused)
+	assert_false(menu.visible == false)
+	assert_eq(game._game_mode, game.GameMode.PLAYER_VS_AI)
+	assert_eq(game.ball.current_speed, 1140.0)
+
+	settings._finish_selection()
+	await get_tree().process_frame
+
+	assert_null(menu.get_node_or_null("SettingsMenu"))
+	assert_true(get_tree().paused)
+	assert_true(menu.visible)
+
 func test_quit_card_signal_is_connected_to_the_game_shutdown() -> void:
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
