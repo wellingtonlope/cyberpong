@@ -1,0 +1,85 @@
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: 4.7-stable
+
+jobs:
+  gut:
+    name: GUT headless
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Fazer o checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar o Godot ${{ env.GODOT_VERSION }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$url"
+          unzip -q godot.zip
+          install -m 0755 "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          godot --version
+
+      - name: Executar a suíte GUT
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          godot --headless --path . \
+            -s addons/gut/gut_cmdln.gd \
+            -gdir=res://test \
+            -ginclude_subdirs \
+            -gexit \
+            -gjunit_xml_file=reports/gut-results.xml
+
+      - name: Resumir o resultado no relatório do job
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import os
+          import xml.etree.ElementTree as ET
+
+          path = "reports/gut-results.xml"
+          if not os.path.isfile(path):
+              print("O arquivo JUnit `reports/gut-results.xml` não foi gerado.")
+              raise SystemExit(0)
+
+          root = ET.parse(path).getroot()
+          suites = root.findall("testsuite")
+          total = int(root.get("tests", 0))
+          failures = int(root.get("failures", 0))
+          print("### Resultado da suíte GUT")
+          print()
+          print(f"- Testes: **{total}**")
+          print(f"- Falhas: **{failures}**")
+          print()
+          if failures:
+              print("| Suíte | Testes | Falhas |")
+              print("| --- | ---: | ---: |")
+              for suite in suites:
+                  print(
+                      "| {name} | {tests} | {failures} |".format(
+                          name=suite.get("name", ""),
+                          tests=suite.get("tests", "0"),
+                          failures=suite.get("failures", "0"),
+                      )
+                  )
+          PY
+
+      - name: Publicar o relatório JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gut-junit-report
+          path: reports/gut-results.xml
+          if-no-files-found: warn
