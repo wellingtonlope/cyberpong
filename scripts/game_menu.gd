@@ -105,6 +105,7 @@ func _on_mode_pressed(index: int) -> void:
 func _activate(mode: int, index: int) -> void:
 	if _selected or _closing:
 		return
+	SoundManager.play_ui_select()
 	_closing = true
 	_close_progress = 0.0
 	_closing_index = index
@@ -113,6 +114,7 @@ func _activate(mode: int, index: int) -> void:
 func _request_quit(index: int) -> void:
 	if _selected or _closing:
 		return
+	SoundManager.play_ui_select()
 	_closing = true
 	_close_progress = 0.0
 	_closing_index = index

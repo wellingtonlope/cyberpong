@@ -16,6 +16,7 @@ const CREDITS_SCENE := preload("res://scenes/credits_screen.tscn")
 const GAME_MENU_SCENE := preload("res://scenes/game_menu.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 const Difficulty = preload("res://scripts/difficulty.gd")
+const Effect = preload("res://scripts/power_up_effect.gd")
 
 enum GameMode {
 	PLAYER_VS_PLAYER,
@@ -52,6 +53,7 @@ func _ready() -> void:
 	power_up.configure(GAME_SCALE, HUD_BAR_HEIGHT)
 	ball.paddle_hit.connect(_on_ball_paddle_hit)
 	ball.missed.connect(_on_ball_missed)
+	ball.wall_hit.connect(_on_ball_wall_hit)
 	ball.speed_changed.connect(debug_hud.set_ball_speed)
 	ball.power_up_collected.connect(power_up.collect)
 	power_up.effect_changed.connect(_on_power_up_effect_changed)
@@ -169,9 +171,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif event.keycode == KEY_M:
 		_return_to_main_menu()
 
+func _on_ball_wall_hit(_impact_position: Vector2) -> void:
+	SoundManager.play_wall_bounce()
+
 func _open_pause_menu() -> void:
 	if _pause_menu != null or _menu_shown or game_over:
 		return
+	SoundManager.play_pause_open()
 	var menu = PAUSE_MENU_SCENE.instantiate()
 	add_child(menu)
 	menu.connect("resume_requested", _on_pause_resume_requested)
@@ -182,6 +188,7 @@ func _open_pause_menu() -> void:
 func _on_pause_resume_requested() -> void:
 	_dismiss_pause_menu()
 	get_tree().paused = false
+	SoundManager.play_pause_close()
 
 func _on_pause_main_menu_requested() -> void:
 	_dismiss_pause_menu()
@@ -226,6 +233,7 @@ func _restart_match() -> void:
 		right_paddle.get_collision_rect(),
 		HUD_BAR_HEIGHT
 	)
+	SoundManager.play_serve(true)
 
 func _on_ball_paddle_hit(
 	is_left: bool,
@@ -235,14 +243,25 @@ func _on_ball_paddle_hit(
 	used_extra_defense: bool
 ) -> void:
 	var paddle = left_paddle if is_left else right_paddle
+	var effect_id: int = power_up.get_active_effect_id()
+	var owner_is_left: bool = power_up.get_active_owner_is_left()
 	total_rebounds += 1
 	debug_hud.record_paddle_hit(is_left)
 	power_up.record_paddle_hit(is_left, used_extra_defense)
 	if total_rebounds >= _next_power_up_rebound and power_up.appear(field_size):
 		_schedule_next_power_up_spawn()
+		SoundManager.play_power_up_spawn()
 	_refresh_match_hud()
 	paddle.play_impact_deformation()
 	spark_effects.play_paddle_hit(impact_position, paddle.tint, horizontal_direction, speed_ratio)
+	if used_extra_defense:
+		SoundManager.play_extra_defense()
+	elif effect_id == Effect.Id.POWERFUL_BOUNCE and is_left == owner_is_left:
+		SoundManager.play_powerful_bounce()
+	elif effect_id == Effect.Id.BALL_BRAKE and is_left != owner_is_left:
+		SoundManager.play_ball_brake()
+	else:
+		SoundManager.play_paddle_hit(is_left, speed_ratio)
 
 func _refresh_match_hud() -> void:
 	var hits_until_next_power_up := maxi(_next_power_up_rebound - total_rebounds, 0)
@@ -256,8 +275,10 @@ func _on_power_up_effect_changed(is_left: bool, is_active: bool, size_multiplier
 	var paddle = left_paddle if is_left else right_paddle
 	if is_active:
 		paddle.apply_power_up(size_multiplier, accent_color)
+		SoundManager.play_power_up_collect(power_up.get_active_effect_id())
 	else:
 		paddle.clear_power_up()
+		SoundManager.play_power_up_expire()
 
 func _on_ball_missed(left_side: bool) -> void:
 	power_up.clear_available_item()
@@ -268,12 +289,14 @@ func _on_ball_missed(left_side: bool) -> void:
 		right_score += 1
 	arena.set_score(left_score, right_score)
 	arena.show_point_awarded(scorer_is_left)
+	SoundManager.play_score(scorer_is_left)
 
 	var winning_score := left_score if scorer_is_left else right_score
 	if winning_score >= WINNING_SCORE:
 		game_over = true
 		var winner_name := "Cyan Circuit" if scorer_is_left else "Magenta Volt"
 		arena.set_winner(winner_name)
+		SoundManager.play_win(scorer_is_left)
 		return
 
 	ball.serve_from_paddle(
@@ -282,4 +305,5 @@ func _on_ball_missed(left_side: bool) -> void:
 		scorer_is_left,
 		NEXT_RALLY_BALL_SPEED
 	)
+	SoundManager.play_serve(scorer_is_left)
 	arena.show_rally_intro(scorer_is_left)

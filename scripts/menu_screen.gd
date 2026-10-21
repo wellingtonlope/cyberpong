@@ -86,7 +86,10 @@ func _configure_selector_buttons() -> void:
 func _set_selector_selection(index: int) -> void:
 	if _selector_buttons.is_empty():
 		return
-	_selector_selected_index = clampi(index, 0, _selector_buttons.size() - 1)
+	var clamped := clampi(index, 0, _selector_buttons.size() - 1)
+	if _selector_selected_index != clamped:
+		SoundManager.play_ui_move()
+	_selector_selected_index = clamped
 	queue_redraw()
 
 func _set_selector_visible(visible: bool) -> void:
@@ -160,6 +163,8 @@ func _finish_selection() -> void:
 	pass
 
 func _on_card_focused(index: int) -> void:
+	if _focused_index != index:
+		SoundManager.play_ui_move()
 	_focused_index = index
 	if index < _card_rects.size():
 		_cursor_target_y = _card_rects[index].get_center().y

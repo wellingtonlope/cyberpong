@@ -12,6 +12,7 @@ signal paddle_hit(
 signal missed(left_side: bool)
 signal speed_changed(current_speed: float)
 signal power_up_collected(is_left: bool)
+signal wall_hit(hit_position: Vector2)
 
 const DEFAULT_RADIUS := 30.0
 const DEFAULT_SPEED := 1140.0
@@ -129,9 +130,11 @@ func advance(
 	if position.y - radius <= play_top:
 		position.y = play_top + radius
 		velocity.y = absf(velocity.y)
+		wall_hit.emit(Vector2(position.x, play_top))
 	elif position.y + radius >= field_size.y:
 		position.y = field_size.y - radius
 		velocity.y = -absf(velocity.y)
+		wall_hit.emit(Vector2(position.x, field_size.y))
 
 	if power_up_radius > 0.0 and _segment_intersects_power_up(
 		previous_position,

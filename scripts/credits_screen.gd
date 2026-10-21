@@ -39,6 +39,7 @@ func _ready() -> void:
 	background.color = BACKGROUND_COLOR
 	_update_layout()
 	_apply_alpha()
+	SoundManager.play_credits_sting()
 
 func _process(delta: float) -> void:
 	if _finished:

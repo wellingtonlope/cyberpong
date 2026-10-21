@@ -38,6 +38,7 @@ func _activate_card(index: int) -> void:
 func _activate_action(action: int, index: int) -> void:
 	if _selected or _closing:
 		return
+	SoundManager.play_ui_select()
 	_closing = true
 	_close_progress = 0.0
 	_closing_index = index

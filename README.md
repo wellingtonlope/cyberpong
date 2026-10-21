@@ -120,6 +120,7 @@ Se o executável não estiver no `PATH`, use o caminho completo do Godot. Para e
 - `test_power_up.gd`: catálogo centralizado, aparição, janela de cinco rebatidas, coleta, proprietário, durações, cargas, sinais, HUD, cores e redimensionamento.
 - `test_debug_hud.gd` e `test_spark_effects.gd`: visibilidade e contagens do HUD; quantidade, expiração, quique e anel de impacto.
 - `test_credits_screen.gd`: layout, fade, emissão única de `finished`, pulo por tecla/clique e janelas diferentes.
+- `test_sound_manager.gd`: catálogo de efeitos sonoros, pool de AudioStreamPlayers, reprodução desativável, variação de tom por velocidade e efeitos de power-up.
 - `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seletor de dificuldade condicional, seleção, transição e início/saída.
 - `test_pause_menu.gd`: cartões, layout, foco, transição, retomada por ESC e volta ao menu principal.
 
@@ -128,6 +129,7 @@ Se o executável não estiver no `PATH`, use o caminho completo do Godot. Para e
 - `test_credits_flow.gd`: abertura pelos créditos, entrega ao menu, bloqueio de teclas e ausência de repetição ao voltar da pausa.
 - `test_menu_flow.gd`: pausa da partida, seleção de modo e dificuldade, aplicação na IA, retomada, modos PvP/Jogador VS AI e encerramento.
 - `test_pause_flow.gd`: abertura por ESC/P, congelamento, retomada sem alterar o estado e restauração dos padrões.
+- `test_sound_flow.gd`: integração de áudio com rebatidas, paredes, power-ups, saques, pontos, vitória e transições de pausa.
 - `test_main_flow.gd`: nós e sinais, saques, placar, vitória, retorno ao menu pelo `M`, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.
 - `test_scene_resources.gd`: carregamento das cenas e disponibilidade da fonte de fallback.
 - `test_visual_verification.gd`: limites em várias resoluções, sobreposição do HUD, contraste e efeitos visuais.
@@ -144,11 +146,12 @@ Os testes validam intervalos e invariantes quando há aleatoriedade e rodam em m
 ```text
 .
 ├── main.tscn / main.gd     # Cena principal, créditos, menus e regras da partida
-├── project.godot           # Configuração, janela e cena de entrada
+├── project.godot           # Configuração, janela, autoload e cena de entrada
 ├── guia-visual.md          # Paleta, identidade das equipes e critérios visuais
 ├── assets/icons/           # Avatar da tela de créditos
+├── assets/audio/           # Efeitos sonoros sintetizados (WAV)
 ├── scenes/                 # Cenas de bola, raquetes, créditos, menu e pausa
-├── scripts/                # Arena, bola, raquetes, dificuldade, menus, HUD, power-ups e efeitos
+├── scripts/                # Arena, bola, raquetes, áudio, dificuldade, menus, HUD, power-ups e efeitos
 ├── test/unit/              # Testes unitários
 ├── test/integration/       # Testes de cenas, sinais e fluxos
 ├── docs/screenshots/       # Capturas usadas neste README
@@ -164,6 +167,7 @@ O único arquivo de imagem do jogo é o avatar da tela de créditos. Todo o rest
 | Recurso | Origem | Licença |
 | --- | --- | --- |
 | Avatar da Moron Souls Productions (`assets/icons/moronsouls_avatar.png`) | Avatar do canal [@moronsouls4405](https://www.youtube.com/@moronsouls4405), recortado sem fundo | Arte fornecida pelo autor; confirme a licença antes de redistribuir |
+| Efeitos sonoros (`assets/audio/*.wav`) | Síntese procedural via `scripts/generate_audio.py` | Código e áudio próprios |
 | Arena, HUD, placar, emblemas, power-ups, menus e efeitos | Código do projeto | Código próprio |
 | Tipografia | `ThemeDB.fallback_font` do Godot | Conforme a distribuição do Godot |
 | GUT 9.7.1 | `addons/gut/` | MIT |
@@ -181,6 +185,7 @@ O avatar pode ser substituído mantendo o caminho referenciado por `scenes/credi
 - `difficulty.gd` define os presets Fácil, Médio e Difícil, com velocidade, atraso de reação e zona morta das IAs.
 - `power_up_effect.gd` centraliza os IDs (`Effect.Id`) e o catálogo (`Effect.CATALOG`) dos efeitos; `power_up.gd` agenda aparições a cada 5–15 rebatidas totais e controla coleta, proprietário e duração.
 - `arena.gd` desenha a arena em camadas, o placar, o aviso de saque, a transição de ponto, a tela de vitória e o HUD superior.
+- `sound_manager.gd` (autoload `SoundManager`) gerencia e reproduz os efeitos sonoros via pool de áudio com modulação de tom por velocidade, sons por equipe e por tipo de power-up.
 - `menu_screen.gd` concentra layout, desenho e foco compartilhados, incluindo o seletor de dificuldade; `game_menu.gd`, `pause_menu.gd` e `credits_screen.gd` usam esse template.
 - `debug_hud.gd` exibe velocidade e rebatidas por IA com `F3`; `spark_effects.gd` simula as faíscas e o anel de impacto.
 - A resolução de viewport em `project.godot` é **2880 × 1620**, em tela cheia. A escala é definida por `GAME_SCALE` em `main.gd` e o HUD respeita `HUD_BAR_HEIGHT`.
