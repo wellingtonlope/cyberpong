@@ -181,6 +181,7 @@ func _open_pause_menu() -> void:
 	var menu = PAUSE_MENU_SCENE.instantiate()
 	add_child(menu)
 	menu.connect("resume_requested", _on_pause_resume_requested)
+	menu.connect("restart_requested", _on_pause_restart_requested)
 	menu.connect("main_menu_requested", _on_pause_main_menu_requested)
 	_pause_menu = menu
 	get_tree().paused = true
@@ -189,6 +190,12 @@ func _on_pause_resume_requested() -> void:
 	_dismiss_pause_menu()
 	get_tree().paused = false
 	SoundManager.play_pause_close()
+
+func _on_pause_restart_requested() -> void:
+	_dismiss_pause_menu()
+	get_tree().paused = false
+	SoundManager.play_pause_close()
+	_restart_match()
 
 func _on_pause_main_menu_requested() -> void:
 	_dismiss_pause_menu()

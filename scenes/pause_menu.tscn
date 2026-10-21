@@ -22,6 +22,24 @@ focus_mode = 2
 flat = true
 text = ""
 
+[node name="BtnRestart" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 2
+flat = true
+text = ""
+
+[node name="BtnSettings" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 2
+flat = true
+text = ""
+
 [node name="BtnMainMenu" type="Button" parent="."]
 layout_mode = 0
 offset_right = 10.0

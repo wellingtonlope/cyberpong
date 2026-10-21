@@ -6,6 +6,7 @@ const SCENE_PATHS := [
 	"res://scenes/paddle.tscn",
 	"res://scenes/game_menu.tscn",
 	"res://scenes/pause_menu.tscn",
+	"res://scenes/settings_menu.tscn",
 	"res://scenes/credits_screen.tscn",
 ]
 

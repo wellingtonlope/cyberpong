@@ -107,6 +107,61 @@ func test_resume_button_unpauses_and_preserves_the_frozen_state() -> void:
 	assert_eq(game.right_paddle.position.y, 960.0)
 	await get_tree().process_frame
 
+func test_restart_action_resets_the_match_and_resumes_the_game() -> void:
+	game.left_score = 2
+	game.right_score = 1
+	game.total_rebounds = 9
+	game.debug_hud.record_paddle_hit(true)
+	game.ball.current_speed = 3000.0
+	game.ball.velocity = Vector2(-3000.0, 0.0)
+	game.power_up.appear(game.field_size)
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
+	game.power_up.collect(true)
+
+	_press_key(KEY_ESCAPE)
+	var pause_menu = game.get_node_or_null("PauseMenu")
+	assert_not_null(pause_menu)
+	pause_menu._select_action(pause_menu.Action.RESTART)
+
+	assert_null(game._pause_menu)
+	assert_null(game.get_node_or_null("PauseMenu"))
+	assert_false(get_tree().paused)
+	assert_false(game.game_over)
+	assert_eq(game.left_score, 0)
+	assert_eq(game.right_score, 0)
+	assert_eq(game.total_rebounds, 0)
+	assert_eq(game.ball.current_speed, 1140.0)
+	assert_eq(game.ball._paddle_hits, 0)
+	assert_eq(game.power_up.status, game.power_up.Status.INACTIVE)
+	assert_false(game.left_paddle.power_up_active)
+	assert_eq(game.left_paddle.paddle_height, game.left_paddle.base_paddle_height)
+	await get_tree().process_frame
+
+func test_settings_menu_opens_from_the_pause_menu_and_keeps_the_match_frozen() -> void:
+	game.ball.position = Vector2(1200.0, 700.0)
+	game.ball.velocity = Vector2(-2100.0, 480.0)
+
+	_press_key(KEY_ESCAPE)
+	var pause_menu = game.get_node_or_null("PauseMenu")
+	assert_not_null(pause_menu)
+	pause_menu._activate_action(pause_menu.Action.SETTINGS, 2)
+
+	var settings = pause_menu.get_node_or_null("SettingsMenu")
+	assert_not_null(settings)
+	assert_true(get_tree().paused)
+
+	var ball_position: Vector2 = game.ball.position
+	game._physics_process(0.5)
+	assert_eq(game.ball.position, ball_position)
+	assert_eq(game.ball.velocity, Vector2(-2100.0, 480.0))
+
+	settings._finish_selection()
+	await get_tree().process_frame
+
+	assert_null(pause_menu.get_node_or_null("SettingsMenu"))
+	assert_true(get_tree().paused)
+	assert_not_null(game.get_node_or_null("PauseMenu"))
+
 func test_returning_to_main_menu_restores_all_default_match_values() -> void:
 	game.left_score = 2
 	game.right_score = 1

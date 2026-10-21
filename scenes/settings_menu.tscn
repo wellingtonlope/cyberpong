@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/settings_menu.gd" id="1_settings"]
+
+[node name="SettingsMenu" type="Control"]
+z_index = 120
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_settings")
+
+[node name="BtnVolumeDown" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 2
+flat = true
+text = ""
+
+[node name="BtnVolumeUp" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 2
+flat = true
+text = ""
+
+[node name="BtnSound" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 2
+flat = true
+text = ""
+
+[node name="BtnFullscreen" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 2
+flat = true
+text = ""
+
+[node name="BtnBack" type="Button" parent="."]
+layout_mode = 0
+offset_right = 10.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 2
+focus_mode = 2
+flat = true
+text = ""

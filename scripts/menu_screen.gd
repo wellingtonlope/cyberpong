@@ -185,6 +185,15 @@ func grab_first_focus() -> void:
 			button.grab_focus()
 			return
 
+func set_cards_interactive(interactive: bool) -> void:
+	for button in _card_buttons:
+		if button == null:
+			continue
+		button.disabled = not interactive
+		button.mouse_filter = (
+			Control.MOUSE_FILTER_STOP if interactive else Control.MOUSE_FILTER_IGNORE
+		)
+
 func _show() -> void:
 	show()
 	get_tree().paused = true
