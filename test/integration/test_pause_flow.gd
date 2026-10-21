@@ -182,7 +182,7 @@ func test_returning_to_main_menu_restores_all_default_match_values() -> void:
 
 	assert_null(game._pause_menu)
 	assert_null(game.get_node_or_null("PauseMenu"))
-	assert_true(game._menu_shown)
+	assert_eq(game.screen_state, ScreenState.State.MENU)
 	assert_true(get_tree().paused)
 	var game_menu = game.get_node_or_null("GameMenu")
 	assert_not_null(game_menu)

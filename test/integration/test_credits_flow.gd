@@ -27,7 +27,7 @@ func test_game_starts_with_the_credits_screen_instead_of_the_menu() -> void:
 	assert_true(credits.visible)
 	assert_eq(credits.get_display_name(), "Moron Souls Productions")
 	assert_eq(credits.background.color, Color.BLACK)
-	assert_true(game._menu_shown)
+	assert_eq(game.screen_state, ScreenState.State.CREDITS)
 	assert_true(get_tree().paused)
 
 func test_credits_hand_off_to_the_menu_and_the_match_can_start() -> void:
@@ -38,6 +38,7 @@ func test_credits_hand_off_to_the_menu_and_the_match_can_start() -> void:
 	assert_not_null(menu)
 	assert_true(menu.visible)
 	assert_true(get_tree().paused)
+	assert_eq(game.screen_state, ScreenState.State.MENU)
 
 	menu.get_node("BtnPvAI").pressed.emit()
 	menu._process(menu.CLOSE_DURATION)

@@ -18,7 +18,7 @@ func before_each() -> void:
 	var menu = game.get_node_or_null("GameMenu")
 	if menu != null:
 		menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
-	game.game_over = true
+	game.screen_state = ScreenState.State.GAME_OVER
 	SoundManager.play_count = 0
 	SoundManager.last_played_sound = ""
 
@@ -78,8 +78,7 @@ func test_score_and_win_trigger_respective_sounds() -> void:
 	assert_eq(SoundManager.last_played_sound, "win")
 
 func test_pause_open_and_resume_trigger_pause_sounds() -> void:
-	game.game_over = false
-	game._menu_shown = false
+	game.screen_state = ScreenState.State.PLAYING
 	game._open_pause_menu()
 	assert_eq(SoundManager.last_played_sound, "pause_open")
 

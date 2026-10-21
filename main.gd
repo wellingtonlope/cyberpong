@@ -26,7 +26,6 @@ const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 @onready var power_up: PowerUp = $PowerUp
 
 var field_size := Vector2.ZERO
-var game_over := false
 var left_score := 0
 var right_score := 0
 var total_rebounds := 0
@@ -34,9 +33,14 @@ var _next_power_up_rebound := 0
 var _random := RandomNumberGenerator.new()
 var _game_mode: GameMode.Mode = GameMode.Mode.PLAYER_VS_AI
 var _difficulty: Difficulty.Level = Difficulty.DEFAULT_LEVEL
-var _menu_shown := false
 var _pause_menu: PauseMenu = null
 var _credits: CreditsScreen = null
+var screen_state: ScreenState.State = ScreenState.State.CREDITS
+
+## Verdadeiro quando a partida terminou e a tela de vitória está aberta.
+var game_over: bool:
+	get:
+		return screen_state == ScreenState.State.GAME_OVER
 
 func _ready() -> void:
 	_random.randomize()
@@ -57,12 +61,12 @@ func _ready() -> void:
 	_show_credits()
 
 func _show_credits() -> void:
-	_menu_shown = true
 	var credits := CREDITS_SCENE.instantiate() as CreditsScreen
 	credits.name = "CreditsScreen"
 	add_child(credits)
 	credits.finished.connect(_on_credits_finished)
 	_credits = credits
+	screen_state = ScreenState.State.CREDITS
 	get_tree().paused = true
 
 func _on_credits_finished() -> void:
@@ -89,7 +93,7 @@ func _show_menu() -> void:
 	add_child(menu)
 	menu.mode_selected.connect(_on_mode_selected)
 	menu.quit_requested.connect(_on_quit_requested)
-	_menu_shown = true
+	screen_state = ScreenState.State.MENU
 
 func _on_quit_requested() -> void:
 	get_tree().quit()
@@ -97,7 +101,6 @@ func _on_quit_requested() -> void:
 func _on_mode_selected(mode: GameMode.Mode, difficulty: Difficulty.Level) -> void:
 	_game_mode = mode
 	_difficulty = difficulty
-	_menu_shown = false
 	_apply_game_mode()
 	_restart_match()
 
@@ -114,7 +117,7 @@ func _apply_game_mode() -> void:
 			right_paddle.set_control_mode(Paddle.ControlMode.AI)
 
 func _physics_process(delta: float) -> void:
-	if game_over or _menu_shown or _pause_menu != null:
+	if screen_state != ScreenState.State.PLAYING:
 		return
 
 	var viewport_size := get_viewport_rect().size
@@ -149,18 +152,18 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if not event.pressed or event.echo:
 		return
-	if _credits != null:
+	if screen_state == ScreenState.State.CREDITS:
 		return
 	if event.keycode == KEY_F3:
 		debug_hud.toggle()
 		get_viewport().set_input_as_handled()
 		return
 	if event.keycode == KEY_ESCAPE or event.keycode == KEY_P:
-		if not game_over and not _menu_shown and _pause_menu == null:
+		if screen_state == ScreenState.State.PLAYING:
 			_open_pause_menu()
 			get_viewport().set_input_as_handled()
 		return
-	if not game_over:
+	if screen_state != ScreenState.State.GAME_OVER:
 		return
 	if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
 		_restart_match()
@@ -168,12 +171,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_return_to_main_menu()
 
 func _on_victory_new_match_requested() -> void:
-	if not game_over:
+	if screen_state != ScreenState.State.GAME_OVER:
 		return
 	_restart_match()
 
 func _on_victory_main_menu_requested() -> void:
-	if not game_over:
+	if screen_state != ScreenState.State.GAME_OVER:
 		return
 	_return_to_main_menu()
 
@@ -181,7 +184,7 @@ func _on_ball_wall_hit(_impact_position: Vector2) -> void:
 	SoundManager.play_wall_bounce()
 
 func _open_pause_menu() -> void:
-	if _pause_menu != null or _menu_shown or game_over:
+	if screen_state != ScreenState.State.PLAYING:
 		return
 	SoundManager.play_pause_open()
 	var menu := PAUSE_MENU_SCENE.instantiate() as PauseMenu
@@ -190,10 +193,12 @@ func _open_pause_menu() -> void:
 	menu.restart_requested.connect(_on_pause_restart_requested)
 	menu.main_menu_requested.connect(_on_pause_main_menu_requested)
 	_pause_menu = menu
+	screen_state = ScreenState.State.PAUSED
 	get_tree().paused = true
 
 func _on_pause_resume_requested() -> void:
 	_dismiss_pause_menu()
+	screen_state = ScreenState.State.PLAYING
 	get_tree().paused = false
 	SoundManager.play_pause_close()
 
@@ -219,6 +224,7 @@ func _dismiss_pause_menu() -> void:
 	_pause_menu = null
 	remove_child(menu)
 	menu.queue_free()
+	screen_state = ScreenState.State.PLAYING
 
 func _restart_match() -> void:
 	field_size = get_viewport_rect().size
@@ -231,7 +237,7 @@ func _restart_match() -> void:
 	right_score = 0
 	total_rebounds = 0
 	_schedule_next_power_up_spawn()
-	game_over = false
+	screen_state = ScreenState.State.PLAYING
 	power_up.reset_for_match(field_size)
 	debug_hud.reset_match_counts()
 	arena.set_score(left_score, right_score, WINNING_SCORE)
@@ -306,7 +312,7 @@ func _on_ball_missed(left_side: bool) -> void:
 
 	var winning_score := left_score if scorer_is_left else right_score
 	if winning_score >= WINNING_SCORE:
-		game_over = true
+		screen_state = ScreenState.State.GAME_OVER
 		arena.set_winner(scorer_is_left)
 		SoundManager.play_win(scorer_is_left)
 		return

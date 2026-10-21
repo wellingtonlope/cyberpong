@@ -17,7 +17,7 @@ func before_each() -> void:
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
 	menu.select_mode(GameMode.Mode.PLAYER_VS_AI)
-	game.game_over = true
+	game.screen_state = ScreenState.State.GAME_OVER
 
 func test_main_scene_initializes_expected_nodes_and_first_serve() -> void:
 	for node_path in ["Arena", "Paddles/Left", "Paddles/Right", "Ball", "PowerUp", "SparkEffects", "DebugHud"]:
@@ -79,7 +79,7 @@ func test_m_returns_to_main_menu_after_victory() -> void:
 	game._unhandled_key_input(event)
 
 	assert_false(game.game_over)
-	assert_true(game._menu_shown)
+	assert_eq(game.screen_state, ScreenState.State.MENU)
 	assert_true(get_tree().paused)
 	assert_eq(game.left_score, 0)
 	assert_eq(game.right_score, 0)
@@ -96,7 +96,7 @@ func test_m_does_not_open_menu_during_an_active_match() -> void:
 	event.keycode = KEY_M
 	game._unhandled_key_input(event)
 
-	assert_false(game._menu_shown)
+	assert_ne(game.screen_state, ScreenState.State.MENU)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
 	assert_false(menu.visible)
@@ -215,7 +215,7 @@ func test_clicking_the_main_menu_button_returns_to_the_main_menu() -> void:
 	game.arena._unhandled_input(_click_event(position))
 
 	assert_false(game.game_over)
-	assert_true(game._menu_shown)
+	assert_eq(game.screen_state, ScreenState.State.MENU)
 	assert_true(get_tree().paused)
 	var menu = game.get_node_or_null("GameMenu")
 	assert_not_null(menu)
@@ -229,7 +229,7 @@ func test_clicking_outside_the_victory_buttons_does_nothing() -> void:
 	game.arena._unhandled_input(_click_event(Vector2(40.0, 40.0)))
 
 	assert_true(game.game_over)
-	assert_false(game._menu_shown)
+	assert_ne(game.screen_state, ScreenState.State.MENU)
 
 func test_hovering_the_victory_buttons_highlights_the_pressed_action() -> void:
 	for _index in range(3):
@@ -349,7 +349,7 @@ func test_hud_scale_keeps_interface_compact_on_narrow_windows() -> void:
 	assert_lte(float(game.arena._hud_scale_for(FIELD_SIZE)), float(3.0))
 
 func test_viewport_resize_keeps_entities_inside_play_area() -> void:
-	game.game_over = false
+	game.screen_state = ScreenState.State.PLAYING
 	game.power_up.appear(game.field_size)
 	game.power_up.position = FIELD_SIZE - Vector2.ONE * 2.0
 	get_viewport().size = Vector2(1000.0, 600.0)
