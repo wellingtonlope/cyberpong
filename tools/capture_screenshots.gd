@@ -8,7 +8,7 @@ const TARGET_SIZE := Vector2i(1920, 1080)
 const WARM_UP_SECONDS := 16.0
 const HIT_TIMEOUT_FRAMES := 900
 
-var _main: Node
+var _main: CyberPong
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -53,7 +53,7 @@ func _capture_matches() -> void:
 	await _capture_reduced_paddle()
 
 func _capture_item_in_field() -> void:
-	var power_up := _main.power_up
+	var power_up: PowerUp = _main.power_up
 	power_up.appear(_main.field_size)
 	power_up.effect_id = PowerUpEffect.Id.DOUBLE_SIZE
 	power_up._apply_effect_visuals()
@@ -64,7 +64,7 @@ func _capture_item_in_field() -> void:
 	await _save("partida.png")
 
 func _capture_powerful_bounce() -> void:
-	var power_up := _main.power_up
+	var power_up: PowerUp = _main.power_up
 	power_up.clear_available_item()
 	_hold_effect(PowerUpEffect.Id.POWERFUL_BOUNCE, true, 6, 3)
 	await _wait_next_left_hit()
@@ -77,7 +77,7 @@ func _capture_reduced_paddle() -> void:
 	await _save("power-up-raquete-reduzida.png")
 
 func _hold_effect(effect_id: int, owner_is_left: bool, hits_remaining: int, uses_remaining: int) -> void:
-	var power_up := _main.power_up
+	var power_up: PowerUp = _main.power_up
 	if power_up.status == PowerUp.Status.HELD:
 		power_up.effect_changed.emit(power_up.owner_is_left, false, 1.0, Color.TRANSPARENT)
 	var data := PowerUpEffect.data(effect_id)
@@ -96,7 +96,7 @@ func _hold_effect(effect_id: int, owner_is_left: bool, hits_remaining: int, uses
 	power_up._emit_status()
 
 func _wait_next_left_hit() -> void:
-	var before := _main.total_rebounds
+	var before: int = _main.total_rebounds
 	for _frame in range(HIT_TIMEOUT_FRAMES):
 		await get_tree().process_frame
 		if _main.total_rebounds > before and _main.ball.velocity.x > 0.0:
