@@ -135,6 +135,38 @@ O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pu
 - O resumo com o total de testes e falhas é escrito no relatório do job.
 - A execução falha quando há testes quebrados, porque o GUT encerra com código diferente de zero.
 
+## Build e releases
+
+O workflow `.github/workflows/build.yml` gera os builds de **Linux** e **Windows** quando você cria uma tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+O workflow instala o Godot 4.7, baixa os export templates, roda a suíte GUT, exporta os dois alvos e publica:
+
+| Arquivo | Conteúdo |
+| --- | --- |
+| `CyberPong-v1.0.0-linux-x86_64.zip` | Executável único de 64 bits para Linux |
+| `CyberPong-v1.0.0-windows-x86_64.zip` | Executável único de 64 bits para Windows |
+| `checksums.txt` | SHA-256 dos dois zips |
+
+Os zips viram artefatos da execução e anexos da Release da tag no GitHub. Builds manuais podem ser disparados em **Actions → Build → Run workflow**, informando a versão.
+
+- A tag precisa seguir `v` seguido de números (`v1.0.0`). A versão é gravada em `application/config/version` antes da exportação e aparece nos metadados do executável Windows.
+- Os presets de exportação ficam em `export_presets.cfg`, na raiz do projeto, e são versionados. O pacote do jogo exclui `addons/gut/`, `test/`, `tools/` e `docs/`.
+- Os export templates do Godot (1,27 GB) são baixados uma vez e guardados em cache pelo Actions.
+- `godot --headless --path . --import` roda antes da exportação, porque um checkout limpo não tem a pasta `.godot/`.
+- O executável do Windows **não é assinado** com certificado de código, então o Windows pode mostrar o aviso do SmartScreen ao abrir.
+
+Para exportar localmente, instale os export templates da mesma versão do Godot (**Editor → Gerenciar Modelos de Exportação**) e use **Projeto → Exportar**, ou o comando:
+
+```bash
+godot --headless --path . --export-release "Linux x86_64" build/linux/CyberPong.x86_64
+godot --headless --path . --export-release "Windows x86_64" build/windows/CyberPong.exe
+```
+
 <details>
 <summary><b>Plano de testes detalhado</b></summary>
 
@@ -154,6 +186,7 @@ O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pu
 - `test_menu_screen.gd`: template compartilhado dos menus (layout, foco, transição de fechamento e sobreposição das configurações).
 - `test_game_config.gd`: medidas e velocidades escaladas e valores documentados.
 - `test_ui_draw.gd`: helpers de desenho compartilhados (fonte, transparência, geometria e emblemas).
+- `test_export_presets.gd`: presets de exportação de Linux e Windows, arquitetura, exclusão de testes e addons, ícone e versão do projeto.
 
 **Integração**
 
@@ -178,15 +211,16 @@ Os testes validam intervalos e invariantes quando há aleatoriedade e rodam em m
 .
 ├── main.tscn / main.gd     # Cena principal, créditos, menus e regras da partida
 ├── project.godot           # Configuração, janela, autoload e cena de entrada
+├── export_presets.cfg      # Presets de exportação de Linux e Windows
 ├── guia-visual.md          # Paleta, identidade das equipes e critérios visuais
-├── assets/icons/           # Avatar da tela de créditos
+├── assets/icons/           # Avatar da tela de créditos e ícone do aplicativo
 ├── assets/audio/           # Efeitos sonoros sintetizados (WAV)
 ├── scenes/                 # Cenas de bola, raquetes, créditos, menu, pausa e configurações
 ├── scripts/                # Arena, bola, raquetes, áudio, dificuldade, menus, HUD, power-ups e efeitos
 ├── test/unit/              # Testes unitários
 ├── test/integration/       # Testes de cenas, sinais e fluxos
 ├── tools/                  # Ferramenta que regera as capturas de tela do README
-├── .github/workflows/      # CI com GUT headless e relatório JUnit XML
+├── .github/workflows/      # CI com GUT headless, build por tag e release
 ├── docs/screenshots/       # Capturas usadas neste README
 └── addons/gut/             # GUT 9.7.1, somente desenvolvimento e testes
 ```
@@ -195,11 +229,11 @@ Os testes validam intervalos e invariantes quando há aleatoriedade e rodam em m
 
 ## Créditos e licenças
 
-O único arquivo de imagem do jogo é o avatar da tela de créditos. Todo o restante é desenhado pelo código com `_draw()`, `Polygon2D`, `Line2D`, `ColorRect` e controles nativos do Godot.
+O único arquivo de imagem do jogo é o avatar da tela de créditos, do qual deriva o ícone do aplicativo. Todo o restante é desenhado pelo código com `_draw()`, `Polygon2D`, `Line2D`, `ColorRect` e controles nativos do Godot.
 
 | Recurso | Origem | Licença |
 | --- | --- | --- |
-| Avatar da Moron Souls Productions (`assets/icons/moronsouls_avatar.png`) | Avatar do canal [@moronsouls4405](https://www.youtube.com/@moronsouls4405), recortado sem fundo | Arte fornecida pelo autor; confirme a licença antes de redistribuir |
+| Avatar da Moron Souls Productions (`assets/icons/moronsouls_avatar.png`) e ícone do aplicativo (`assets/icons/cyberpong_icon.png`, recorte quadrado do avatar) | Avatar do canal [@moronsouls4405](https://www.youtube.com/@moronsouls4405), recortado sem fundo | Arte fornecida pelo autor; confirme a licença antes de redistribuir |
 | Efeitos sonoros (`assets/audio/*.wav`) | Síntese procedural via `scripts/generate_audio.py` | Código e áudio próprios |
 | Arena, HUD, placar, emblemas, power-ups, menus e efeitos | Código do projeto | Código próprio |
 | Tipografia | `ThemeDB.fallback_font` do Godot | Conforme a distribuição do Godot |

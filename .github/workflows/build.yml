@@ -1,0 +1,144 @@
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão do build no formato v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: 4.7-stable
+  GODOT_TEMPLATES_VERSION: 4.7.stable
+  APP_NAME: CyberPong
+
+jobs:
+  build:
+    name: Exportar Linux e Windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Fazer o checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar o Godot ${{ env.GODOT_VERSION }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -fsSL --retry 3 -o godot.zip "$url"
+          unzip -q godot.zip
+          install -m 0755 "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          godot --version
+
+      - name: Cachear os export templates
+        id: cache-templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates
+          key: godot-export-templates-${{ env.GODOT_VERSION }}
+
+      - name: Baixar os export templates
+        if: steps.cache-templates.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          curl -fsSL --retry 3 -o /tmp/templates.tpz "$url"
+          rm -rf /tmp/templates
+          mkdir -p /tmp/templates "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}"
+          unzip -q /tmp/templates.tpz -d /tmp/templates \
+            "templates/version.txt" \
+            "templates/linux_debug.x86_64" \
+            "templates/linux_release.x86_64" \
+            "templates/windows_debug_x86_64.exe" \
+            "templates/windows_release_x86_64.exe"
+          cp -r /tmp/templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}/"
+          chmod +x "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}"/linux_* || true
+          rm -f /tmp/templates.tpz
+          ls -la "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}/"
+
+      - name: Importar os recursos do projeto
+        run: |
+          set -euo pipefail
+          godot --headless --path . --import
+
+      - name: Definir a versão a partir da tag
+        env:
+          TAG_ENTRADA: ${{ inputs.version || github.ref_name }}
+        run: |
+          set -euo pipefail
+          tag="$TAG_ENTRADA"
+          version="${tag#v}"
+          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "::error::Tag inválida: '${tag}'. Use o formato v1.0.0."
+            exit 1
+          fi
+          sed -i.bak "s|^config/version=.*|config/version=\"${version}\"|" project.godot
+          rm -f project.godot.bak
+          grep -n "^config/version=" project.godot
+          if ! grep -q "^config/version=\"${version}\"$" project.godot; then
+            echo "::error::Não foi possível gravar a versão em project.godot."
+            exit 1
+          fi
+          echo "TAG=${tag}" >> "$GITHUB_ENV"
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Executar a suíte GUT
+        run: |
+          set -euo pipefail
+          godot --headless --path . \
+            -s addons/gut/gut_cmdln.gd \
+            -gdir=res://test \
+            -ginclude_subdirs \
+            -gexit
+
+      - name: Exportar o Linux
+        run: |
+          set -euo pipefail
+          mkdir -p build/linux
+          godot --headless --path . --export-release "Linux x86_64" "build/linux/${APP_NAME}.x86_64"
+          chmod +x "build/linux/${APP_NAME}.x86_64"
+
+      - name: Exportar o Windows
+        run: |
+          set -euo pipefail
+          mkdir -p build/windows
+          godot --headless --path . --export-release "Windows x86_64" "build/windows/${APP_NAME}.exe"
+
+      - name: Empacotar os builds
+        run: |
+          set -euo pipefail
+          (cd build/linux && zip -9 "../${APP_NAME}-${TAG}-linux-x86_64.zip" "${APP_NAME}.x86_64")
+          (cd build/windows && zip -9 "../${APP_NAME}-${TAG}-windows-x86_64.zip" "${APP_NAME}.exe")
+          (cd build && sha256sum ./*.zip > checksums.txt)
+          cat build/checksums.txt
+
+      - name: Publicar os artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.TAG }}
+          path: |
+            build/*.zip
+            build/checksums.txt
+          if-no-files-found: error
+
+      - name: Criar a Release no GitHub
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" build/*.zip build/checksums.txt --clobber
+          else
+            gh release create "$TAG" build/*.zip build/checksums.txt \
+              --title "${APP_NAME} ${TAG}" \
+              --generate-notes
+          fi

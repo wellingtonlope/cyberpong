@@ -2,3 +2,6 @@
 reports/
 *.translation
 .DS_Store
+build/
+override.cfg
+export_credentials.cfg
