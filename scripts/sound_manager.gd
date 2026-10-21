@@ -34,9 +34,11 @@ var play_count := 0
 
 var _players: Array[AudioStreamPlayer] = []
 var _rng := RandomNumberGenerator.new()
+var _headless := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_headless = DisplayServer.get_name() == "headless"
 	_rng.randomize()
 	for i in range(POOL_SIZE):
 		var player := AudioStreamPlayer.new()
@@ -63,7 +65,8 @@ func play(sound_name: String, pitch_scale: float = 1.0, volume_db: float = 0.0) 
 	player.stream = stream
 	player.pitch_scale = pitch_scale
 	player.volume_db = master_volume_db + volume_db
-	player.play()
+	if not _headless:
+		player.play()
 	return player
 
 func play_paddle_hit(is_left: bool, speed_ratio: float = 1.0) -> AudioStreamPlayer:
@@ -131,6 +134,14 @@ func play_pause_close() -> AudioStreamPlayer:
 
 func play_credits_sting() -> AudioStreamPlayer:
 	return play("credits_sting", 1.0, 1.0)
+
+func _exit_tree() -> void:
+	for player in _players:
+		if not is_instance_valid(player):
+			continue
+		player.stop()
+		player.stream = null
+	_players.clear()
 
 func _get_available_player() -> AudioStreamPlayer:
 	for player in _players:

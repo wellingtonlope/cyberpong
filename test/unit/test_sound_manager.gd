@@ -56,6 +56,19 @@ func test_play_returns_null_when_disabled() -> void:
 	assert_null(player)
 	assert_eq(sound_manager.play_count, 0)
 
+func test_playback_skips_audio_output_in_headless_mode() -> void:
+	sound_manager._headless = true
+	var player = sound_manager.play("ui_select")
+	assert_not_null(player)
+	assert_false(player.playing)
+	assert_eq(sound_manager.last_played_sound, "ui_select")
+
+func test_exit_tree_stops_and_releases_every_pooled_player() -> void:
+	sound_manager._headless = true
+	sound_manager.play("ui_select")
+	sound_manager._exit_tree()
+	assert_true(sound_manager._players.is_empty())
+
 func test_paddle_hit_selects_side_sound_and_scales_pitch() -> void:
 	sound_manager.play_paddle_hit(true, 1.0)
 	assert_eq(sound_manager.last_played_sound, "hit_cyan")
