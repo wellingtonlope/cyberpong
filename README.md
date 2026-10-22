@@ -229,11 +229,12 @@ Os testes validam intervalos e invariantes quando há aleatoriedade e rodam em m
 
 ## Créditos e licenças
 
-O único arquivo de imagem do jogo é o avatar da tela de créditos, do qual deriva o ícone do aplicativo. Todo o restante é desenhado pelo código com `_draw()`, `Polygon2D`, `Line2D`, `ColorRect` e controles nativos do Godot.
+O único arquivo de arte externa do jogo é o avatar da tela de créditos; o ícone do aplicativo é gerado por script a partir da identidade visual do jogo (paleta de `scripts/palette.gd`). Todo o restante é desenhado pelo código com `_draw()`, `Polygon2D`, `Line2D`, `ColorRect` e controles nativos do Godot.
 
 | Recurso | Origem | Licença |
 | --- | --- | --- |
-| Avatar da Moron Souls Productions (`assets/icons/moronsouls_avatar.png`) e ícone do aplicativo (`assets/icons/cyberpong_icon.png`, recorte quadrado do avatar) | Avatar do canal [@moronsouls4405](https://www.youtube.com/@moronsouls4405), recortado sem fundo | Arte fornecida pelo autor; confirme a licença antes de redistribuir |
+| Avatar da Moron Souls Productions (`assets/icons/moronsouls_avatar.png`) | Canal [@moronsouls4405](https://www.youtube.com/@moronsouls4405), recortado sem fundo | Arte fornecida pelo autor; confirme a licença antes de redistribuir |
+| Ícone do aplicativo (`assets/icons/cyberpong_icon.png`) | Gerado por script a partir da identidade visual do jogo | Código próprio |
 | Efeitos sonoros (`assets/audio/*.wav`) | Síntese procedural via `scripts/generate_audio.py` | Código e áudio próprios |
 | Arena, HUD, placar, emblemas, power-ups, menus e efeitos | Código do projeto | Código próprio |
 | Tipografia | `ThemeDB.fallback_font` do Godot | Conforme a distribuição do Godot |
