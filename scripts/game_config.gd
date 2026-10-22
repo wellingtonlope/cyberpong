@@ -33,6 +33,14 @@ const FIRST_SERVE_SPEED := FIRST_SERVE_SPEED_UNITS * GAME_SCALE
 const NEXT_SERVE_SPEED := NEXT_SERVE_SPEED_UNITS * GAME_SCALE
 const MAX_BALL_SPEED := MAX_BALL_SPEED_UNITS * GAME_SCALE
 
+## Raio visual do power-up (moldura desenhada) e raio de coleta.
+## A bola coleta o item quando chega a BALL_RADIUS + POWER_UP_PICKUP_RADIUS.
+const POWER_UP_RADIUS_UNITS := 18.0
+const POWER_UP_PICKUP_RADIUS_UNITS := 30.0
+const POWER_UP_ICON_RATIO := 0.64
+const POWER_UP_RADIUS := POWER_UP_RADIUS_UNITS * GAME_SCALE
+const POWER_UP_PICKUP_RADIUS := POWER_UP_PICKUP_RADIUS_UNITS * GAME_SCALE
+
 # --- regras da partida ---
 
 ## Pontos necessários para vencer a partida.

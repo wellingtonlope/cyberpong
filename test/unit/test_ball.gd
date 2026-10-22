@@ -158,6 +158,23 @@ func test_swept_collision_collects_power_up_between_frames() -> void:
 
 	assert_signal_emitted_with_parameters(ball, "power_up_collected", [true])
 
+func test_ball_collects_power_up_when_passing_within_pickup_radius() -> void:
+	watch_signals(ball)
+	ball.position = Vector2(100.0, 300.0)
+	ball.velocity = Vector2(1000.0, 0.0)
+	# Distância de 35 px dentro da zona combinada (10 + 30 = 40).
+	ball.advance(0.2, LEFT_PADDLE, RIGHT_PADDLE, Vector2(150.0, 335.0), 30.0)
+
+	assert_signal_emitted(ball, "power_up_collected")
+
+func test_ball_ignores_power_up_beyond_pickup_radius() -> void:
+	watch_signals(ball)
+	ball.position = Vector2(100.0, 300.0)
+	ball.velocity = Vector2(1000.0, 0.0)
+	ball.advance(0.2, LEFT_PADDLE, RIGHT_PADDLE, Vector2(150.0, 345.0), 30.0)
+
+	assert_signal_not_emitted(ball, "power_up_collected")
+
 func test_ball_trail_tracks_movement_and_fades_out() -> void:
 	ball._trail.clear()
 	ball.position = Vector2(500.0, 300.0)

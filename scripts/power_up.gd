@@ -24,6 +24,7 @@ var effect_duration_hits := 0
 var effect_uses_remaining := 0
 var effect_id: int = PowerUpEffect.Id.NONE
 var collision_radius := 36.0
+var visual_radius := 36.0
 var field_size := Vector2.ZERO
 var play_top := 0.0
 var _random := RandomNumberGenerator.new()
@@ -41,14 +42,15 @@ func _ready() -> void:
 	hide()
 
 func configure(scale: float, play_top_boundary: float = 0.0) -> void:
-	collision_radius = 12.0 * scale
+	visual_radius = GameConfig.POWER_UP_RADIUS_UNITS * scale
+	collision_radius = GameConfig.POWER_UP_PICKUP_RADIUS_UNITS * scale
 	play_top = play_top_boundary
-	glow.polygon = UiDraw.diamond_points(Vector2.ZERO, collision_radius * 1.36)
-	body.polygon = UiDraw.diamond_points(Vector2.ZERO, collision_radius * 0.88)
-	core.polygon = UiDraw.diamond_points(Vector2.ZERO, collision_radius * 0.54)
-	frame.points = UiDraw.diamond_points(Vector2.ZERO, collision_radius)
-	frame.width = maxf(1.5, collision_radius * 0.07)
-	icon.configure(collision_radius * 0.54)
+	glow.polygon = UiDraw.diamond_points(Vector2.ZERO, visual_radius * 1.36)
+	body.polygon = UiDraw.diamond_points(Vector2.ZERO, visual_radius * 0.88)
+	core.polygon = UiDraw.diamond_points(Vector2.ZERO, visual_radius * 0.54)
+	frame.points = UiDraw.diamond_points(Vector2.ZERO, visual_radius)
+	frame.width = maxf(1.5, visual_radius * 0.07)
+	icon.configure(visual_radius * GameConfig.POWER_UP_ICON_RATIO)
 	_apply_default_visuals()
 
 func reset_for_match(size: Vector2) -> void:

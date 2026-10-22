@@ -222,5 +222,12 @@ func test_resizing_field_keeps_available_item_inside_play_area() -> void:
 	power_up.position = Vector2(900.0, 900.0)
 	power_up.update_field_size(Vector2(200.0, 180.0))
 
-	assert_eq(power_up.position, Vector2(188.0, 168.0))
+	assert_eq(power_up.position, Vector2(170.0, 150.0))
+
+func test_pickup_radius_is_larger_than_the_drawn_frame() -> void:
+	power_up.configure(1.0, PLAY_TOP)
+
+	assert_eq(float(power_up.visual_radius), float(GameConfig.POWER_UP_RADIUS_UNITS))
+	assert_eq(float(power_up.collision_radius), float(GameConfig.POWER_UP_PICKUP_RADIUS_UNITS))
+	assert_gt(power_up.collision_radius, power_up.visual_radius)
 
