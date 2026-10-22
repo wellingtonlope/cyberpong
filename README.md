@@ -160,21 +160,21 @@ O workflow `.github/workflows/tests.yml` roda a cada push em `main` e em cada pu
 O workflow `.github/workflows/build.yml` gera os builds de **Linux** e **Windows** quando você cria uma tag:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 O workflow instala o Godot 4.7, baixa os export templates, roda a suíte GUT, exporta os dois alvos e publica:
 
 | Arquivo | Conteúdo |
 | --- | --- |
-| `CyberPong-v1.0.0-linux-x86_64.zip` | Executável único de 64 bits para Linux |
-| `CyberPong-v1.0.0-windows-x86_64.zip` | Executável único de 64 bits para Windows |
+| `CyberPong-v0.2.0-linux-x86_64.zip` | Executável único de 64 bits para Linux |
+| `CyberPong-v0.2.0-windows-x86_64.zip` | Executável único de 64 bits para Windows |
 | `checksums.txt` | SHA-256 dos dois zips |
 
 Os zips viram artefatos da execução e anexos da Release da tag no GitHub. Builds manuais podem ser disparados em **Actions → Build → Run workflow**, informando a versão.
 
-- A tag precisa seguir `v` seguido de números (`v1.0.0`). A versão é gravada em `application/config/version` antes da exportação e aparece nos metadados do executável Windows.
+- A tag precisa seguir `v` seguido de números (`v0.2.0`). A versão é gravada em `application/config/version` antes da exportação e aparece nos metadados do executável Windows.
 - Os presets de exportação ficam em `export_presets.cfg`, na raiz do projeto, e são versionados. O pacote do jogo exclui `addons/gut/`, `test/`, `tools/` e `docs/`.
 - Os export templates do Godot (1,27 GB) são baixados uma vez e guardados em cache pelo Actions.
 - `godot --headless --path . --import` roda antes da exportação, porque um checkout limpo não tem a pasta `.godot/`.
