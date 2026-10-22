@@ -7,6 +7,15 @@ const RING_LIFETIME := 0.3
 const RING_START_RADIUS := 2.0
 const RING_END_RADIUS := 22.0
 
+## Rajada dos efeitos que mudam o tamanho da raquete.
+const POWER_UP_BURST_RING_RADIUS := 88.0
+const POWER_UP_BURST_RING_LIFETIME := 0.42
+const POWER_UP_BURST_PARTICLE_COUNT := 26
+const POWER_UP_BURST_LIFETIME := 0.55
+const POWER_UP_BURST_SPEED := 320.0
+const POWER_UP_BURST_PULL_SPEED := 380.0
+const POWER_UP_BURST_ORBIT_RADIUS := 120.0
+
 var game_scale := 3.0
 var top_boundary := 180.0
 var side_boundary := 36.0
@@ -51,6 +60,50 @@ func play_paddle_hit(position: Vector2, tint: Color, horizontal_direction: float
 		})
 	queue_redraw()
 
+## Rajada dos power-ups que aumentam ou reduzem a raquete. No crescimento as
+## faíscas saem da raquete para fora; na redução elas são puxadas de volta
+## para o centro, acompanhando o encolhimento.
+func play_power_up_burst(position: Vector2, tint: Color, direction: float) -> void:
+	if is_zero_approx(direction):
+		return
+	var growing := direction > 0.0
+	var ring_radius := POWER_UP_BURST_RING_RADIUS * game_scale
+	_rings.append({
+		"position": position,
+		"color": tint,
+		"age": 0.0,
+		"lifetime": POWER_UP_BURST_RING_LIFETIME,
+		"start_radius": RING_START_RADIUS * game_scale if growing else ring_radius,
+		"end_radius": ring_radius if growing else RING_START_RADIUS * game_scale,
+	})
+
+	for _index in range(POWER_UP_BURST_PARTICLE_COUNT):
+		var angle := _random.randf_range(0.0, TAU)
+		var particle_position := position
+		var velocity := Vector2.ZERO
+		var radius := _random.randf_range(0.5, 1.0) * game_scale
+		var lifetime := POWER_UP_BURST_LIFETIME * _random.randf_range(0.75, 1.0)
+		if growing:
+			var particle_speed := _random.randf_range(0.45, 1.0) * POWER_UP_BURST_SPEED * game_scale
+			velocity = Vector2(cos(angle), sin(angle)) * particle_speed
+		else:
+			var orbit_radius := _random.randf_range(0.55, 1.0) * POWER_UP_BURST_ORBIT_RADIUS * game_scale
+			particle_position = position + Vector2(cos(angle), sin(angle)) * orbit_radius
+			velocity = Vector2(-sin(angle), cos(angle)) * POWER_UP_BURST_PULL_SPEED * game_scale * 0.35
+		_particles.append({
+			"position": particle_position,
+			"previous_position": particle_position,
+			"velocity": velocity,
+			"color": tint,
+			"radius": radius,
+			"age": 0.0,
+			"lifetime": lifetime,
+			"attracts": not growing,
+			"attract_center": position,
+			"attract_speed": POWER_UP_BURST_PULL_SPEED * game_scale,
+		})
+	queue_redraw()
+
 func _physics_process(delta: float) -> void:
 	if _particles.is_empty() and _rings.is_empty():
 		return
@@ -75,6 +128,13 @@ func _physics_process(delta: float) -> void:
 		var velocity: Vector2 = particle["velocity"]
 		var radius: float = particle["radius"]
 		particle["previous_position"] = particle_position
+		if bool(particle.get("attracts", false)):
+			velocity = _attracted_velocity(particle, velocity, particle_position)
+			particle_position += velocity * delta
+			particle["position"] = particle_position
+			particle["velocity"] = velocity
+			_particles[index] = particle
+			continue
 		velocity.y += 520.0 * game_scale * delta
 		particle_position += velocity * delta
 
@@ -111,6 +171,17 @@ func _physics_process(delta: float) -> void:
 		_particles[index] = particle
 
 	queue_redraw()
+
+## Conduz a partícula em direção ao centro da rajada, sem gravidade nem
+## quique, para o efeito de redução puxar as faíscas para dentro.
+func _attracted_velocity(particle: Dictionary, velocity: Vector2, particle_position: Vector2) -> Vector2:
+	var center: Vector2 = particle["attract_center"]
+	var pull_speed: float = particle["attract_speed"]
+	var to_center := center - particle_position
+	var distance := to_center.length()
+	if distance <= 1.0:
+		return Vector2.ZERO
+	return velocity.lerp(to_center / distance * pull_speed, 0.25)
 
 func _draw() -> void:
 	for ring in _rings:

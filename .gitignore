@@ -5,3 +5,7 @@ reports/
 build/
 override.cfg
 export_credentials.cfg
+
+# Videos gerados localmente a partir das capturas da animação de tamanho.
+docs/screenshots/*.gif
+docs/screenshots/*.mp4

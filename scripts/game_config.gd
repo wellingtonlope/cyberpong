@@ -54,3 +54,13 @@ const POWER_UP_MAX_SPAWN_INTERVAL := 15
 ## Aceleração normal da bola: 10% a cada dois rebatimentos.
 const BALL_SPEED_ACCELERATION := 1.1
 const BALL_SPEED_ACCELERATION_INTERVAL := 2
+
+## Conversão do deslocamento vertical do rebote na raquete em ângulo de saída
+## da bola. Compartilhado pela bola e pela IA para que o modelo de trajetória
+## da IA e o da bola permaneçam alinhados.
+const BOUNCE_VERTICAL_FACTOR := 0.85
+
+## Duração das animações de tamanho da raquete quando um efeito de aumento
+## ou de redução entra em vigor, e quando a raquete volta ao tamanho normal.
+const PADDLE_GROW_ANIMATION_SECONDS := 0.36
+const PADDLE_SHRINK_ANIMATION_SECONDS := 0.26

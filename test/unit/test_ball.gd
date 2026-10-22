@@ -100,13 +100,46 @@ func test_opponent_rebound_resets_powerful_bounce_speed_and_visual_scale() -> vo
 func test_brake_does_not_reduce_speed_below_rally_floor() -> void:
 	ball.base_speed = 1000.0
 	ball.current_speed = 660.0
-	ball._ball_brake_reference_speed = 660.0
-	ball._ball_brake_active = true
 	watch_signals(ball)
+
 	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.BALL_BRAKE)
 
 	assert_eq(ball.current_speed, 650.0)
 	assert_signal_emitted_with_parameters(ball, "speed_changed", [650.0])
+
+
+func test_brake_owner_returns_at_the_current_speed() -> void:
+	ball.base_speed = 1140.0
+	ball.current_speed = 2000.0
+	ball._paddle_hits = 0
+	watch_signals(ball)
+
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.BALL_BRAKE, false, true)
+
+	assert_eq(ball.current_speed, 2000.0)
+	assert_signal_not_emitted(ball, "speed_changed")
+
+
+func test_brake_opponent_returns_eight_percent_slower() -> void:
+	ball.base_speed = 1140.0
+	ball.current_speed = 2000.0
+	ball._paddle_hits = 0
+	watch_signals(ball)
+
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.BALL_BRAKE, false, false)
+
+	assert_almost_eq(float(ball.current_speed), float(2000.0 * 0.92), float(0.01))
+	assert_signal_emitted_with_parameters(ball, "speed_changed", [2000.0 * 0.92])
+
+
+func test_brake_does_not_cancel_the_normal_acceleration() -> void:
+	ball.base_speed = 1140.0
+	ball.current_speed = 1000.0
+	ball._paddle_hits = 1
+
+	ball._bounce_from_paddle(LEFT_PADDLE, 1.0, true, POWER_UP_EFFECT.Id.BALL_BRAKE, false, true)
+
+	assert_almost_eq(float(ball.current_speed), float(1100.0), float(0.01))
 
 func test_top_and_bottom_walls_reflect_ball_inside_play_area() -> void:
 	ball.position = Vector2(500.0, 75.0)
@@ -157,6 +190,30 @@ func test_swept_collision_collects_power_up_between_frames() -> void:
 	ball.advance(0.2, LEFT_PADDLE, RIGHT_PADDLE, Vector2(150.0, 300.0), 5.0)
 
 	assert_signal_emitted_with_parameters(ball, "power_up_collected", [true])
+
+
+func test_ball_does_not_tunnel_through_the_paddle_on_a_long_step() -> void:
+	watch_signals(ball)
+	ball.position = Vector2(190.0, 280.0)
+	ball.velocity = Vector2(-3000.0, 0.0)
+	ball.current_speed = 3000.0
+	ball.advance(0.05, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0)
+
+	assert_signal_not_emitted(ball, "missed")
+	assert_signal_emitted(ball, "paddle_hit")
+	assert_eq(ball.position.x, 80.0)
+	assert_gt(float(ball.velocity.x), float(0.0))
+
+
+func test_ball_that_passes_above_the_paddle_still_misses() -> void:
+	watch_signals(ball)
+	ball.position = Vector2(180.0, 100.0)
+	ball.velocity = Vector2(-3000.0, 0.0)
+	ball.current_speed = 3000.0
+	ball.advance(0.05, LEFT_PADDLE, RIGHT_PADDLE, Vector2.ZERO, 0.0)
+
+	assert_signal_not_emitted(ball, "paddle_hit")
+	assert_signal_emitted_with_parameters(ball, "missed", [true])
 
 func test_ball_collects_power_up_when_passing_within_pickup_radius() -> void:
 	watch_signals(ball)

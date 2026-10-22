@@ -1,6 +1,6 @@
 extends GutTest
 
-const FONT := ThemeDB.fallback_font
+var FONT: Font = ThemeDB.fallback_font
 
 func test_fit_font_size_shrinks_until_the_text_fits() -> void:
 	var wide := FONT.get_string_size("CyberPong Settings", HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x

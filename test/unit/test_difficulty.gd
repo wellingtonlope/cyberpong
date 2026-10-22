@@ -12,7 +12,25 @@ func test_presets_are_ordered_from_easiest_to_hardest() -> void:
 		var current: Difficulty.Preset = Difficulty.PRESETS[index]
 		assert_gt(current.ai_speed_factor, previous.ai_speed_factor)
 		assert_lt(current.ai_reaction_delay, previous.ai_reaction_delay)
-		assert_lt(current.ai_dead_zone, previous.ai_dead_zone)
+		assert_lt(current.ai_dead_zone_ratio, previous.ai_dead_zone_ratio)
+
+
+func test_dead_zone_ratio_reproduces_the_documented_pixels_with_default_paddle() -> void:
+	assert_almost_eq(
+		float(Difficulty.preset(Difficulty.Level.EASY).ai_dead_zone_ratio * GameConfig.PADDLE_HEIGHT),
+		float(38.0),
+		float(0.01)
+	)
+	assert_almost_eq(
+		float(Difficulty.preset(Difficulty.Level.NORMAL).ai_dead_zone_ratio * GameConfig.PADDLE_HEIGHT),
+		float(24.0),
+		float(0.01)
+	)
+	assert_almost_eq(
+		float(Difficulty.preset(Difficulty.Level.HARD).ai_dead_zone_ratio * GameConfig.PADDLE_HEIGHT),
+		float(12.0),
+		float(0.01)
+	)
 
 
 func test_default_level_is_normal_and_titles_are_defined() -> void:

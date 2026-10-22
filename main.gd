@@ -209,7 +209,13 @@ func _on_pause_main_menu_requested() -> void:
 	_return_to_main_menu()
 
 func _return_to_main_menu() -> void:
-	_restart_match()
+	_reset_match_state()
+	ball.reset_for_match(
+		field_size,
+		GameConfig.BALL_RADIUS,
+		GameConfig.FIRST_SERVE_SPEED,
+		GameConfig.HUD_BAR_HEIGHT
+	)
 	_show_menu()
 
 func _dismiss_pause_menu() -> void:
@@ -220,41 +226,10 @@ func _dismiss_pause_menu() -> void:
 	_pause_menu = null
 	remove_child(menu)
 	menu.queue_free()
-	screen_state = ScreenState.State.PLAYING
 
 func _restart_match() -> void:
-	field_size = get_viewport_rect().size
-	left_paddle.configure(
-		field_size,
-		GameConfig.PADDLE_WIDTH,
-		GameConfig.PADDLE_HEIGHT,
-		GameConfig.PADDLE_MARGIN,
-		GameConfig.PADDLE_SPEED,
-		GameConfig.BALL_RADIUS,
-		GameConfig.HUD_BAR_HEIGHT
-	)
-	right_paddle.configure(
-		field_size,
-		GameConfig.PADDLE_WIDTH,
-		GameConfig.PADDLE_HEIGHT,
-		GameConfig.PADDLE_MARGIN,
-		GameConfig.PADDLE_SPEED,
-		GameConfig.BALL_RADIUS,
-		GameConfig.HUD_BAR_HEIGHT
-	)
-	var difficulty_config := Difficulty.preset(_difficulty)
-	left_paddle.apply_difficulty(difficulty_config)
-	right_paddle.apply_difficulty(difficulty_config)
-	left_score = 0
-	right_score = 0
-	total_rebounds = 0
-	_schedule_next_power_up_spawn()
+	_reset_match_state()
 	screen_state = ScreenState.State.PLAYING
-	power_up.reset_for_match(field_size)
-	debug_hud.reset_match_counts()
-	arena.set_score(left_score, right_score, GameConfig.WINNING_SCORE)
-	_refresh_match_hud()
-	arena.set_game_over(false)
 	arena.show_rally_intro(true)
 	ball.restart(
 		field_size,
@@ -265,6 +240,35 @@ func _restart_match() -> void:
 		GameConfig.HUD_BAR_HEIGHT
 	)
 	SoundManager.play_serve(true)
+
+## Devolve a partida aos valores padrão: placar, rebatidas, power-up,
+## velocidade, tamanho das raquetes e dificuldade da IA. Não saca a bola nem
+## muda o estado da tela, para que cada chamador decida o que fazer em
+## seguida.
+func _reset_match_state() -> void:
+	field_size = get_viewport_rect().size
+	for paddle: Paddle in [left_paddle, right_paddle]:
+		paddle.configure(
+			field_size,
+			GameConfig.PADDLE_WIDTH,
+			GameConfig.PADDLE_HEIGHT,
+			GameConfig.PADDLE_MARGIN,
+			GameConfig.PADDLE_SPEED,
+			GameConfig.BALL_RADIUS,
+			GameConfig.HUD_BAR_HEIGHT
+		)
+	var difficulty_config := Difficulty.preset(_difficulty)
+	left_paddle.apply_difficulty(difficulty_config)
+	right_paddle.apply_difficulty(difficulty_config)
+	left_score = 0
+	right_score = 0
+	total_rebounds = 0
+	_schedule_next_power_up_spawn()
+	power_up.reset_for_match(field_size)
+	debug_hud.reset_match_counts()
+	arena.set_score(left_score, right_score, GameConfig.WINNING_SCORE)
+	_refresh_match_hud()
+	arena.set_game_over(false)
 
 func _on_ball_paddle_hit(
 	is_left: bool,
@@ -311,8 +315,21 @@ func _on_power_up_effect_changed(is_left: bool, is_active: bool, size_multiplier
 		paddle.apply_power_up(size_multiplier, accent_color)
 		SoundManager.play_power_up_collect(power_up.get_active_effect_id())
 	else:
+		var expired_color := paddle.power_up_accent_color
 		paddle.clear_power_up()
 		SoundManager.play_power_up_expire()
+		_play_power_up_burst(paddle, expired_color)
+		return
+	_play_power_up_burst(paddle, accent_color)
+
+## Rajada visual dos efeitos que mudam o tamanho da raquete. A direção da
+## animação informa se as faíscas saem para fora (aumento) ou são puxadas
+## para dentro (redução).
+func _play_power_up_burst(paddle: Paddle, color: Color) -> void:
+	var direction := paddle.get_size_animation_direction()
+	if is_zero_approx(direction):
+		return
+	spark_effects.play_power_up_burst(paddle.position, color, direction)
 
 func _on_ball_missed(left_side: bool) -> void:
 	power_up.clear_available_item()

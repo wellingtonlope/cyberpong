@@ -3,7 +3,15 @@ extends Node2D
 
 const POWER_UP_AIM_MAX_HIT_OFFSET := 0.72
 const POWER_UP_AVOIDANCE_STEPS := 48
-const BOUNCE_VERTICAL_FACTOR := 0.85
+const BOUNCE_VERTICAL_FACTOR := GameConfig.BOUNCE_VERTICAL_FACTOR
+
+## Altura mínima da raquete em relação à base, usada como piso das animações
+## de tamanho.
+const MIN_HEIGHT_MULTIPLIER := 0.08
+## Excesso da curva de animação: a raquete passa um pouco do tamanho final e
+## volta, o que dá o impulso visual do aumento e o impacto da redução.
+const GROW_OVERSHOOT := 1.7
+const SHRINK_OVERSHOOT := 2.6
 
 enum ControlMode {
 	AI,
@@ -31,14 +39,25 @@ var ball_radius := 0.0
 var play_top := 0.0
 var power_up_size_multiplier := 1.0
 var effective_height_multiplier := 1.0
+## Multiplicador de altura exibido no quadro atual. Segue o alvo durante a
+## animação de tamanho e é igual a ele quando a animação termina.
+var animated_height_multiplier := 1.0
 var power_up_accent_color := Color.TRANSPARENT
 var power_up_active := false
 var ai_speed_factor := Difficulty.preset(Difficulty.DEFAULT_LEVEL).ai_speed_factor
 var ai_reaction_delay := Difficulty.preset(Difficulty.DEFAULT_LEVEL).ai_reaction_delay
-var ai_dead_zone := Difficulty.preset(Difficulty.DEFAULT_LEVEL).ai_dead_zone
+var ai_dead_zone_ratio := Difficulty.preset(Difficulty.DEFAULT_LEVEL).ai_dead_zone_ratio
+var ai_dead_zone := 0.0
 var control_up_actions: Array[String] = ["p1_up"]
 var control_down_actions: Array[String] = ["p1_down"]
 var _deformation_tween: Tween
+var _size_animating := false
+var _size_animation_elapsed := 0.0
+var _size_animation_duration := 0.0
+var _size_animation_from := 1.0
+var _size_animation_to := 1.0
+var _size_animation_direction := 1.0
+var _transition_flash := 0.0
 
 var control_mode: ControlMode = ControlMode.AI
 
@@ -71,27 +90,45 @@ func configure(
 	power_up_active = false
 	power_up_accent_color = Color.TRANSPARENT
 	position = Vector2(_paddle_x(), play_top + (field_size.y - play_top) * 0.5)
+	_refresh_ai_dead_zone()
+	_reset_size_animation()
 	_update_size_and_visuals()
 	_reset_deformation()
 
 func update_field_size(size: Vector2) -> void:
 	field_size = size
 	_update_size_and_visuals()
+	_retarget_size_animation()
 	position.y = clampf(position.y, play_top + paddle_height * 0.5, field_size.y - paddle_height * 0.5)
 
+## Aplica um efeito à raquete. Quando o efeito muda a altura, a raquete
+## cresce ou encolhe em animação até o novo tamanho, e a colisão acompanha o
+## mesmo movimento.
 func apply_power_up(size_multiplier: float, accent_color: Color) -> void:
 	power_up_size_multiplier = size_multiplier
 	power_up_accent_color = accent_color
 	power_up_active = true
-	_update_size_and_visuals()
-	position.y = clampf(position.y, play_top + paddle_height * 0.5, field_size.y - paddle_height * 0.5)
+	_apply_visual_colors()
+	_start_size_animation(_clamped_height_multiplier(size_multiplier))
 
+## Remove o efeito da raquete. A volta ao tamanho normal também é animada.
 func clear_power_up() -> void:
 	power_up_size_multiplier = 1.0
 	power_up_accent_color = Color.TRANSPARENT
 	power_up_active = false
-	_update_size_and_visuals()
-	position.y = clampf(position.y, play_top + paddle_height * 0.5, field_size.y - paddle_height * 0.5)
+	_apply_visual_colors()
+	_start_size_animation(_clamped_height_multiplier(1.0))
+
+## Verdadeiro enquanto a raquete cresce ou encolhe.
+func is_size_animating() -> bool:
+	return _size_animating
+
+## Direção da animação de tamanho em curso: 1.0 para crescimento, -1.0 para
+## redução e 0.0 quando não há animação.
+func get_size_animation_direction() -> float:
+	if not _size_animating:
+		return 0.0
+	return _size_animation_direction
 
 func set_control_mode(mode: ControlMode) -> void:
 	control_mode = mode
@@ -103,7 +140,14 @@ func set_control_actions(up_actions: Array, down_actions: Array) -> void:
 func apply_difficulty(preset: Difficulty.Preset) -> void:
 	ai_speed_factor = maxf(preset.ai_speed_factor, 0.0)
 	ai_reaction_delay = maxf(preset.ai_reaction_delay, 0.0)
-	ai_dead_zone = maxf(preset.ai_dead_zone, 0.0)
+	ai_dead_zone_ratio = maxf(preset.ai_dead_zone_ratio, 0.0)
+	_refresh_ai_dead_zone()
+
+## Converte a zona morta em fração da altura da raquete para uma distância
+## absoluta. A fração acompanha a escala do jogo, então a precisão da IA não
+## depende de `GAME_SCALE`.
+func _refresh_ai_dead_zone() -> void:
+	ai_dead_zone = ai_dead_zone_ratio * base_paddle_height
 
 func update_ai(
 	ball_position: Vector2,
@@ -127,7 +171,7 @@ func update_ai(
 	var target_y := play_top + (field_size.y - play_top) * 0.5
 	var ball_is_approaching := (is_left and ball_velocity.x < 0.0) or (not is_left and ball_velocity.x > 0.0)
 	if ball_is_approaching:
-		var intercept_y := _predict_intercept_y(ball_position, ball_velocity, not power_up_available)
+		var intercept_y := _predict_intercept_y(ball_position, ball_velocity)
 		target_y = intercept_y
 		if power_up_available:
 			var steering_hit_offset := 0.0
@@ -168,18 +212,18 @@ func get_collision_rect() -> Rect2:
 func play_impact_deformation() -> void:
 	_animate_body(Vector2(0.82, 1.04))
 
+## Previsão da altura em que a bola alcança a raquete. O atraso de reação da
+## IA é sempre descontado do tempo de interceptação, de modo que a previsão
+## não fica mais precisa por causa de power-ups disponíveis no campo.
 func _predict_intercept_y(
 	ball_position: Vector2,
-	ball_velocity: Vector2,
-	apply_reaction_delay: bool = true
+	ball_velocity: Vector2
 ) -> float:
 	var intercept_x := paddle_margin + paddle_width + ball_radius
 	if not is_left:
 		intercept_x = field_size.x - intercept_x
 	var time_to_intercept := absf(intercept_x - ball_position.x) / maxf(absf(ball_velocity.x), 1.0)
-	var prediction_time := time_to_intercept
-	if apply_reaction_delay:
-		prediction_time = maxf(time_to_intercept - ai_reaction_delay, 0.0)
+	var prediction_time := maxf(time_to_intercept - ai_reaction_delay, 0.0)
 	var predicted_y := ball_position.y + ball_velocity.y * prediction_time
 	return _reflect_ball_y(predicted_y)
 
@@ -252,10 +296,16 @@ func _paddle_x() -> float:
 	return field_size.x - paddle_margin - base_paddle_width * 0.5
 
 func _update_size_and_visuals() -> void:
-	var available_height := maxf(field_size.y - play_top, 1.0)
-	effective_height_multiplier = minf(power_up_size_multiplier, available_height / base_paddle_height)
+	effective_height_multiplier = _clamped_height_multiplier(power_up_size_multiplier)
+	if not _size_animating:
+		animated_height_multiplier = effective_height_multiplier
+	_apply_geometry()
+
+## Desenha a raquete com a altura do quadro atual. A colisão usa a mesma
+## altura, então a bola encontra a raquete exatamente onde ela está desenhada.
+func _apply_geometry() -> void:
 	paddle_width = base_paddle_width
-	paddle_height = base_paddle_height * effective_height_multiplier
+	paddle_height = base_paddle_height * animated_height_multiplier
 	body.polygon = _make_rectangle_polygon(paddle_width, paddle_height)
 	core.polygon = _make_rectangle_polygon(
 		maxf(paddle_width * 0.32, 2.0),
@@ -263,7 +313,7 @@ func _update_size_and_visuals() -> void:
 	)
 	outline.points = _make_rectangle_polygon(paddle_width, paddle_height)
 	outline.width = maxf(2.0, paddle_width * 0.055)
-	var glow_padding := 5.0 * maxf(power_up_size_multiplier, 1.0)
+	var glow_padding := 5.0 * maxf(animated_height_multiplier, 1.0)
 	var highlight_padding := glow_padding * 0.55
 	glow.polygon = _make_rectangle_polygon(
 		paddle_width + glow_padding * 2.0,
@@ -275,14 +325,99 @@ func _update_size_and_visuals() -> void:
 	)
 	_apply_visual_colors()
 	position.x = _paddle_x()
+	position.y = clampf(
+		position.y,
+		play_top + paddle_height * 0.5,
+		field_size.y - paddle_height * 0.5
+	)
+
+## Avança a animação de tamanho da raquete. O `_process` chama este método a
+## cada quadro e os testes o chamam com um delta fixo, para não depender da
+## taxa de quadros.
+func advance_size_animation(delta: float) -> void:
+	if not _size_animating:
+		return
+	_size_animation_elapsed += delta
+	var duration := maxf(_size_animation_duration, 0.001)
+	var progress := clampf(_size_animation_elapsed / duration, 0.0, 1.0)
+	var overshoot := GROW_OVERSHOOT if _size_animation_direction > 0.0 else SHRINK_OVERSHOOT
+	var eased := maxf(_ease_out_back(progress, overshoot), 0.0)
+	animated_height_multiplier = clampf(
+		lerpf(_size_animation_from, _size_animation_to, eased),
+		MIN_HEIGHT_MULTIPLIER,
+		_max_height_multiplier()
+	)
+	_transition_flash = sin(progress * PI)
+	_apply_geometry()
+	if progress >= 1.0:
+		_size_animating = false
+		animated_height_multiplier = _size_animation_to
+		_transition_flash = 0.0
+		_apply_geometry()
+
+## Começa a animação até o tamanho alvo. Efeitos que não mudam a altura não
+## iniciam animação.
+func _start_size_animation(target: float) -> void:
+	effective_height_multiplier = target
+	if is_equal_approx(animated_height_multiplier, target):
+		_size_animating = false
+		_transition_flash = 0.0
+		_apply_geometry()
+		return
+	_size_animation_from = animated_height_multiplier
+	_size_animation_to = target
+	_size_animation_elapsed = 0.0
+	_size_animation_direction = 1.0 if target > animated_height_multiplier else -1.0
+	_size_animation_duration = (
+		GameConfig.PADDLE_GROW_ANIMATION_SECONDS
+		if _size_animation_direction > 0.0
+		else GameConfig.PADDLE_SHRINK_ANIMATION_SECONDS
+	)
+	_size_animating = true
+
+## Ajusta o alvo da animação em curso quando o campo muda de tamanho.
+func _retarget_size_animation() -> void:
+	if not _size_animating:
+		return
+	_size_animation_to = effective_height_multiplier
+
+## Volta a raquete ao tamanho base, sem animação.
+func _reset_size_animation() -> void:
+	_size_animating = false
+	_size_animation_elapsed = 0.0
+	_size_animation_duration = 0.0
+	_size_animation_from = 1.0
+	_size_animation_to = 1.0
+	_size_animation_direction = 1.0
+	animated_height_multiplier = 1.0
+	_transition_flash = 0.0
+
+## Multiplicador de altura limitado pela área de jogo, para que a raquete
+## nunca ultrapasse o topo nem a base da área de jogo.
+func _clamped_height_multiplier(multiplier: float) -> float:
+	return clampf(multiplier, MIN_HEIGHT_MULTIPLIER, _max_height_multiplier())
+
+func _max_height_multiplier() -> float:
+	var available_height := maxf(field_size.y - play_top, 1.0)
+	return maxf(available_height / maxf(base_paddle_height, 1.0), MIN_HEIGHT_MULTIPLIER)
+
+## Curva que passa do alvo e volta, dando o impulso do aumento e o impacto
+## da redução. O começo pode ficar abaixo de zero em curvas muito fortes; o
+## `maxf` no avanço da animação evita que a raquete encolha antes de crescer.
+static func _ease_out_back(progress: float, overshoot: float) -> float:
+	var shifted := progress - 1.0
+	return 1.0 + (overshoot + 1.0) * shifted * shifted * shifted + overshoot * shifted * shifted
+
+func _process(delta: float) -> void:
+	advance_size_animation(delta)
 
 func _apply_visual_colors() -> void:
 	var accent_color := power_up_accent_color if power_up_active else tint
 	if power_up_active:
 		body.color = tint.lerp(power_up_accent_color, 0.72)
-		power_up_highlight.color = Color(power_up_accent_color, 0.42)
+		power_up_highlight.color = Color(power_up_accent_color, 0.42 + 0.3 * _transition_flash)
 		power_up_highlight.show()
-		glow.color = Color(power_up_accent_color, 0.2)
+		glow.color = Color(power_up_accent_color, 0.2 + 0.25 * _transition_flash)
 	else:
 		body.color = tint
 		power_up_highlight.hide()

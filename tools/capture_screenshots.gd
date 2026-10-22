@@ -4,10 +4,15 @@ extends Node
 ## Executar com: godot --path . res://tools/capture_screenshots.tscn
 
 const OUTPUT_DIR := "res://docs/screenshots"
+const FRAMES_OUTPUT_DIR := "res://.godot/animation_frames"
 const TARGET_SIZE := Vector2i(2880, 1620)
 const WARM_UP_REBOUNDS := 32
 const WARM_UP_MAX_FRAMES := 2700
 const HIT_TIMEOUT_FRAMES := 900
+const ANIMATION_FRAMES := 6
+const ANIMATION_CROP := Vector2i(760, 760)
+const ANIMATION_GIF_FRAMES := 20
+const ANIMATION_GIF_CROP := Vector2i(640, 640)
 
 var _main: CyberPong
 
@@ -50,6 +55,127 @@ func _capture_matches() -> void:
 	await _capture_item_in_field()
 	await _capture_powerful_bounce()
 	await _capture_reduced_paddle()
+	await _capture_grow_animation()
+	await _capture_shrink_animation()
+	await _capture_animation_frames(
+		PowerUpEffect.Id.DOUBLE_SIZE,
+		true,
+		GameConfig.PADDLE_GROW_ANIMATION_SECONDS,
+		"aumento"
+	)
+	await _capture_animation_frames(
+		PowerUpEffect.Id.HALF_SIZE,
+		false,
+		GameConfig.PADDLE_SHRINK_ANIMATION_SECONDS,
+		"reducao"
+	)
+
+func _capture_grow_animation() -> void:
+	await _capture_size_animation(
+		PowerUpEffect.Id.DOUBLE_SIZE,
+		true,
+		GameConfig.PADDLE_GROW_ANIMATION_SECONDS,
+		"power-up-animacao-aumento.png"
+	)
+
+func _capture_shrink_animation() -> void:
+	await _capture_size_animation(
+		PowerUpEffect.Id.HALF_SIZE,
+		false,
+		GameConfig.PADDLE_SHRINK_ANIMATION_SECONDS,
+		"power-up-animacao-reducao.png"
+	)
+
+## Registra a animação de tamanho da raquete em quadros igualmente espaçados e
+## salva as faixas lado a lado, para conferir o movimento do aumento e da
+## redução.
+func _capture_size_animation(
+	effect_id: int,
+	owner_is_left: bool,
+	duration: float,
+	file_name: String
+) -> void:
+	var paddle := _prepare_size_animation(effect_id, owner_is_left)
+	paddle.set_process(false)
+	var region := _crop_region(paddle, ANIMATION_CROP)
+	var frames: Array[Image] = []
+	for _index in range(ANIMATION_FRAMES):
+		paddle.advance_size_animation(duration / float(ANIMATION_FRAMES))
+		await RenderingServer.frame_post_draw
+		frames.append(_crop_frame(_grab_frame(), region))
+	paddle.advance_size_animation(duration)
+	paddle.set_process(true)
+	await _save_strip(frames, file_name)
+	_clear_effect()
+
+## Grava os quadros da animação em PNG, para a montagem do GIF.
+func _capture_animation_frames(
+	effect_id: int,
+	owner_is_left: bool,
+	duration: float,
+	folder_name: String
+) -> void:
+	var paddle := _prepare_size_animation(effect_id, owner_is_left)
+	paddle.set_process(false)
+	var region := _crop_region(paddle, ANIMATION_GIF_CROP)
+	var folder := FRAMES_OUTPUT_DIR.path_join(folder_name)
+	DirAccess.make_dir_recursive_absolute(folder)
+	for index in range(ANIMATION_GIF_FRAMES):
+		paddle.advance_size_animation(duration / float(ANIMATION_GIF_FRAMES))
+		await RenderingServer.frame_post_draw
+		var frame := _crop_frame(_grab_frame(), region)
+		frame.save_png(folder.path_join("frame_%02d.png" % index))
+	paddle.advance_size_animation(duration)
+	paddle.set_process(true)
+	_clear_effect()
+	print("quadros salvos em ", folder)
+
+## Prepara a raquete que vai receber o efeito e aplica o power-up, deixando a
+## animação de tamanho no início.
+func _prepare_size_animation(effect_id: int, owner_is_left: bool) -> Paddle:
+	_clear_effect()
+	_main.left_paddle.advance_size_animation(1.0)
+	_main.right_paddle.advance_size_animation(1.0)
+	var paddle: Paddle = _main.left_paddle if owner_is_left else _main.right_paddle
+	paddle.set_control_mode(Paddle.ControlMode.HUMAN)
+	paddle.position.y = GameConfig.HUD_BAR_HEIGHT + (_main.field_size.y - GameConfig.HUD_BAR_HEIGHT) * 0.5
+	_hold_effect(effect_id, owner_is_left, 20, 0)
+	return paddle
+
+func _crop_region(paddle: Paddle, size: Vector2i) -> Rect2i:
+	var center := paddle.position
+	return Rect2i(
+		int(center.x - size.x * 0.5),
+		int(center.y - size.y * 0.5),
+		size.x,
+		size.y
+	)
+
+## Recorta a área da raquete. A parte que fica fora da tela recebe o fundo
+## escuro da arena, para as duas equipes ficarem centradas na faixa.
+func _crop_frame(frame: Image, region: Rect2i) -> Image:
+	var cropped := Image.create(region.size.x, region.size.y, false, Image.FORMAT_RGBA8)
+	cropped.fill(Palette.PANEL_COLOR)
+	var visible := region.intersection(Rect2i(Vector2i.ZERO, frame.get_size()))
+	if visible.size.x > 0 and visible.size.y > 0:
+		cropped.blit_rect(frame, visible, visible.position - region.position)
+	return cropped
+
+func _grab_frame() -> Image:
+	return get_viewport().get_texture().get_image()
+
+func _save_strip(frames: Array[Image], file_name: String) -> void:
+	var frame_size := frames[0].get_size()
+	var strip := Image.create(frame_size.x * frames.size(), frame_size.y, false, Image.FORMAT_RGBA8)
+	for index in range(frames.size()):
+		strip.blit_rect(
+			frames[index],
+			Rect2i(Vector2i.ZERO, frame_size),
+			Vector2i(index * frame_size.x, 0)
+		)
+	var path := OUTPUT_DIR.path_join(file_name)
+	var error := strip.save_png(path)
+	print("salvo ", path, " erro=", error, " tamanho=", strip.get_size())
 
 func _warm_up() -> void:
 	Engine.time_scale = 2.0

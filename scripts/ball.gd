@@ -24,6 +24,7 @@ const POWERFUL_BOUNCE_SPEED_MULTIPLIER := 1.18
 const POWERFUL_BOUNCE_VISUAL_SCALE := 1.2
 const TRAIL_DURATION := 0.16
 const TRAIL_MAX_SAMPLES := 12
+const BOUNCE_VERTICAL_FACTOR := GameConfig.BOUNCE_VERTICAL_FACTOR
 
 @onready var body: Polygon2D = $Body
 
@@ -36,8 +37,6 @@ var play_top := 0.0
 var _paddle_hits := 0
 var _last_hit_is_left := true
 var _powerful_bounce_visual_scale := 1.0
-var _ball_brake_reference_speed := DEFAULT_SPEED
-var _ball_brake_active := false
 var _stopped := false
 var _deformation_tween: Tween
 var _random := RandomNumberGenerator.new()
@@ -68,6 +67,17 @@ func restart(
 	right_paddle: Rect2,
 	play_top_boundary: float = 0.0
 ) -> void:
+	reset_for_match(size, ball_radius, starting_speed, play_top_boundary)
+	serve_from_paddle(left_paddle, right_paddle, true, starting_speed)
+
+## Reposiciona a bola no centro e restaura a velocidade do saque, sem sacar.
+## Usado para devolver a partida aos valores padrão sem disparar um rally.
+func reset_for_match(
+	size: Vector2,
+	ball_radius: float,
+	starting_speed: float,
+	play_top_boundary: float = 0.0
+) -> void:
 	field_size = size
 	radius = ball_radius
 	play_top = play_top_boundary
@@ -76,7 +86,13 @@ func restart(
 	_trail.clear()
 	if _deformation_tween != null and _deformation_tween.is_running():
 		_deformation_tween.kill()
-	serve_from_paddle(left_paddle, right_paddle, true, starting_speed)
+	_powerful_bounce_visual_scale = 1.0
+	base_speed = starting_speed
+	current_speed = base_speed
+	_paddle_hits = 0
+	_stopped = true
+	velocity = Vector2.ZERO
+	position = Vector2(size.x * 0.5, play_top + (size.y - play_top) * 0.5)
 
 func serve_from_paddle(left_paddle: Rect2, right_paddle: Rect2, server_is_left: bool, starting_speed: float) -> void:
 	if _deformation_tween != null and _deformation_tween.is_running():
@@ -86,8 +102,6 @@ func serve_from_paddle(left_paddle: Rect2, right_paddle: Rect2, server_is_left: 
 	_trail.clear()
 	base_speed = starting_speed
 	current_speed = base_speed
-	_ball_brake_reference_speed = current_speed
-	_ball_brake_active = false
 	_paddle_hits = 0
 	_last_hit_is_left = server_is_left
 	var server_rect := left_paddle if server_is_left else right_paddle
@@ -116,12 +130,6 @@ func advance(
 ) -> void:
 	if _stopped:
 		return
-	if active_power_up_effect == PowerUpEffect.Id.BALL_BRAKE:
-		if not _ball_brake_active:
-			_ball_brake_reference_speed = minf(current_speed, MAX_SPEED)
-			_ball_brake_active = true
-	elif _ball_brake_active:
-		_ball_brake_active = false
 
 	var previous_position := position
 	position += velocity * delta
@@ -144,7 +152,6 @@ func advance(
 	):
 		power_up_collected.emit(_last_hit_is_left)
 
-	var ball_rect := Rect2(position - Vector2.ONE * radius, Vector2.ONE * radius * 2.0)
 	var left_effect: int = PowerUpEffect.Id.NONE
 	var right_effect: int = PowerUpEffect.Id.NONE
 	if active_power_up_effect == PowerUpEffect.Id.BALL_BRAKE:
@@ -155,12 +162,18 @@ func advance(
 	else:
 		right_effect = active_power_up_effect
 
-	if velocity.x < 0.0 and ball_rect.intersects(left_paddle):
-		position.x = left_paddle.end.x + radius
-		_bounce_from_paddle(left_paddle, 1.0, true, left_effect, false, power_up_owner_is_left)
-	elif velocity.x > 0.0 and ball_rect.intersects(right_paddle):
-		position.x = right_paddle.position.x - radius
-		_bounce_from_paddle(right_paddle, -1.0, false, right_effect, false, power_up_owner_is_left)
+	if velocity.x < 0.0:
+		var left_contact := _swept_contact_parameter(previous_position, position, left_paddle)
+		if left_contact >= 0.0:
+			position = previous_position + (position - previous_position) * left_contact
+			position.x = left_paddle.end.x + radius
+			_bounce_from_paddle(left_paddle, 1.0, true, left_effect, false, power_up_owner_is_left)
+	elif velocity.x > 0.0:
+		var right_contact := _swept_contact_parameter(previous_position, position, right_paddle)
+		if right_contact >= 0.0:
+			position = previous_position + (position - previous_position) * right_contact
+			position.x = right_paddle.position.x - radius
+			_bounce_from_paddle(right_paddle, -1.0, false, right_effect, false, power_up_owner_is_left)
 
 	if position.x + radius < left_paddle.position.x:
 		if active_power_up_effect == PowerUpEffect.Id.EXTRA_DEFENSE and power_up_owner_is_left:
@@ -188,32 +201,30 @@ func _bounce_from_paddle(
 	hit_position = clampf(hit_position + _random.randf_range(-0.08, 0.08), -1.0, 1.0)
 	_paddle_hits += 1
 	var previous_speed := current_speed
-	if active_power_up_effect == PowerUpEffect.Id.BALL_BRAKE:
-		if _paddle_hits % ACCELERATION_INTERVAL == 0 and _ball_brake_reference_speed < MAX_SPEED:
-			_ball_brake_reference_speed = minf(_ball_brake_reference_speed * ACCELERATION_FACTOR, MAX_SPEED)
-		current_speed = _ball_brake_reference_speed
-		if is_left != power_up_owner_is_left:
-			current_speed = maxf(
-				_ball_brake_reference_speed * BRAKE_SPEED_MULTIPLIER,
-				base_speed * BRAKE_MINIMUM_SPEED_RATIO
+	if _paddle_hits % ACCELERATION_INTERVAL == 0 and current_speed < MAX_SPEED:
+		current_speed = minf(current_speed * ACCELERATION_FACTOR, MAX_SPEED)
+	match active_power_up_effect:
+		PowerUpEffect.Id.BALL_BRAKE:
+			# A dona do Freio devolve na velocidade atual; a adversária devolve
+			# 8% mais lenta, sem passar do piso de velocidade do rally.
+			if is_left != power_up_owner_is_left:
+				current_speed = maxf(
+					current_speed * BRAKE_SPEED_MULTIPLIER,
+					base_speed * BRAKE_MINIMUM_SPEED_RATIO
+				)
+			_powerful_bounce_visual_scale = 1.0
+		PowerUpEffect.Id.POWERFUL_BOUNCE:
+			current_speed = minf(
+				current_speed * POWERFUL_BOUNCE_SPEED_MULTIPLIER,
+				MAX_SPEED * POWERFUL_BOUNCE_SPEED_MULTIPLIER
 			)
-		_powerful_bounce_visual_scale = 1.0
-	elif active_power_up_effect == PowerUpEffect.Id.POWERFUL_BOUNCE:
-		if _paddle_hits % ACCELERATION_INTERVAL == 0 and current_speed < MAX_SPEED:
-			current_speed = minf(current_speed * ACCELERATION_FACTOR, MAX_SPEED)
-		current_speed = minf(
-			current_speed * POWERFUL_BOUNCE_SPEED_MULTIPLIER,
-			MAX_SPEED * POWERFUL_BOUNCE_SPEED_MULTIPLIER
-		)
-		_powerful_bounce_visual_scale = POWERFUL_BOUNCE_VISUAL_SCALE
-	else:
-		if _paddle_hits % ACCELERATION_INTERVAL == 0 and current_speed < MAX_SPEED:
-			current_speed = minf(current_speed * ACCELERATION_FACTOR, MAX_SPEED)
-		current_speed = minf(current_speed, MAX_SPEED)
-		_powerful_bounce_visual_scale = 1.0
+			_powerful_bounce_visual_scale = POWERFUL_BOUNCE_VISUAL_SCALE
+		_:
+			current_speed = minf(current_speed, MAX_SPEED)
+			_powerful_bounce_visual_scale = 1.0
 	if not is_equal_approx(current_speed, previous_speed):
 		speed_changed.emit(current_speed)
-	velocity = Vector2(horizontal_direction, hit_position * 0.85).normalized() * current_speed
+	velocity = Vector2(horizontal_direction, hit_position * BOUNCE_VERTICAL_FACTOR).normalized() * current_speed
 	_animate_body(Vector2(0.72, 1.16))
 	var impact_position := position - Vector2(horizontal_direction * radius, 0.0)
 	paddle_hit.emit(is_left, impact_position, horizontal_direction, current_speed / base_speed, used_extra_defense)
@@ -229,6 +240,47 @@ func _segment_intersects_power_up(start: Vector2, end: Vector2, center: Vector2,
 		var along_segment := clampf((center - start).dot(segment) / segment.length_squared(), 0.0, 1.0)
 		closest_point = start + segment * along_segment
 	return closest_point.distance_squared_to(center) <= combined_radius * combined_radius
+
+## Parâmetro do caminho percorrido em que a bola alcança a raquete, ou -1.0
+## quando o caminho não cruza a raquete. O teste usa o segmento varrido do
+## passo inteiro em vez do retângulo final, de modo que a bola não atravesse
+## a raquete quando o passo é maior do que a espessura dela.
+func _swept_contact_parameter(
+	from_position: Vector2,
+	to_position: Vector2,
+	paddle_rect: Rect2
+) -> float:
+	return _segment_rect_entry_parameter(
+		from_position,
+		to_position,
+		paddle_rect.grow(radius)
+	)
+
+## Primeira fração do segmento `start` -> `end` dentro de `rect`, ou -1.0
+## quando o segmento não cruza o retângulo.
+func _segment_rect_entry_parameter(start: Vector2, end: Vector2, rect: Rect2) -> float:
+	var segment := end - start
+	var entry := 0.0
+	var exit := 1.0
+	for axis in 2:
+		var delta := segment[axis]
+		var rect_min := rect.position[axis]
+		var rect_max := rect.end[axis]
+		if absf(delta) < 0.000001:
+			if start[axis] < rect_min or start[axis] > rect_max:
+				return -1.0
+			continue
+		var near := (rect_min - start[axis]) / delta
+		var far := (rect_max - start[axis]) / delta
+		if near > far:
+			var swap := near
+			near = far
+			far = swap
+		entry = maxf(entry, near)
+		exit = minf(exit, far)
+		if entry > exit:
+			return -1.0
+	return entry
 
 func _animate_body(impact_scale: Vector2) -> void:
 	if _deformation_tween != null and _deformation_tween.is_running():

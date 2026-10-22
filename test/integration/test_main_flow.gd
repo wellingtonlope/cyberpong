@@ -87,6 +87,22 @@ func test_m_returns_to_main_menu_after_victory() -> void:
 	assert_not_null(menu)
 	assert_true(menu.visible)
 
+
+func test_returning_to_main_menu_does_not_serve_the_ball_or_play_the_serve_sound() -> void:
+	game.ball.velocity = Vector2(1200.0, -300.0)
+	game.screen_state = ScreenState.State.GAME_OVER
+
+	var event := InputEventKey.new()
+	event.pressed = true
+	event.keycode = KEY_M
+	game._unhandled_key_input(event)
+
+	assert_eq(game.screen_state, ScreenState.State.MENU)
+	assert_true(game.ball._stopped)
+	assert_eq(game.ball.velocity, Vector2.ZERO)
+	assert_eq(game.ball.current_speed, GameConfig.FIRST_SERVE_SPEED)
+	assert_ne(SoundManager.last_played_sound, "serve")
+
 func test_m_does_not_open_menu_during_an_active_match() -> void:
 	game._restart_match()
 	assert_false(game.game_over)
@@ -266,10 +282,38 @@ func test_power_up_signal_updates_owner_paddle_and_match_hud() -> void:
 	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
 	game.power_up.collect(true)
 
+	assert_true(game.left_paddle.is_size_animating())
+	assert_eq(game.left_paddle.get_size_animation_direction(), 1.0)
+	game.left_paddle.advance_size_animation(GameConfig.PADDLE_GROW_ANIMATION_SECONDS)
+
 	assert_eq(game.left_paddle.paddle_height, game.left_paddle.base_paddle_height * 2.0)
 	assert_eq(game.right_paddle.paddle_height, game.right_paddle.base_paddle_height)
 	assert_eq(game.arena.power_up_hud_title, "Raquete dobrada")
 	assert_true(game.arena.power_up_hud_show_progress)
+
+func test_collecting_a_size_power_up_plays_the_burst_in_the_growth_direction() -> void:
+	game.power_up.appear(game.field_size)
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.DOUBLE_SIZE
+	game.power_up.collect(true)
+
+	assert_gt(game.spark_effects._rings.size(), 0)
+	assert_gt(game.spark_effects._particles.size(), 0)
+
+	var ring: Dictionary = game.spark_effects._rings[0]
+	assert_gt(float(ring["end_radius"]), float(ring["start_radius"]))
+
+func test_collecting_the_reduced_paddle_plays_the_burst_in_the_shrink_direction() -> void:
+	game.power_up.appear(game.field_size)
+	game.power_up.effect_id = POWER_UP_EFFECT.Id.HALF_SIZE
+	game.power_up.collect(true)
+
+	assert_eq(game.left_paddle.get_size_animation_direction(), -1.0)
+	var ring: Dictionary = game.spark_effects._rings[0]
+	assert_lt(float(ring["end_radius"]), float(ring["start_radius"]))
+
+	game.left_paddle.advance_size_animation(GameConfig.PADDLE_SHRINK_ANIMATION_SECONDS)
+
+	assert_eq(game.left_paddle.paddle_height, game.left_paddle.base_paddle_height * 0.5)
 
 func test_ball_collection_signal_assigns_power_up_to_last_hitter() -> void:
 	game.power_up.appear(game.field_size)

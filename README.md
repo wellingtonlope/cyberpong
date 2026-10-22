@@ -38,7 +38,14 @@ As capturas são geradas em **2880 × 1620**, a resolução nativa do jogo, pela
 godot --path . res://tools/capture_screenshots.tscn
 ```
 
-A ferramenta percorre o menu, joga alguns rallies com as IAs e salva as quatro imagens em `docs/screenshots/`.
+A ferramenta percorre o menu, joga alguns rallies com as IAs e salva as imagens em `docs/screenshots/`. As faixas de animação são compostas com seis quadros igualmente espaçados da animação de tamanho da raquete.
+
+Para gerar também os vídeos da animação, que **não são versionados**, monte os MP4 a partir dos quadros gravados pela ferramenta. É preciso ter o `ffmpeg` no `PATH` ou o pacote `imageio-ffmpeg`:
+
+```bash
+godot --path . res://tools/capture_screenshots.tscn
+python3 tools/build_animation_video.py
+```
 
 ## Como jogar
 
@@ -71,9 +78,11 @@ A dificuldade escolhida no menu vale para toda raquete controlada pela IA. No mo
 
 | Dificuldade | Velocidade da IA | Atraso de reação | Zona morta |
 | --- | --- | --- | --- |
-| **Fácil** | 64% da velocidade da raquete | 0,30 s | 38 px |
-| **Médio** | 82% da velocidade da raquete | 0,14 s | 24 px |
-| **Difícil** | 100% da velocidade da raquete | 0,04 s | 12 px |
+| **Fácil** | 64% da velocidade da raquete | 0,30 s | 13,2% da altura da raquete (38 px) |
+| **Médio** | 82% da velocidade da raquete | 0,14 s | 8,3% da altura da raquete (24 px) |
+| **Difícil** | 100% da velocidade da raquete | 0,04 s | 4,2% da altura da raquete (12 px) |
+
+A zona morta é a tolerância de movimento da IA: dentro dela, a raquete não se move para perseguir a bola. Ela é medida como fração da altura da raquete para acompanhar a escala do jogo; os valores em pixels correspondem à raquete padrão de 288 px.
 
 A dificuldade altera apenas o comportamento das IAs; regras, velocidade da bola e power-ups continuam iguais.
 
@@ -94,11 +103,22 @@ O primeiro item aparece após **5 a 15 rebatidas totais**; os próximos seguem o
 | --- | --- | --- |
 | **Raquete dobrada** | 6 rebatidas | Dobra a altura da raquete beneficiada. |
 | **Raquete reduzida** | 5 rebatidas | Reduz pela metade a altura da própria raquete de quem coletou. |
-| **Freio na bola** | 8 rebatidas | A dona rebate na velocidade atual; a adversária devolve 8% mais devagar. |
+| **Freio na bola** | 8 rebatidas | A dona rebate na velocidade atual; a adversária devolve 8% mais devagar, nunca abaixo de 65% da velocidade de saque. |
 | **Rebote potente** | 8 rebatidas | A dona acelera a bola em 18% por rebatida, até 3.540 px/s. A raquete adversária devolve a 3.000 px/s. |
 | **Defesa extra** | 14 rebatidas | Salva uma falha e termina ao ser usada. |
 
 As durações contam rebatidas das duas raquetes. Freio na bola e Rebote potente valem pelos próximos quatro rebatimentos da raquete afetada. Quando há um item disponível, a IA tenta direcionar a bola aos efeitos benéficos e evitar a raquete reduzida, considerando as quicadas nas bordas.
+
+### Animação de tamanho
+
+**Raquete dobrada** e **Raquete reduzida** animam a altura da raquete em vez de trocá-la de uma vez. A raquete cresce ou encolhe em 0,36 s (aumento) e 0,26 s (redução), passa um pouco do tamanho final e volta, o que dá o impulso do aumento e o impacto da redução. A colisão acompanha a animação quadro a quadro, então a bola encontra a raquete exatamente onde ela está desenhada. A volta ao tamanho normal, quando o efeito termina, também é animada.
+
+Na coleta e no fim do efeito, uma rajada de faíscas acompanha a mudança: no aumento as faíscas saem da raquete para fora; na redução elas são puxadas de volta para o centro, e o anel de impacto se contrai.
+
+| Aumento | Redução |
+|:---:|:---:|
+| <img src="docs/screenshots/power-up-animacao-aumento.png" alt="Seis quadros da animação de aumento da raquete, da esquerda para a direita" width="100%"> | <img src="docs/screenshots/power-up-animacao-reducao.png" alt="Seis quadros da animação de redução da raquete, da esquerda para a direita" width="100%"> |
+| Raquete dobrada em seis quadros | Raquete reduzida em seis quadros |
 
 ## Executar
 
@@ -172,11 +192,11 @@ godot --headless --path . --export-release "Windows x86_64" build/windows/CyberP
 
 **Unitários**
 
-- `test_ball.gd`: saques, sinal de velocidade, aceleração e limites, Rebote potente, Freio, colisões, falhas, Defesa extra, coleta varrida e última raquete.
-- `test_difficulty.gd`: ordem dos presets, padrão, títulos e conversão entre nível e índice.
-- `test_paddle.gd`: posição, colisão, previsão com reflexão, movimento, zona morta, dificuldade aplicada, tamanho dos efeitos, camadas visuais e mira.
+- `test_ball.gd`: saques, sinal de velocidade, aceleração e limites, Rebote potente, Freio (dona mantém a velocidade, adversária devolve 8% mais lenta e piso de rally), colisões, colisão varrida contra a raquete, falhas, Defesa extra, coleta varrida e última raquete.
+- `test_difficulty.gd`: ordem dos presets, padrão, títulos, conversão entre nível e índice e zona morta medida em fração da altura da raquete.
+- `test_paddle.gd`: posição, colisão, previsão com reação, movimento, zona morta proporcional à altura da raquete, dificuldade aplicada, camadas visuais, mira e animação de tamanho (aumento, redução, volta ao tamanho base e limite da área de jogo).
 - `test_power_up.gd`: catálogo centralizado, aparição, janela de cinco rebatidas, coleta, proprietário, durações, cargas, sinais, HUD, cores e redimensionamento.
-- `test_debug_hud.gd` e `test_spark_effects.gd`: visibilidade e contagens do HUD; quantidade, expiração, quique e anel de impacto.
+- `test_debug_hud.gd` e `test_spark_effects.gd`: visibilidade e contagens do HUD; quantidade, expiração, quique e anel de impacto; rajada dos power-ups de tamanho, para fora no aumento e puxada para dentro na redução.
 - `test_credits_screen.gd`: layout, fade, emissão única de `finished`, pulo por tecla/clique e janelas diferentes.
 - `test_sound_manager.gd`: catálogo de efeitos sonoros, pool de AudioStreamPlayers, reprodução desativável, variação de tom por velocidade e efeitos de power-up.
 - `test_game_menu.gd`: layout responsivo, cartões, foco, cursor, seletor de dificuldade condicional, abertura das configurações, seleção, transição e início/saída.
@@ -194,7 +214,7 @@ godot --headless --path . --export-release "Windows x86_64" build/windows/CyberP
 - `test_menu_flow.gd`: pausa da partida, seleção de modo e dificuldade, aplicação na IA, retomada, abertura das configurações pelo menu inicial, modos PvP/Jogador VS AI e encerramento.
 - `test_pause_flow.gd`: abertura por ESC/P, congelamento, retomada sem alterar o estado, reinício da partida, abertura das configurações e restauração dos padrões.
 - `test_sound_flow.gd`: integração de áudio com rebatidas, paredes, power-ups, saques, pontos, vitória e transições de pausa.
-- `test_main_flow.gd`: nós e sinais, saques, placar, match point, vitória, retorno ao menu pelo `M`, clique nos botões da tela de vitória, aviso, transição de ponto, power-ups, teclas, HUD e redimensionamento.
+- `test_main_flow.gd`: nós e sinais, saques, placar, match point, vitória, retorno ao menu pelo `M` sem sacar a bola, clique nos botões da tela de vitória, aviso, transição de ponto, power-ups com animação de tamanho e rajada visual, teclas, HUD e redimensionamento.
 - `test_scene_resources.gd`: carregamento das cenas e disponibilidade da fonte de fallback.
 - `test_visual_verification.gd`: limites em várias resoluções, sobreposição do HUD, contraste e efeitos visuais.
 
